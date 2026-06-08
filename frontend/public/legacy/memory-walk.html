@@ -379,9 +379,9 @@
           const ang = k * 2.39996323;                  // 황금각(golden angle) → 고르게 분산
           const r = 0.14 + 0.10 * k;                   // 바깥으로 나선
           const e = h.eye.clone();
-          e.x = g.cx + Math.cos(ang) * r;
+          e.x = g.cx + Math.cos(ang) * r;              // x,z 수평으로만 흩음
           e.z = g.cz + Math.sin(ang) * r;
-          e.y = Math.min(floor + 2.3, e.y + k * 0.24); // 세로도 층층이
+          // 높이(세로)는 원래 눈높이 그대로 — 천장까지 솟지 않게(높이 변주 제거).
           h.eye = e; h._stack = k;
         });
       });
