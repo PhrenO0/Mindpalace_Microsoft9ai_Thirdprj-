@@ -365,15 +365,26 @@
         const ey = Math.min(Math.max(p.y + 0.3, floor + 1.2), floor + 1.95);  // 눈높이 근처로 클램프
         return { pos: p, label: a.label, name: a.name, entity: entOf.get(a) || null, number: i+1, eye: p.clone().setY(ey) };
       });
-      // 겹치는 마커(XZ가 0.35m 내) 세로로 층층이 쌓아 번호를 알아보기 쉽게(식탁 위 화분·꽃병 등).
-      for (let i = 0; i < route.length; i++) {
-        let level = 0;
-        for (let j = 0; j < i; j++)
-          if (Math.hypot(route[i].pos.x - route[j].pos.x, route[i].pos.z - route[j].pos.z) < 0.35)
-            level = Math.max(level, (route[j]._stack || 0) + 1);
-        route[i]._stack = level;
-        if (level > 0) route[i].eye = route[i].eye.clone().setY(Math.min(floor + 2.3, route[i].eye.y + level * 0.3));
-      }
+      // 겹쳐 보이는 마커(같은 XZ 0.4m 내)를 황금각 나선으로 x,z 흩고 세로로도 층 → 어느 각도서도 안 겹침.
+      //   (부피 큰 사물은 중심이 위의 작은 사물들과 겹치기 쉬워 변주가 특히 필요)
+      const _cl = [];
+      route.forEach(h => {
+        let g = _cl.find(c => Math.hypot(c.cx - h.pos.x, c.cz - h.pos.z) < 0.4);
+        if (!g) { g = { cx: h.pos.x, cz: h.pos.z, items: [] }; _cl.push(g); }
+        g.items.push(h);
+      });
+      _cl.forEach(g => {
+        if (g.items.length < 2) return;
+        g.items.forEach((h, k) => {
+          const ang = k * 2.39996323;                  // 황금각(golden angle) → 고르게 분산
+          const r = 0.14 + 0.10 * k;                   // 바깥으로 나선
+          const e = h.eye.clone();
+          e.x = g.cx + Math.cos(ang) * r;
+          e.z = g.cz + Math.sin(ang) * r;
+          e.y = Math.min(floor + 2.3, e.y + k * 0.24); // 세로도 층층이
+          h.eye = e; h._stack = k;
+        });
+      });
       window.__mw = { route, anchors, ordered };   // 디버그
       $("listBtn").style.display = "inline-flex"; $("listCount").textContent = anchors.length; buildObjectList();
       buildMarkers(); buildRouteLine(spawn); buildRelations();
