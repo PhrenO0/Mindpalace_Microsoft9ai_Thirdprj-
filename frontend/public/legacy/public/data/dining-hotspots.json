@@ -1,0 +1,22 @@
+{
+  "roomId": "dining-kitchen-names",
+  "title": "dining/kitchen — 이름표 스캔(Azure 0콜·노드명 그대로)",
+  "generatedBy": "personal-room-scanner-3d (GLB node names → consolidateByName)",
+  "hotspots": [
+    { "slot": 1,  "detectedClass": "cabinet",      "object": "수납장",    "confidence": 1, "markerPosition": [3.367, 1.097, 0.073] },
+    { "slot": 2,  "detectedClass": "window",       "object": "창문",      "confidence": 1, "markerPosition": [2.024, 1.099, -2.880] },
+    { "slot": 3,  "detectedClass": "dining table", "object": "식탁/테이블", "confidence": 1, "markerPosition": [1.309, 0.281, 0.198] },
+    { "slot": 4,  "detectedClass": "jar",          "object": "병",        "confidence": 1, "markerPosition": [3.483, 0.730, 1.697] },
+    { "slot": 5,  "detectedClass": "vase",         "object": "꽃병",      "confidence": 1, "markerPosition": [1.325, 0.660, 0.487] },
+    { "slot": 6,  "detectedClass": "sink",         "object": "싱크대",    "confidence": 1, "markerPosition": [3.373, 0.664, 0.991] },
+    { "slot": 7,  "detectedClass": "bowl",         "object": "그릇",      "confidence": 1, "markerPosition": [3.429, 0.657, 1.999] },
+    { "slot": 8,  "detectedClass": "painting",     "object": "그림",      "confidence": 1, "markerPosition": [3.537, 0.852, -1.529] },
+    { "slot": 9,  "detectedClass": "candle",       "object": "촛대",      "confidence": 1, "markerPosition": [3.381, 0.770, -1.092] },
+    { "slot": 10, "detectedClass": "potted plant", "object": "화분",      "confidence": 1, "markerPosition": [1.301, 0.799, 0.475] },
+    { "slot": 11, "detectedClass": "lamp",         "object": "조명",      "confidence": 1, "markerPosition": [2.084, 1.647, 0.214] },
+    { "slot": 12, "detectedClass": "chair",        "object": "의자",      "confidence": 1, "markerPosition": [3.440, 0.216, -2.407] },
+    { "slot": 13, "detectedClass": "rug",          "object": "러그",      "confidence": 1, "markerPosition": [1.352, 0.008, 0.189] },
+    { "slot": 14, "detectedClass": "jar",          "object": "병",        "confidence": 1, "markerPosition": [3.435, 0.699, -0.826] },
+    { "slot": 15, "detectedClass": "chair",        "object": "의자",      "confidence": 1, "markerPosition": [1.317, 0.373, 0.217] }
+  ]
+}

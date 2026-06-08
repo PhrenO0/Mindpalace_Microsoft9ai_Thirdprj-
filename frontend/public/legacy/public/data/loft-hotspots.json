@@ -1,0 +1,21 @@
+{
+  "roomId": "loft-boxcenter",
+  "title": "loft 박스중심 스캔(시점계획 + 하나의 사물=하나의 마커)",
+  "generatedBy": "personal-room-scanner-3d (view-planning + box-center raycast + node merge)",
+  "hotspots": [
+    { "slot": 1,  "detectedClass": "chair",        "object": "의자",      "confidence": 0.88, "markerPosition": [0.577, 0.571, 0.571] },
+    { "slot": 2,  "detectedClass": "cabinet",      "object": "수납장",    "confidence": 0.80, "markerPosition": [2.919, 1.634, -1.404] },
+    { "slot": 3,  "detectedClass": "dining table", "object": "식탁/테이블", "confidence": 0.81, "markerPosition": [0.283, 0.752, 0.445] },
+    { "slot": 4,  "detectedClass": "sofa",         "object": "소파",      "confidence": 0.82, "markerPosition": [-2.586, 0.589, -1.635] },
+    { "slot": 5,  "detectedClass": "pillow",       "object": "쿠션",      "confidence": 0.77, "markerPosition": [-3.078, 0.784, 1.096] },
+    { "slot": 6,  "detectedClass": "cup",          "object": "컵",        "confidence": 0.68, "markerPosition": [-2.068, 0.498, -1.023] },
+    { "slot": 7,  "detectedClass": "refrigerator", "object": "냉장고",    "confidence": 0.67, "markerPosition": [2.659, 1.245, -0.123] },
+    { "slot": 8,  "detectedClass": "bowl",         "object": "그릇",      "confidence": 0.76, "markerPosition": [2.813, 1.252, 0.570] },
+    { "slot": 9,  "detectedClass": "stove",        "object": "가스레인지", "confidence": 0.76, "markerPosition": [2.676, 0.799, -1.407] },
+    { "slot": 10, "detectedClass": "sink",         "object": "싱크대",    "confidence": 0.82, "markerPosition": [2.930, 1.009, -2.150] },
+    { "slot": 11, "detectedClass": "bed",          "object": "침대",      "confidence": 0.85, "markerPosition": [-2.956, 0.828, -1.989] },
+    { "slot": 12, "detectedClass": "rug",          "object": "러그",      "confidence": 0.71, "markerPosition": [-0.714, 0.287, -0.858] },
+    { "slot": 13, "detectedClass": "painting",     "object": "그림",      "confidence": 0.58, "markerPosition": [-2.585, 1.616, -2.933] },
+    { "slot": 14, "detectedClass": "carpet",       "object": "카펫",      "confidence": 0.62, "markerPosition": [2.332, 0.282, 0.875] }
+  ]
+}
