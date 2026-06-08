@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>세종대왕 동상 기억의 방</title>
+  <style>
+    :root {
+      --ink: #f6f2e8;
+      --muted: #c8c2b5;
+      --jade: #8bc7b0;
+      --panel: rgba(12,14,13,.9);
+      --line: rgba(246,242,232,.18);
+      --shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e0d; color: var(--ink);
+      font-family: "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif; }
+
+    #scene { position: fixed; inset: 0; cursor: grab; }
+    #scene:active { cursor: grabbing; }
+
+    /* HUD (좌상단) */
+    .hud {
+      position: fixed; left: 18px; top: 18px;
+      width: min(260px, calc(100vw - 36px));
+      border: 1px solid var(--line); border-radius: 8px;
+      background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow); padding: 14px 16px; z-index: 3;
+    }
+    .kicker { color: var(--muted); font-size: 11px; font-weight: 900;
+      letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 5px 0 10px; font-size: 18px; line-height: 1.1; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .button, button {
+      min-height: 32px; border: 1px solid rgba(246,242,232,.24); border-radius: 7px;
+      background: rgba(255,255,255,.07); color: var(--ink);
+      padding: 0 12px; font: inherit; font-size: 12px; font-weight: 900;
+      text-decoration: none; display: inline-grid; place-items: center; cursor: pointer;
+    }
+    .button:hover, button:hover {
+      border-color: rgba(139,199,176,.68); background: rgba(139,199,176,.16);
+    }
+
+    /* 설명 카드 (번호 클릭 시) */
+    .card {
+      position: fixed; right: 18px; top: 18px;
+      width: min(300px, calc(100vw - 36px));
+      border: 1px solid var(--line); border-radius: 8px;
+      background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow); padding: 16px; z-index: 4;
+      opacity: 0; pointer-events: none; transform: translateY(-8px);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .card.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .card .hd { display: flex; align-items: center; gap: 10px; }
+    .num-badge {
+      min-width: 30px; height: 30px; border-radius: 50%;
+      background: var(--jade); color: #0b0e0d;
+      font-size: 14px; font-weight: 900; display: grid; place-items: center; flex-shrink: 0;
+    }
+    .card h2 { font-size: 16px; line-height: 1.2; flex: 1; }
+    .card .x { background: transparent; border: none; color: var(--muted);
+      font-size: 16px; cursor: pointer; min-height: auto; padding: 0 4px; }
+    .card .x:hover { color: var(--ink); }
+    .card .desc {
+      margin-top: 12px; padding: 10px 12px; min-height: 60px;
+      border: 1px dashed rgba(139,199,176,.3); border-radius: 6px;
+      color: var(--muted); font-size: 13px; line-height: 1.65;
+    }
+
+    /* 상태 바 */
+    .status {
+      position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+      border: 1px solid rgba(246,242,232,.14); border-radius: 999px;
+      background: rgba(12,14,13,.78); color: var(--muted);
+      padding: 8px 16px; font-size: 11px; z-index: 3; white-space: nowrap;
+    }
+
+    /* 로딩 */
+    #loading {
+      position: fixed; inset: 0; background: #0b0e0d;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; z-index: 10; transition: opacity .5s ease;
+    }
+    #loading.done { opacity: 0; pointer-events: none; }
+    #loading span { color: var(--muted); font-size: 13px; }
+    .spinner { width: 34px; height: 34px; border-radius: 50%;
+      border: 3px solid rgba(139,199,176,.18); border-top-color: var(--jade);
+      animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="loading"><div class="spinner"></div><span>방을 불러오는 중...</span></div>
+
+  <div id="scene"></div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="kicker">Room 03 · Sejong Statue</div>
+    <h1>조선의 제도와 문화</h1>
+    <div class="controls">
+      <a class="button" href="/">광화문 맵</a>
+      <button id="btnReset">입구 시점</button>
+    </div>
+  </div>
+
+  <!-- 설명 카드 -->
+  <div class="card" id="card">
+    <div class="hd">
+      <span class="num-badge" id="cardNum">1</span>
+      <h2 id="cardName">—</h2>
+      <button class="x" id="cardClose">✕</button>
+    </div>
+    <div class="desc" id="cardDesc"></div>
+  </div>
+
+  <div class="status">드래그: 시점 회전 &nbsp;|&nbsp; WASD: 이동 &nbsp;|&nbsp; 번호 클릭: 설명</div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 마커/설명은 my-room-3d-hotspots.json 에서 읽어온다.
+    // 설명(userDescription)은 아직 비어 있어 카드의 설명란은 공백으로 표시된다.
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    /* ── 기본 세팅 ── */
+    const sceneRoot = document.getElementById("scene");
+    const scene  = new THREE.Scene();
+    scene.background = new THREE.Color(0x0e1210);
+    scene.fog = new THREE.FogExp2(0x0e1210, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.05, 400);
+    camera.rotation.order = "YXZ";
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.65));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    sceneRoot.appendChild(renderer.domElement);
+
+    const clock     = new THREE.Clock();
+    const raycaster = new THREE.Raycaster();
+    const pointer   = new THREE.Vector2();
+    const keys      = new Set();
+
+    let yaw = 0, pitch = 0;
+    let lastPt = null, didDrag = false;
+    let roomCenter = new THREE.Vector3();
+    let roomRadius = 12;
+
+    // objects[i] = { num, center, sprite, name, hotspot }
+    const objects = [];
+    const sprites = [];   // 레이캐스트 대상
+    let selIdx = -1;
+
+    /* ── 조명 ── */
+    scene.add(new THREE.HemisphereLight(0xfff5dc, 0x1a0e00, 2.0));
+    const sun = new THREE.DirectionalLight(0xffe8b0, 2.2);
+    sun.position.set(-5, 10, 4); scene.add(sun);
+    const fill = new THREE.PointLight(0x8bc7b0, 2.5, 40);
+    fill.position.set(0, 5, 0); scene.add(fill);
+
+    /* ── 핫스팟(마커) 데이터 ── */
+    let HOTSPOTS = [];
+
+    /* ── 에셋 URL (Azure Blob Storage, 컨테이너: models) ── */
+    const BLOB_BASE     = "https://9aiteam1.blob.core.windows.net/models";
+    const HOTSPOTS_URL  = `${BLOB_BASE}/my-room-3d-hotspots.json`;
+    const ROOM_GLB_URL  = `${BLOB_BASE}/the_smoking_room.glb`;
+
+    /* ── 핫스팟 JSON 먼저 읽고 → GLB 로드 ── */
+    fetch(HOTSPOTS_URL)
+      .then((r) => r.json())
+      .then((data) => { HOTSPOTS = data.hotspots || []; })
+      .catch((e) => console.error("핫스팟 로드 실패:", e))
+      .finally(loadRoom);
+
+    function loadRoom() {
+      // Draco 압축 GLB를 풀기 위한 디코더(압축이 아니라 압축 해제기).
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/");
+      const loader = new GLTFLoader();
+      loader.setDRACOLoader(dracoLoader);
+      loader.load(ROOM_GLB_URL, (gltf) => {
+        const model = gltf.scene;
+
+        const box  = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const ctr  = box.getCenter(new THREE.Vector3());
+        const sc   = 32 / Math.max(size.x, size.z);
+        model.scale.setScalar(sc);
+        model.position.set(-ctr.x * sc, -box.min.y * sc, -ctr.z * sc);
+        scene.add(model);
+        model.updateMatrixWorld(true);
+
+        const wb = new THREE.Box3().setFromObject(model);
+        roomCenter = wb.getCenter(new THREE.Vector3());
+        const ws = wb.getSize(new THREE.Vector3());
+        roomRadius = Math.max(ws.x, ws.z) / 2 - 1;
+
+        buildMarkers(wb);
+        resetCamera();
+        hideLoading();
+      }, undefined, (e) => { console.error("GLB load error:", e); hideLoading(); });
+    }
+
+    /* ── 핫스팟 마커 배치 ──
+       my-room-3d-hotspots.json 의 좌표계는 스캐너가 정규화한 별도 좌표(±15 규모)라
+       원본 GLB(약 7유닛)와 스케일이 다르다. 따라서 원본 스케일에 기대지 않고,
+       JSON 핫스팟 전체가 차지하는 박스(=방 전체 범위)를 렌더된 모델의 월드 박스(wb)에
+       그대로 매핑해 slot 번호 마커를 배치한다. */
+    function buildMarkers(wb) {
+      // JSON 좌표계에서 핫스팟들이 차지하는 박스 (geometryBox + markerPosition)
+      const jb = new THREE.Box3(
+        new THREE.Vector3(Infinity, Infinity, Infinity),
+        new THREE.Vector3(-Infinity, -Infinity, -Infinity)
+      );
+      HOTSPOTS.forEach((h) => {
+        const g = h.geometryBox;
+        if (g && g.min && g.max) {
+          jb.min.min(new THREE.Vector3(g.min[0], g.min[1], g.min[2]));
+          jb.max.max(new THREE.Vector3(g.max[0], g.max[1], g.max[2]));
+        }
+        const mp = h.markerPosition;
+        if (Array.isArray(mp) && mp.length >= 3) {
+          jb.min.min(new THREE.Vector3(mp[0], mp[1], mp[2]));
+          jb.max.max(new THREE.Vector3(mp[0], mp[1], mp[2]));
+        }
+      });
+      const jSize = jb.getSize(new THREE.Vector3());
+      const wSize = wb.getSize(new THREE.Vector3());
+      // JSON 좌표 → 렌더 월드 좌표 (방 박스끼리 축별 매핑)
+      const toWorld = (p) => new THREE.Vector3(
+        wb.min.x + ((p[0] - jb.min.x) / (jSize.x || 1)) * wSize.x,
+        wb.min.y + ((p[1] - jb.min.y) / (jSize.y || 1)) * wSize.y,
+        wb.min.z + ((p[2] - jb.min.z) / (jSize.z || 1)) * wSize.z
+      );
+
+      HOTSPOTS.forEach((h) => {
+        const num = h.slot;
+        const mp = h.markerPosition;
+        if (!Array.isArray(mp) || mp.length < 3) return;
+        const worldPos = toWorld(mp);
+
+        const mat = new THREE.SpriteMaterial({
+          map: makeSpriteTex(num, false),
+          depthTest: false, depthWrite: false, transparent: true, sizeAttenuation: false,
+        });
+        const sprite = new THREE.Sprite(mat);
+        sprite.scale.set(0.055, 0.055, 1);
+        sprite.position.copy(worldPos);
+        sprite.renderOrder = 999;
+        sprite.userData.idx = objects.length;
+        scene.add(sprite);
+        sprites.push(sprite);
+        objects.push({ num, center: worldPos.clone(), sprite, name: h.title || `사물 ${num}`, hotspot: h });
+      });
+      console.log(`[Room03] 마커 ${objects.length}개 배치`);
+      console.table(objects.map((o) => ({ slot: o.num, name: o.name })));
+    }
+
+    /* ── 번호 텍스처 ── */
+    function makeSpriteTex(num, active) {
+      const S = 128, cv = document.createElement("canvas");
+      cv.width = cv.height = S;
+      const ctx = cv.getContext("2d");
+      ctx.beginPath(); ctx.arc(S/2, S/2, S/2 - 5, 0, Math.PI*2);
+      ctx.fillStyle   = active ? "rgba(139,199,176,0.95)" : "rgba(12,14,13,0.9)";
+      ctx.fill();
+      ctx.strokeStyle = active ? "#ffffff" : "#8bc7b0";
+      ctx.lineWidth = 7; ctx.stroke();
+      ctx.fillStyle = active ? "#0b0e0d" : "#8bc7b0";
+      ctx.font = `bold ${num > 9 ? 46 : 56}px sans-serif`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(String(num), S/2, S/2 + 3);
+      return new THREE.CanvasTexture(cv);
+    }
+
+    function setSprite(idx, active) {
+      const o = objects[idx]; if (!o) return;
+      o.sprite.material.map.dispose();
+      o.sprite.material.map = makeSpriteTex(o.num, active);
+      o.sprite.material.needsUpdate = true;
+    }
+
+    /* ── 번호 클릭 → 설명 카드 ── */
+    function openCard(idx) {
+      if (selIdx >= 0 && selIdx !== idx) setSprite(selIdx, false);
+      selIdx = idx;
+      setSprite(idx, true);
+      const o = objects[idx];
+      document.getElementById("cardNum").textContent  = o.num;
+      document.getElementById("cardName").textContent = o.name;
+      document.getElementById("cardDesc").textContent = "";   // 설명은 아직 공백
+      document.getElementById("card").classList.add("show");
+    }
+    function closeCard() {
+      if (selIdx >= 0) setSprite(selIdx, false);
+      selIdx = -1;
+      document.getElementById("card").classList.remove("show");
+    }
+
+    /* ── 카메라 (1인칭, 방 중앙) ── */
+    function resetCamera() {
+      camera.position.set(roomCenter.x, Math.max(roomCenter.y * 0.7, 1.6), roomCenter.z);
+      yaw = 0; pitch = 0; applyRot();
+    }
+    function applyRot() {
+      pitch = THREE.MathUtils.clamp(pitch, -Math.PI * 0.49, Math.PI * 0.49);
+      camera.rotation.set(pitch, yaw, 0);
+    }
+    function clampPlayer() {
+      const r = roomRadius;
+      camera.position.x = THREE.MathUtils.clamp(camera.position.x, roomCenter.x - r, roomCenter.x + r);
+      camera.position.z = THREE.MathUtils.clamp(camera.position.z, roomCenter.z - r, roomCenter.z + r);
+      camera.position.y = Math.max(roomCenter.y * 0.7, 1.6);
+    }
+
+    /* ── 이동 ── */
+    function updateMovement(dt) {
+      const dir = new THREE.Vector3();
+      const fwd = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
+      const rgt = new THREE.Vector3(Math.cos(yaw), 0,  Math.sin(yaw));
+      if (keys.has("KeyW")) dir.add(fwd);
+      if (keys.has("KeyS")) dir.sub(fwd);
+      if (keys.has("KeyD")) dir.add(rgt);
+      if (keys.has("KeyA")) dir.sub(rgt);
+      if (dir.lengthSq() > 0) {
+        dir.normalize();
+        const spd = (keys.has("ShiftLeft") || keys.has("ShiftRight")) ? 6 : 3.4;
+        camera.position.addScaledVector(dir, spd * dt);
+        clampPlayer();
+      }
+    }
+
+    /* ── 클릭 → 번호 선택 ── */
+    function onPointerUp(e) {
+      const wasDrag = didDrag;
+      lastPt = null; didDrag = false;
+      if (wasDrag) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+      pointer.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(sprites);
+      if (hits.length) openCard(hits[0].object.userData.idx);
+      else closeCard();
+    }
+
+    /* ── 렌더 루프 ── */
+    (function animate() {
+      const dt = Math.min(clock.getDelta(), 0.05);
+      updateMovement(dt);
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    })();
+
+    /* ── 이벤트 ── */
+    window.addEventListener("keydown", e => {
+      if (e.code.startsWith("Key") || e.code.startsWith("Shift")) keys.add(e.code);
+    });
+    window.addEventListener("keyup", e => keys.delete(e.code));
+
+    sceneRoot.addEventListener("pointerdown", e => {
+      didDrag = false; lastPt = { x: e.clientX, y: e.clientY };
+    });
+    sceneRoot.addEventListener("pointermove", e => {
+      if (!lastPt) return;
+      const dx = e.clientX - lastPt.x, dy = e.clientY - lastPt.y;
+      if (!didDrag && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) didDrag = true;
+      if (didDrag) {
+        yaw   += dx * 0.0016;
+        pitch += dy * 0.0014;
+        applyRot();
+        lastPt = { x: e.clientX, y: e.clientY };
+      }
+    });
+    sceneRoot.addEventListener("pointerup",    onPointerUp);
+    sceneRoot.addEventListener("pointerleave", () => { lastPt = null; didDrag = false; });
+
+    document.getElementById("btnReset").addEventListener("click", resetCamera);
+    document.getElementById("cardClose").addEventListener("click", closeCard);
+
+    window.addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    function hideLoading() {
+      const el = document.getElementById("loading");
+      el.classList.add("done");
+      setTimeout(() => el.remove(), 600);
+    }
+  </script>
+</body>
+</html>
