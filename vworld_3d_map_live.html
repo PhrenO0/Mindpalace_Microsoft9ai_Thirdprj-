@@ -1277,10 +1277,10 @@
       // (카메라 지상 위치 그대로. flyTo는 목표점 해석이 달라 시작은 직접 setView 사용)
       const GWANGHWAMUN = {
         lon: 126.97689,
-        lat: 37.5683,
-        height: 340,
+        lat: 37.5689,
+        height: 185,
         heading: 0,
-        pitch: -28,
+        pitch: -19,
       };
       // 시작 카메라를 정확히 그 위치/각도로 직접 배치(클램프 -25 안쪽, 공허 없음).
       function setInitialView() {
@@ -1747,7 +1747,7 @@
 
         // ── 3. 틸트 제한: 수평선 25° 이상 기울이지 못하도록 차단 (maxPolarAngle ≈ 65°) ──
         // Cesium pitch 0=수평, -π/2=수직하강. -25° 이상(더 수평)이 되면 클리핑 너머 공허가 보임
-        const MAX_PITCH = -((25 * Math.PI) / 180);
+        const MAX_PITCH = -((5 * Math.PI) / 180);   // 틸트 제한 완화(거의 수평까지 허용) — 공허 보일 수 있음
 
         viewer.camera.moveEnd.addEventListener(() => {
           const pos = viewer.camera.positionCartographic;
