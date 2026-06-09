@@ -346,15 +346,35 @@
         0% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
         100% { transform: translate(-50%, -50%) scale(3.4); opacity: 0; }
       }
-      /* 현위치 화살표(헤딩 방향) */
-      .mini-arrow-i {
+      /* 현위치 화살표 — 미니맵 정중앙 고정, 크고 잘 보이게(글로우) */
+      .mini-arrow-fixed {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 600;
+        pointer-events: none;
         width: 0;
         height: 0;
-        border-left: 6px solid transparent;
-        border-right: 6px solid transparent;
-        border-bottom: 14px solid #dcc079;
-        filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
-        transform-origin: 50% 64%;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
+        border-bottom: 22px solid #ffd966;
+        transform: translate(-50%, -50%);
+        transform-origin: 50% 62%;
+        filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 4px rgba(0, 0, 0, 0.9))
+          drop-shadow(0 0 8px rgba(255, 217, 102, 0.75));
+      }
+      /* 중앙 위치 강조 점(화살표 뒤) */
+      .mini-arrow-fixed::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 78%;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #ffd966;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 6px #ffd966;
       }
 
       .building-layer {
@@ -1247,13 +1267,13 @@
 
     <script>
       const STORAGE_KEY = "VWORLD_API_KEY";
-      // 첫 화면 — 세종대로 남쪽 입구에서 북향, 양옆 빌딩이 크게 보이는 몰입 위치.
+      // 첫 화면 — 세종대로 입구에서 북향, 빌딩 사이로 몰입(pitch는 클램프 -25에 맞춤).
       const GWANGHWAMUN = {
         lon: 126.97689,
-        lat: 37.56980,
-        height: 360,
+        lat: 37.57000,
+        height: 340,
         heading: 0,
-        pitch: -20,
+        pitch: -25,
       };
 
       const PALACE_ANCHORS = [
@@ -2069,38 +2089,27 @@
             interactive: false, keyboard: false,
           }).addTo(miniMap);
         });
-        miniMarker = L.marker([37.575, 126.977], {
-          icon: L.divIcon({
-            className: "mini-arrow",
-            html: '<div class="mini-arrow-i"></div>',
-            iconSize: [16, 16], iconAnchor: [8, 9],
-          }),
-          interactive: false, keyboard: false,
-        }).addTo(miniMap);
-        // 루트 전체가 늘 보이게 고정 오버뷰(5핀 항상 표시) + 시작 위치 여유
-        setTimeout(() => {
-          if (!miniMap) return;
-          miniMap.invalidateSize();
-          const bounds = L.latLngBounds(PALACE_BUILDINGS.map((b) => [b.lat, b.lon]));
-          miniMap.fitBounds(bounds.pad(0.7));
-        }, 100);
+        // 화살표는 Leaflet 마커가 아니라 컨테이너 중앙에 고정한 오버레이(항상 가운데).
+        const arrow = document.createElement("div");
+        arrow.className = "mini-arrow-fixed";
+        arrow.id = "miniArrow";
+        qs("minimap").appendChild(arrow);
+        setTimeout(() => miniMap && miniMap.invalidateSize(), 100);
       }
-      // 미니맵은 고정(루트 오버뷰), 내 화살표만 실시간으로 이동/회전.
+      // GPS형: 화살표는 항상 중앙 고정, 지도가 내 위치를 따라 움직인다(setView).
       function updateMinimap() {
         if (!miniMap) initMinimap();
-        if (!miniMap || !miniMarker) return;
+        if (!miniMap) return;
         try {
           const viewer = getVWorldViewer();
           if (viewer && viewer.camera && viewer.camera.positionCartographic) {
             const c = viewer.camera.positionCartographic;
-            miniMarker.setLatLng([
-              (c.latitude * 180) / Math.PI, // 라디안→도(engine 미접근 → 수동 변환)
-              (c.longitude * 180) / Math.PI,
-            ]);
-            const el = miniMarker.getElement();
-            const inner = el && el.querySelector(".mini-arrow-i");
-            if (inner)
-              inner.style.transform = `rotate(${((viewer.camera.heading || 0) * 180) / Math.PI}deg)`;
+            const lat = (c.latitude * 180) / Math.PI;   // 라디안→도
+            const lon = (c.longitude * 180) / Math.PI;
+            miniMap.setView([lat, lon], miniMap.getZoom(), { animate: false });
+            const arrow = qs("miniArrow");
+            if (arrow)
+              arrow.style.transform = `translate(-50%, -50%) rotate(${((viewer.camera.heading || 0) * 180) / Math.PI}deg)`;
           }
         } catch (e) {}
       }
