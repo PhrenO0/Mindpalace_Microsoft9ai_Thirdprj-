@@ -1277,10 +1277,10 @@
       // (카메라 지상 위치 그대로. flyTo는 목표점 해석이 달라 시작은 직접 setView 사용)
       const GWANGHWAMUN = {
         lon: 126.97689,
-        lat: 37.5709,
-        height: 285,
+        lat: 37.5683,
+        height: 340,
         heading: 0,
-        pitch: -33,
+        pitch: -28,
       };
       // 시작 카메라를 정확히 그 위치/각도로 직접 배치(클램프 -25 안쪽, 공허 없음).
       function setInitialView() {
@@ -2103,7 +2103,7 @@
         if (key) {
           L.tileLayer(
             `https://api.vworld.kr/req/wmts/1.0.0/${key}/Base/{z}/{y}/{x}.png`,
-            { minZoom: 12, maxZoom: 19 },
+            { minZoom: 12, maxZoom: 19, opacity: 0.45 }, // 타일 흐리게 → 텍스트·도로 덜 보이고 핀만 또렷
           ).addTo(miniMap);
         }
         PALACE_BUILDINGS.forEach((b, i) => {
