@@ -318,6 +318,34 @@
         text-shadow: 0 1px 3px #000;
         pointer-events: none;
       }
+      /* 5개 루트 포인트 — 반짝(펄스) */
+      .mini-pin-dot {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--c);
+        border: 1.5px solid #0c0f0d;
+        box-shadow: 0 0 5px var(--c);
+        z-index: 2;
+      }
+      .mini-pin-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--c);
+        animation: miniPulse 1.7s ease-out infinite;
+      }
+      @keyframes miniPulse {
+        0% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
+        100% { transform: translate(-50%, -50%) scale(3.4); opacity: 0; }
+      }
       /* 현위치 화살표(헤딩 방향) */
       .mini-arrow-i {
         width: 0;
@@ -1222,10 +1250,10 @@
       // 첫 화면 오버뷰 — 건물 가까이 앞으로 당겨, 남쪽·상공에서 비스듬히 내려다봄.
       const GWANGHWAMUN = {
         lon: 126.97689,
-        lat: 37.57015,
-        height: 690,
+        lat: 37.57110,
+        height: 640,
         heading: 0,
-        pitch: -32,
+        pitch: -33,
       };
 
       const PALACE_ANCHORS = [
@@ -2030,8 +2058,15 @@
         }
         PALACE_BUILDINGS.forEach((b, i) => {
           const color = (PALACE_ANCHORS[i] && PALACE_ANCHORS[i].color) || "#a9d8c8";
-          L.circleMarker([b.lat, b.lon], {
-            radius: 4, color: "#0c0f0d", weight: 1.5, fillColor: color, fillOpacity: 0.95,
+          L.marker([b.lat, b.lon], {
+            icon: L.divIcon({
+              className: "mini-pin",
+              html:
+                `<span class="mini-pin-ring" style="--c:${color};animation-delay:${(i * 0.28).toFixed(2)}s"></span>` +
+                `<span class="mini-pin-dot" style="--c:${color}"></span>`,
+              iconSize: [12, 12], iconAnchor: [6, 6],
+            }),
+            interactive: false, keyboard: false,
           }).addTo(miniMap);
         });
         miniMarker = L.marker([37.575, 126.977], {
@@ -2091,6 +2126,7 @@
             }
           }
         } catch (e) {}
+        updateMinimap(); // 매 프레임 미니맵을 카메라 현위치에 동기(드래그·WASD·비행 모두)
         requestAnimationFrame(wasdTick);
       }
       requestAnimationFrame(wasdTick);
