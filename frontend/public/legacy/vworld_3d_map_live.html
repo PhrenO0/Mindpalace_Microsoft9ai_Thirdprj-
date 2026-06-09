@@ -175,14 +175,16 @@
         -webkit-backdrop-filter: blur(8px);
       }
 
-      /* 상단 루트바 = 색깔 도트 가로 연결(아이콘만, 현재 위치 강조) */
+      /* 루트 도트 = 색깔 동그라미 가로 연결. 하단 우측(미니맵 위)에 작게. */
       .route-rail {
         position: absolute;
-        left: 50%;
-        top: 14px;
+        left: auto;
+        right: 14px;
+        top: auto;
+        bottom: 196px;
         width: auto;
-        transform: translateX(-50%);
-        padding: 9px 18px;
+        transform: none;
+        padding: 6px 12px;
       }
 
       .route-head {
@@ -225,8 +227,8 @@
       .anchor-tabs::before {
         content: "";
         position: absolute;
-        left: 16px;
-        right: 16px;
+        left: 11px;
+        right: 11px;
         top: 50%;
         height: 2px;
         transform: translateY(-50%);
@@ -237,18 +239,18 @@
       .anchor-tab {
         position: relative;
         z-index: 1;
-        width: 26px;
-        height: 26px;
+        width: 19px;
+        height: 19px;
         min-height: 0;
         padding: 0;
-        margin: 0 9px;
+        margin: 0 6px;
         border-radius: 50%;
         display: grid;
         place-items: center;
         background: rgba(8, 12, 11, 0.92);
         border: 2px solid color-mix(in srgb, var(--accent) 55%, #2a302d);
         color: var(--muted);
-        font-size: 11px;
+        font-size: 9px;
         font-weight: 900;
       }
       .anchor-num {
@@ -285,12 +287,12 @@
       }
 
       .anchor-tab.active {
-        width: 32px;
-        height: 32px;
+        width: 23px;
+        height: 23px;
         background: var(--accent);
         border-color: var(--accent);
         color: #08120f;
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
       }
       .anchor-tab.visited {
         border-color: color-mix(in srgb, var(--accent) 80%, transparent);
@@ -813,15 +815,20 @@
 
       .status {
         position: absolute;
-        left: 20px;
-        bottom: 18px;
-        max-width: 360px;
-        padding: 9px 12px;
+        left: 14px;
+        top: 14px;
+        bottom: auto;
+        max-width: 320px;
+        padding: 8px 12px;
         color: var(--muted);
-        font-size: 12px;
+        font-size: 11.5px;
         line-height: 1.45;
         pointer-events: none;
         z-index: 4;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        backdrop-filter: blur(8px);
       }
 
       #mapLoader {
@@ -1186,12 +1193,13 @@
 
     <script>
       const STORAGE_KEY = "VWORLD_API_KEY";
+      // 첫 화면 오버뷰 — 5개 한옥(남↔북 약 830m)을 남쪽·상공에서 비스듬히 내려다봄.
       const GWANGHWAMUN = {
-        lon: 126.97691,
-        lat: 37.57525,
-        height: 620,
+        lon: 126.97689,
+        lat: 37.56930,
+        height: 780,
         heading: 0,
-        pitch: -30,
+        pitch: -31,
       };
 
       const PALACE_ANCHORS = [
@@ -1512,7 +1520,7 @@
 
       function startMap() {
         setStatus("광화문 3D 지도를 생성하는 중...");
-        const initCam = PALACE_ANCHORS[0].camera;
+        const initCam = GWANGHWAMUN;   // 시작 = 전체 오버뷰
         const initPosition = new vw.CameraPosition(
           new vw.CoordZ(initCam.lon, initCam.lat, initCam.height),
           new vw.Direction(initCam.heading, initCam.pitch, 0),
@@ -1539,7 +1547,7 @@
           showBuildingLayers(true, false);
           applyPerformanceMode(true, false);
           applyClippingPlanes();
-          flyToAnchor(0);
+          activeIndex = 0; renderUi(); flyTo(GWANGHWAMUN);   // 시작은 오버뷰(전체 조망), 이후 다음/도트로 줌인
           const viewer = getVWorldViewer();
           if (viewer && viewer.scene && viewer.scene.postRender) {
             viewer.scene.postRender.addEventListener(syncBuildingPositions);
@@ -1872,6 +1880,7 @@
         if (!layer) return;
         const rect = qs("vmap").getBoundingClientRect();
         if (!rect.width || !rect.height) return;
+        drawMinimap();   // 실시간 미니맵(카메라 위치/방향 동기)
 
         // 매 프레임 카메라 위치로 가장 가까운 앵커를 계산
         // navLocked(programmatic 이동 중)이면 activeIndex 그대로 사용
@@ -1968,15 +1977,30 @@
         drawMinimap();
       }
 
-      // 우하단 미니맵 — 상공에서 본 한옥들의 위치/경로/현재 위치(북쪽 위). 최소 정보만.
+      // 우하단 미니맵 — 상공뷰. 한옥 위치/경로 + "내 카메라 현위치·바라보는 방향"(실시간, 북=위).
       function drawMinimap() {
         const cv = qs("minimap");
         if (!cv) return;
         const g = cv.getContext("2d");
-        const W = cv.width, H = cv.height, pad = 24;
+        const W = cv.width, H = cv.height, pad = 22;
         g.clearRect(0, 0, W, H);
+        // 실시간 카메라 지상 위치/방향
+        let cam = null;
+        try {
+          const viewer = getVWorldViewer();
+          if (viewer && viewer.camera && viewer.camera.positionCartographic) {
+            const c = viewer.camera.positionCartographic;
+            cam = {
+              lon: engine.Math.toDegrees(c.longitude),
+              lat: engine.Math.toDegrees(c.latitude),
+              heading: viewer.camera.heading || 0,
+            };
+          }
+        } catch (e) {}
+        // 경계(건물 + 카메라 포함) — 카메라가 밖이어도 보이게
         const lons = PALACE_BUILDINGS.map((b) => b.lon);
         const lats = PALACE_BUILDINGS.map((b) => b.lat);
+        if (cam) { lons.push(cam.lon); lats.push(cam.lat); }
         const minLon = Math.min(...lons), maxLon = Math.max(...lons);
         const minLat = Math.min(...lats), maxLat = Math.max(...lats);
         const spanLon = Math.max(maxLon - minLon, 1e-4);
@@ -1985,11 +2009,10 @@
           x: pad + ((lon - minLon) / spanLon) * (W - 2 * pad),
           y: pad + (1 - (lat - minLat) / spanLat) * (H - 2 * pad), // 북=위
         });
-        // 북 표시
         g.fillStyle = "rgba(244,241,234,0.5)";
         g.font = "9px 'Malgun Gothic',sans-serif";
         g.textAlign = "center";
-        g.fillText("N ↑", W / 2, 14);
+        g.fillText("N ↑", W / 2, 13);
         // 경로 선
         g.strokeStyle = "rgba(195,229,220,0.22)";
         g.lineWidth = 2;
@@ -1999,23 +2022,30 @@
           i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y);
         });
         g.stroke();
-        // 건물 점(현재 강조)
+        // 건물 점(현재 단계 강조)
         PALACE_BUILDINGS.forEach((b, i) => {
           const p = proj(b.lon, b.lat);
-          const cur = i === activeIndex;
+          const sel = i === activeIndex;
           const color = (PALACE_ANCHORS[i] && PALACE_ANCHORS[i].color) || "#a9d8c8";
-          if (cur) {
-            g.strokeStyle = color;
-            g.lineWidth = 2.5;
-            g.beginPath();
-            g.arc(p.x, p.y, 11, 0, 7);
-            g.stroke();
-          }
           g.beginPath();
-          g.arc(p.x, p.y, cur ? 6.5 : 4, 0, 7);
-          g.fillStyle = cur ? color : "rgba(255,255,255,0.5)";
+          g.arc(p.x, p.y, sel ? 5 : 3.5, 0, 7);
+          g.fillStyle = sel ? color : "rgba(255,255,255,0.5)";
           g.fill();
         });
+        // 내 카메라(현위치) — 골드 화살표가 바라보는 방향을 가리킴
+        if (cam) {
+          const p = proj(cam.lon, cam.lat);
+          g.fillStyle = "rgba(220,192,121,0.22)";
+          g.beginPath(); g.arc(p.x, p.y, 10, 0, 7); g.fill();
+          g.save();
+          g.translate(p.x, p.y);
+          g.rotate(cam.heading); // Cesium heading: 북=0, 시계방향 → 캔버스 회전과 일치
+          g.fillStyle = "#dcc079";
+          g.beginPath();
+          g.moveTo(0, -8); g.lineTo(5, 5); g.lineTo(0, 2); g.lineTo(-5, 5);
+          g.closePath(); g.fill();
+          g.restore();
+        }
       }
 
       function initBuildings() {
@@ -2233,8 +2263,8 @@
                 distanceDisplayCondition: new engine.DistanceDisplayCondition(0, 1500),
               },
             });
-            // 3번(대표 방, featured)만 클릭 시 입장. 1·2·4·5번은 배치만 하고 이동 없음.
-            if (building.featured) entityToPage.set(entity, building.page);
+            // 모든 한옥 클릭 시 해당 페이지로 입장(2번 dining·3번 loft 포함).
+            entityToPage.set(entity, building.page);
 
             const overlay = document.querySelector(
               `[data-building-id="${building.id}"]`,
