@@ -171,13 +171,10 @@
       .route-rail {
         display: none; /* 상단 레일은 숨김(routeCount/Summary만 JS용으로 유지) */
       }
+      /* 도트 줄(1~10)을 absolute 대신 정상 흐름에 두고 버튼과 같은 줄(.dock-right)에 묶음 */
       .entry-dock .anchor-tabs {
-        position: absolute;
-        top: 9px;
-        right: 14px;
-      }
-      .entry-dock {
-        padding-top: 80px; /* 도트 줄과 이전/다음 버튼이 겹치지 않게 충분히 띄움 */
+        position: static;
+        margin: 0;
       }
 
       .route-title {
@@ -214,15 +211,7 @@
         position: relative;
       }
       .anchor-tabs::before {
-        content: "";
-        position: absolute;
-        left: 11px;
-        right: 11px;
-        top: 50%;
-        height: 2px;
-        transform: translateY(-50%);
-        background: rgba(195, 229, 220, 0.2);
-        z-index: 0;
+        display: none; /* 도트 연결 가로줄 제거 */
       }
 
       .anchor-tab {
@@ -856,12 +845,23 @@
         bottom: 18px;
         width: min(760px, calc(100vw - 40px));
         transform: translateX(-50%);
-        padding: 14px;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px;
-        align-items: end;
+        padding: 8px 14px;
+        display: flex;
+        align-items: flex-end;
+        gap: 18px;
         z-index: 4;
+      }
+      .dock-text {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      /* 도트(1~10)를 버튼 바로 위에 얹음(오른쪽 그룹: 위=도트, 아래=버튼) */
+      .dock-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 5px;
+        flex: 0 0 auto;
       }
 
       .question {
@@ -1200,8 +1200,8 @@
           <div class="perf-row">
             <span>VWorld 건물 레이어</span>
             <button
-              class="switch active"
-              id="buildingToggle"
+              class="switch"
+              id="landmarkOnlyToggle"
               type="button"
               aria-label="VWorld 건물 레이어"
             ></button>
@@ -1220,21 +1220,23 @@
       </aside>
 
       <section class="entry-dock" aria-label="건물 입장">
-        <div class="anchor-tabs" id="anchorTabs"></div>
-        <div>
+        <div class="dock-text">
           <div class="question" id="entryQuestion">현재 건물로 들어갈 준비</div>
           <p id="spatialCue">
             건물을 클릭하거나 입장 버튼을 누르면 개별 HTML 페이지로 이동합니다.
             지금 단계에서는 외관까지만 렌더링합니다.
           </p>
         </div>
-        <div class="dock-actions">
-          <button id="dockPrevBtn" type="button">이전</button>
-          <button id="dockNextBtn" type="button">다음</button>
-          <button id="dockFocusBtn" type="button">중심 이동</button>
-          <button id="dockEnterBtn" class="primary-button" type="button">
-            건물 입장
-          </button>
+        <div class="dock-right">
+          <div class="anchor-tabs" id="anchorTabs"></div>
+          <div class="dock-actions">
+            <button id="dockPrevBtn" type="button">이전</button>
+            <button id="dockNextBtn" type="button">다음</button>
+            <button id="dockFocusBtn" type="button">중심 이동</button>
+            <button id="dockEnterBtn" class="primary-button" type="button">
+              건물 입장
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1487,7 +1489,6 @@
 
       let map = null;
       let activeIndex = 0;
-      let buildingVisible = true;
       let focusMode = true;
       let performanceMode = true;
       let labelsHidden = false;
@@ -1622,7 +1623,6 @@
           "VWorld 3D 지도 로드 완료. 실제 위경도 기반 외관 건물 overlay를 준비합니다.",
         );
         window.setTimeout(() => {
-          showBuildingLayers(true, false);
           applyPerformanceMode(true, false);
           applyClippingPlanes();
           activeIndex = 0; renderUi(); setInitialView();   // 교보 앞에서 세종대로 북향 몰입(직접 setView)
@@ -1668,14 +1668,14 @@
         // 빌딩 3D 타일셋: 서울 영역 클리핑 + LOD 임계.
         //  maximumScreenSpaceError 가 작을수록 더 높은 고도/먼 거리에서도 건물이 렌더됨(대신 부하↑).
         //  (건물을 더 높은 곳에서도 보이게 64→24로 낮춤. 더 멀리서 보려면 더 낮추고, 더 빠르게는 키움)
-        const LOW_QUALITY_SSE = 24;
+        const LOW_QUALITY_SSE = 32;
         const lowerTilesetQuality = (p) => {
           try {
             p.maximumScreenSpaceError = LOW_QUALITY_SSE;
             p.dynamicScreenSpaceError = false; // 거리별 화질 완화 끔 → 먼/높은 곳 건물도 렌더
             p.clippingPlanes = makeSeoulPlanes(); // 서울 밖 건물 컷(타일셋마다 별도 생성)
             // ── 접근 시 디테일이 빨리 뜨도록 타일 스트리밍 최적화 ──
-            p.cullRequestsWhileMoving = false; // ★ 이동 중에도 타일 로드(멈춰야만 뜨던 문제 해결)
+            p.cullRequestsWhileMoving = true; // 이동 중 타일 요청을 줄여 이동을 매끄럽게(멈추면 디테일 채움)
             p.preferLeaves = true;          // 상세(잎) 타일 우선 로드 → 디테일 빨리 표시
             p.skipLevelOfDetail = true;     // 중간 LOD 건너뛰고 목표 디테일로 바로 점프
             p.baseScreenSpaceError = 1024;
@@ -1703,14 +1703,16 @@
         try {
           viewer.scene.primitives.primitiveAdded.addEventListener((p) => {
             if (p instanceof engine.Cesium3DTileset) lowerTilesetQuality(p);
+            // 건물 끄기 모드면 새로 추가되는 건물 Primitive도 숨김
+            if (landmarkOnly && isBuildingPrimitive(p)) { try { p.show = false; } catch {} }
           });
         } catch {}
 
         // 글로브(지형·위성): 클리핑 없이 화질만 낮춰 가속
         viewer.scene.globe.backFaceCulling = true;
         viewer.scene.globe.showSkirts = false;
-        viewer.scene.globe.maximumScreenSpaceError = 8; // 지형 화질↓(기본 2)로 추가 가속
-        try { viewer.resolutionScale = 1.0; } catch {}    // 네이티브 해상도(라벨/글자 선명하게)
+        viewer.scene.globe.maximumScreenSpaceError = 12; // 지형 화질↓(기본 2)로 추가 가속
+        try { viewer.resolutionScale = 0.9; } catch {}    // 렌더 해상도 약간↓(픽셀 수 ~19%↓ → FPS↑, 라벨은 거의 유지)
         try { viewer.scene.fog.enabled = true; viewer.scene.fog.density = 0.0006; } catch {} // 원경 안개로 먼 타일 부하↓
         try { viewer.scene.postProcessStages.fxaa.enabled = false; } catch {} // 안티에일리어싱 끔(속도↑)
 
@@ -1861,30 +1863,87 @@
         }
       }
 
-      function showBuildingLayers(visible, announce = true) {
-        buildingVisible = visible;
-        qs("buildingToggle").classList.toggle("active", buildingVisible);
-        if (!map || !map.getLayerElement) {
-          if (announce)
-            setStatus("VWorld 건물 레이어 제어는 지도 로드 후 적용됩니다.");
-          return;
-        }
-        const names = ["facility_build", "facility_build_world"];
-        const changed = [];
-        names.forEach((name) => {
-          try {
-            const layer = map.getLayerElement(name);
-            if (layer && layer.show && layer.hide) {
-              visible ? layer.show() : layer.hide();
-              changed.push(name);
+      // ── "랜드마크만" 토글: 무거운 3D 건물(VWorld batch Primitive)을 통째로 끔 ──
+      // VWorld 건물은 타일셋이 아니라 geometryInstances를 가진 Primitive(난독화 클래스 Ja류)라
+      // 개별 건물 필터링은 불가능. 대신 건물 Primitive를 통째로 show=false 하여 랙을 크게 줄인다.
+      // (10개 랜드마크 빨간 핀/라벨은 entities/billboard라 그대로 남는다)
+      let landmarkOnly = false;
+      let _buildingHideHookInstalled = false;
+
+      // 건물 Primitive 판별: geometryInstances + appearance + 인스턴스 배열을 가진 배치 Primitive
+      function isBuildingPrimitive(p) {
+        return (
+          !!p &&
+          typeof p === "object" &&
+          "geometryInstances" in p &&
+          "appearance" in p &&
+          ("_numberOfInstances" in p || "_instanceIds" in p)
+        );
+      }
+
+      // 씬의 모든 건물 Primitive를 보이기/숨기기 + VWorld 공식 레이어 토글(이중 안전)
+      function setVWorldBuildingsVisible(visible) {
+        // 1) VWorld 공식 건물 레이어 on/off (지원되면 가장 깔끔)
+        try {
+          const m = window.vworldMap;
+          if (m && m.getLayerElement) {
+            ["facility_build", "facility_build_world"].forEach((n) => {
+              try {
+                const l = m.getLayerElement(n);
+                if (l) visible ? l.show && l.show() : l.hide && l.hide();
+              } catch {}
+            });
+          }
+        } catch {}
+        // 2) 씬의 건물 Primitive show 직접 토글(레이어 토글이 안 먹는 경우 대비)
+        let count = 0;
+        try {
+          const viewer = getVWorldViewer();
+          if (viewer && viewer.scene) {
+            const P = viewer.scene.primitives;
+            for (let i = 0; i < (P.length || 0); i++) {
+              let p; try { p = P.get(i); } catch { continue; }
+              if (isBuildingPrimitive(p)) { p.show = visible; count++; }
             }
-          } catch {}
-        });
+            if (viewer.scene.requestRender) viewer.scene.requestRender();
+          }
+        } catch {}
+        return count;
+      }
+
+      // 카메라 이동 시 VWorld가 건물 Primitive를 새로 추가해도 계속 숨김 유지
+      function installBuildingHideHook() {
+        if (_buildingHideHookInstalled) return;
+        const viewer = getVWorldViewer();
+        if (!viewer || !viewer.scene) return;
+        try {
+          viewer.scene.primitives.primitiveAdded.addEventListener((p) => {
+            if (landmarkOnly && isBuildingPrimitive(p)) { try { p.show = false; } catch {} }
+          });
+          // 백업: postRender마다 새 건물 Primitive가 보이면 숨김(landmarkOnly일 때만)
+          viewer.scene.postRender.addEventListener(() => {
+            if (!landmarkOnly) return;
+            const P = viewer.scene.primitives;
+            for (let i = 0; i < (P.length || 0); i++) {
+              let p; try { p = P.get(i); } catch { continue; }
+              if (isBuildingPrimitive(p) && p.show) p.show = false;
+            }
+          });
+          _buildingHideHookInstalled = true;
+        } catch {}
+      }
+
+      function applyLandmarkOnly(enabled, announce = true) {
+        landmarkOnly = enabled;
+        const btn = qs("landmarkOnlyToggle");
+        if (btn) btn.classList.toggle("active", enabled);
+        installBuildingHideHook();
+        const count = setVWorldBuildingsVisible(!enabled);
         if (announce) {
           setStatus(
-            changed.length
-              ? `VWorld 건물 레이어 ${visible ? "표시" : "숨김"}: ${changed.join(", ")}`
-              : "건물 레이어를 찾지 못했습니다. VWorld 원본 로드 상태를 확인하세요.",
+            enabled
+              ? `다른 3D 건물을 끄고 10개 랜드마크만 남깁니다. (건물 Primitive ${count}개 숨김)`
+              : "전체 3D 건물을 다시 표시합니다.",
           );
         }
       }
@@ -1994,9 +2053,11 @@
       function syncBuildingPositions() {
         const layer = qs("buildingLayer");
         if (!layer) return;
+        updateMinimap();   // 실시간 미니맵(카메라 위치/방향 동기)
+        // 건물 오버레이 레이어가 숨김이면 이후 무거운 작업(강제 레이아웃·좌표 투영·DOM)을 건너뜀
+        if (layer.style.display === "none" || layer.offsetParent === null) return;
         const rect = qs("vmap").getBoundingClientRect();
         if (!rect.width || !rect.height) return;
-        updateMinimap();   // 실시간 미니맵(카메라 위치/방향 동기)
 
         // 매 프레임 카메라 위치로 가장 가까운 앵커를 계산
         // navLocked(programmatic 이동 중)이면 activeIndex 그대로 사용
@@ -2139,9 +2200,14 @@
         setTimeout(() => miniMap && miniMap.invalidateSize(), 100);
       }
       // GPS형: 화살표는 항상 중앙 고정, 지도가 내 위치를 따라 움직인다(setView).
+      // ── 성능: Leaflet setView는 무거우므로 매 프레임이 아니라 ~15fps로 제한 ──
+      let _miniLastUpdate = 0;
       function updateMinimap() {
         if (!miniMap) initMinimap();
         if (!miniMap) return;
+        const _now = performance.now();
+        if (_now - _miniLastUpdate < 66) return; // 초당 약 15회로 throttle
+        _miniLastUpdate = _now;
         try {
           const viewer = getVWorldViewer();
           if (viewer && viewer.camera && viewer.camera.positionCartographic) {
@@ -2169,13 +2235,22 @@
       window.addEventListener("blur", () => { for (const k in keyMove) keyMove[k] = false; });
       window.addEventListener("mousedown", releaseLock);
       window.addEventListener("wheel", releaseLock, { passive: true });
+      // WASD 첫 입력부터 동작하도록 로드 직후/포인터 진입 시 창에 포커스를 잡는다
+      // (iframe 안에서 실행될 때 키보드 포커스가 없으면 keydown이 전달되지 않는 문제 방지)
+      const grabFocus = () => { try { window.focus(); } catch {} };
+      window.addEventListener("load", grabFocus);
+      window.addEventListener("pointerdown", grabFocus);
+      window.addEventListener("pointerenter", grabFocus);
+      grabFocus();
       function wasdTick() {
         try {
           // 초기 락: VWorld 정착에 안 밀리게 시작 카메라를 잠깐 강제 유지
           if (initLock > 0 && !userMoved) { setInitialView(); initLock--; }
-          const viewer = getVWorldViewer();
+          // 성능: WASD 키가 눌렸을 때만 무거운 행렬 연산/객체 할당 수행(idle 시 GC·CPU 절약)
+          const anyMoveKey = keyMove.w || keyMove.a || keyMove.s || keyMove.d;
+          const viewer = anyMoveKey ? getVWorldViewer() : null;
           const engine = window.Cesium;
-          if (viewer && viewer.camera && engine) {
+          if (anyMoveKey && viewer && viewer.camera && engine) {
             const cam = viewer.camera;
             const h = cam.positionCartographic ? cam.positionCartographic.height : 500;
             const step = Math.max(2.5, h * 0.014); // 고도 비례 속도
@@ -2321,8 +2396,8 @@
         qs("performanceToggle").addEventListener("click", () =>
           applyPerformanceMode(!performanceMode),
         );
-        qs("buildingToggle").addEventListener("click", () =>
-          showBuildingLayers(!buildingVisible),
+        qs("landmarkOnlyToggle").addEventListener("click", () =>
+          applyLandmarkOnly(!landmarkOnly),
         );
         window.addEventListener("wheel", (event) => {
           if (!event.ctrlKey) return;
@@ -2375,18 +2450,18 @@
           cam: { latOff: -0.0045, height: 260, pitch: -32 } },                 // 1: 더 남쪽(근정전 정면)
         { name: "광화문", lon: 126.9769, lat: 37.5759, h: 18, desc: "경복궁 정문이자 광화문광장의 상징." },
         { name: "청계광장", lon: 126.9788, lat: 37.5691, h: 5, desc: "청계천이 시작되는 도심 속 광장.",
-          cam: { lonOff: -0.0030, latOff: 0.0007, heading: 92, height: 220, pitch: -26 } }, // 3: 서→동
+          cam: { lonOff: -0.0030, latOff: 0.0000, heading: 92, height: 220, pitch: -26 } }, // 3: 서→동 (카메라 약간 남쪽으로)
         { name: "덕수궁", lon: 126.9751, lat: 37.5658, h: 18, desc: "대한제국 황궁. 근대 건축이 어우러진 궁궐." },
         { name: "숭례문", lon: 126.9753, lat: 37.5600, h: 30, desc: "국보 제1호, 한양도성의 남대문.",
           cam: { lonOff: -0.0029, latOff: -0.0020, heading: 50, height: 270, pitch: -25 } }, // 5: 살짝 북서로
         { name: "보신각", lon: 126.9836, lat: 37.5697, h: 15, desc: "종로 종각. 제야의 종 타종 장소.",
-          cam: { lonOff: -0.0022, latOff: 0.0010, heading: 135, height: 230, pitch: -34 } }, // 6: 살짝 남서로
+          cam: { lonOff: -0.0014, latOff: 0.0016, heading: 135, height: 230, pitch: -34 } }, // 6: 카메라 약간 북동쪽으로
         { name: "남산서울타워", lon: 126.9882, lat: 37.5512, h: 237, desc: "남산 정상의 전망 타워, 서울 랜드마크.",
           cam: { latOff: -0.0055, height: 550, pitch: -14 } },                 // 7: 낮은 고도·약간 남쪽에서 타워 전체
         { name: "창덕궁", lon: 126.9910, lat: 37.5794, h: 20, desc: "유네스코 세계유산, 자연과 어우러진 궁궐." },
         { name: "종묘", lon: 126.9942, lat: 37.5746, h: 16, desc: "조선 왕조 신주를 모신 유네스코 세계유산." },
         { name: "흥인지문", lon: 127.0094, lat: 37.5712, h: 25, desc: "보물, 한양도성의 동대문.",
-          cam: { lonOff: -0.0035, latOff: -0.0008, heading: 95, height: 260, pitch: -28 } }, // 10: 많이 서쪽에서 동향
+          cam: { lonOff: -0.0035, latOff: -0.0004, heading: 88, height: 260, pitch: -28 } }, // 10: 시야 동향 살짝 북쪽(heading 88)
       ];
 
       // 하단 번호 도트 색(원래 디자인 — 다양한 톤)
