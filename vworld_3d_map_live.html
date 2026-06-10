@@ -383,45 +383,6 @@
         height: 10px;
       }
 
-      /* 화면 밖(지나간) 건물 방향 아이콘 */
-      #offscreenIndicators {
-        position: absolute;
-        inset: 0;
-        z-index: 5;
-        pointer-events: none;
-      }
-      .osi {
-        position: absolute;
-        transform: translate(-50%, -50%);
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: rgba(8, 12, 11, 0.82);
-        border: 2px solid var(--c);
-        color: var(--c);
-        font-weight: 900;
-        font-size: 13px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        pointer-events: auto;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
-      }
-      .osi-num {
-        line-height: 1;
-      }
-      .osi-arrow {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 0;
-        height: 0;
-        border-left: 5px solid transparent;
-        border-right: 5px solid transparent;
-        border-bottom: 9px solid var(--c);
-      }
-
       .building-layer {
         position: absolute;
         inset: 0;
@@ -1289,26 +1250,6 @@
       <div class="status" id="status">VWorld 3D API 준비 중...</div>
     </main>
 
-    <section class="keyPanel" id="keyPanel">
-      <div class="keyCard">
-        <div class="kicker">API key required</div>
-        <h1>VWorld 인증키 입력</h1>
-        <p>
-          키는 브라우저 localStorage에만 저장됩니다. 서버 환경 변수에 키가
-          있으면 자동으로 불러옵니다.
-        </p>
-        <label for="apiKeyInput">VWorld API Key</label>
-        <input
-          id="apiKeyInput"
-          autocomplete="off"
-          placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-        />
-        <div class="controls">
-          <button id="saveKey" type="button">3D 지도 불러오기</button>
-          <button id="clearKey" type="button">저장 키 지우기</button>
-        </div>
-      </div>
-    </section>
 
     <script>
       const STORAGE_KEY = "VWORLD_API_KEY";
@@ -1316,10 +1257,10 @@
       // (카메라 지상 위치 그대로. flyTo는 목표점 해석이 달라 시작은 직접 setView 사용)
       const GWANGHWAMUN = {
         lon: 126.97689,
-        lat: 37.5682,
-        height: 225,
+        lat: 37.5689,
+        height: 185,
         heading: 0,
-        pitch: -20,
+        pitch: -19,
       };
       // 시작 카메라를 정확히 그 위치/각도로 직접 배치(클램프 -25 안쪽, 공허 없음).
       function setInitialView() {
@@ -1494,8 +1435,8 @@
           id: "room-02",
           anchorId: "yi-sunsin",
           title: "이순신 동상 — dining 방(이름표)",
-          // 오늘 만든 방: dining/kitchen(이름표 있는 GLB → 노드명 스캔 + 1인칭 워크스루). fork 자체 정적 자산(legacy/).
-          page: "memory-walk.html?glb=public/assets/rooms/dining_kitchen_baked.glb&hotspots=public/data/dining-hotspots.json",
+          // dining/kitchen(이름표 있는 GLB → 노드명 스캔 + 1인칭 워크스루). GLB는 Azure Blob에서 로드.
+          page: "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/dining_kitchen_baked.glb&hotspots=public/data/dining-hotspots.json",
           variant: "steel",
           color: "#9db8d2",
           lon: 126.97684,
@@ -1506,8 +1447,8 @@
           id: "room-03",
           anchorId: "sejong-statue",
           title: "세종대왕 동상 — loft 방(스캔)",
-          // 오늘 만든 방: loft(라벨 없는 GLB → 시점계획 + 박스중심 스캔 + 1인칭 워크스루). fork 자체 정적 자산(legacy/).
-          page: "memory-walk.html?glb=public/assets/rooms/loft.glb&hotspots=public/data/loft-hotspots.json",
+          // loft(라벨 없는 GLB → 시점계획 + 박스중심 스캔 + 1인칭 워크스루). GLB는 Azure Blob에서 로드.
+          page: "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/loft.glb&hotspots=public/data/loft-hotspots.json",
           variant: "jade",
           color: "#a8d8c9",
           lon: 126.97683,
@@ -1545,6 +1486,8 @@
         minLat: Math.min(...PALACE_BUILDINGS.map((item) => item.lat)),
         maxLat: Math.max(...PALACE_BUILDINGS.map((item) => item.lat)),
       };
+
+      // (지도 전체 확장: 카메라 위치 경계 제한 clampCameraToBounds 제거됨)
 
       let map = null;
       let activeIndex = 0;
@@ -1627,25 +1570,23 @@
         }
       }
 
-      function showKeyPanel(message) {
-        qs("keyPanel").style.display = "grid";
-        setStatus(message || "VWorld 인증키가 필요합니다.");
+      // 키 입력 모달은 제거됨 — 키는 Azure 환경변수(/api/client-config)에서 주입.
+      // 키/로드 실패 시에는 입력창 대신 상태 메시지만 남긴다.
+      function reportKeyError(message) {
+        const msg = message || "VWorld 인증키를 불러오지 못했습니다. 서버 환경변수(VWORLD_API_KEY)를 확인하세요.";
+        console.error(msg);
+        setStatus(msg);
         hideMapLoader();
-      }
-
-      function hideKeyPanel() {
-        qs("keyPanel").style.display = "none";
       }
 
       async function boot() {
         renderUi();
         const apiKey = await getConfiguredKey();
         if (!apiKey) {
-          showKeyPanel();
+          reportKeyError();
           return;
         }
 
-        hideKeyPanel();
         setStatus("VWorld 3D API 확인 중...");
         try {
           if (!window.vw) {
@@ -1655,8 +1596,7 @@
           }
           startMap();
         } catch (err) {
-          console.error(err);
-          showKeyPanel(err.message || "VWorld 3D API 로드에 실패했습니다.");
+          reportKeyError(err.message || "VWorld 3D API 로드에 실패했습니다.");
         }
       }
 
@@ -1696,7 +1636,7 @@
             viewer.scene.postRender.addEventListener(syncBuildingPositions);
             postRenderHooked = true;
           }
-          loadGLBModel();
+          // loadGLBModel(); // [임시 비활성화] korean_gate 5개 배치 끔(다시 켜려면 주석 해제)
           window.setTimeout(hideMapLoader, 500);
         }, 1800);
       }
@@ -1709,46 +1649,41 @@
           return;
         }
 
-        const centerLon =
-          PALACE_BUILDINGS.reduce((s, b) => s + b.lon, 0) /
-          PALACE_BUILDINGS.length;
-        const centerLat =
-          PALACE_BUILDINGS.reduce((s, b) => s + b.lat, 0) /
-          PALACE_BUILDINGS.length;
-        const centerCartesian = engine.Cartesian3.fromDegrees(
-          centerLon,
-          centerLat,
-        );
-        const modelMatrix =
-          engine.Transforms.eastNorthUpToFixedFrame(centerCartesian);
-        const radius = 1000.0;
+        // ※ 지도 전체 확장: 기존 1km 반경 클리핑 제거 → VWorld 지도/타일을 전부 렌더링.
+        //   (성능을 위해 타일셋·지형 화질만 낮춰 유지)
 
-        const makePlanes = () =>
-          new engine.ClippingPlaneCollection({
-            planes: [
-              new engine.ClippingPlane(new engine.Cartesian3(1, 0, 0), radius),
-              new engine.ClippingPlane(new engine.Cartesian3(-1, 0, 0), radius),
-              new engine.ClippingPlane(new engine.Cartesian3(0, 1, 0), radius),
-              new engine.ClippingPlane(new engine.Cartesian3(0, -1, 0), radius),
-            ],
-            modelMatrix,
-            unionClippingRegions: true,
-          });
+        // 빌딩 등 3D 타일셋 화질 낮추기 → 렌더 속도 개선.
+        //  maximumScreenSpaceError 가 클수록 더 거친(저화질) LOD로 그려 GPU/네트워크 부담↓.
+        //  (기본 16 → 32. 더 빠르게: 48~64, 더 선명하게: 24 정도로 조절)
+        const LOW_QUALITY_SSE = 32;
+        const lowerTilesetQuality = (p) => {
+          try {
+            p.maximumScreenSpaceError = LOW_QUALITY_SSE;
+            p.dynamicScreenSpaceError = true; // 멀리 있는 타일은 더 거칠게(원경 가속)
+          } catch {}
+        };
 
-        // 타일셋 클리핑 (POI·맵 데이터)
+        // 타일셋(빌딩 등) 화질만 낮춤 (클리핑은 적용하지 않음 → 전체 표시)
         let tilesetCount = 0;
         for (let i = 0; i < viewer.scene.primitives.length; i++) {
           const p = viewer.scene.primitives.get(i);
           if (p instanceof engine.Cesium3DTileset) {
-            p.clippingPlanes = makePlanes();
+            lowerTilesetQuality(p);
             tilesetCount++;
           }
         }
 
-        // 글로브(지형·위성) 클리핑 — ClippingPlaneCollection은 객체 공유 불가라 별도 생성
-        viewer.scene.globe.clippingPlanes = makePlanes();
+        // 타일셋(빌딩)은 이후 비동기로 추가될 수 있으므로, 추가분도 저화질 적용
+        try {
+          viewer.scene.primitives.primitiveAdded.addEventListener((p) => {
+            if (p instanceof engine.Cesium3DTileset) lowerTilesetQuality(p);
+          });
+        } catch {}
+
+        // 글로브(지형·위성): 클리핑 없이 화질만 낮춰 가속
         viewer.scene.globe.backFaceCulling = true;
         viewer.scene.globe.showSkirts = false;
+        viewer.scene.globe.maximumScreenSpaceError = 4; // 지형 화질↓(기본 2)로 추가 가속
 
         applyCameraConstraints();
       }
@@ -1766,63 +1701,60 @@
           1.0,
         );
 
-        // ── 2. 카메라 이동·줌 제한 ────────────────────────────────────────────────
+        // ── 카메라 이동·줌 제한 ────────────────────────────────────────────────
         const ctrl = viewer.scene.screenSpaceCameraController;
-        ctrl.maximumZoomDistance = 750;
+        ctrl.maximumZoomDistance = 1500;
         ctrl.minimumZoomDistance = 60;
 
-        const centerLon =
-          PALACE_BUILDINGS.reduce((s, b) => s + b.lon, 0) /
-          PALACE_BUILDINGS.length;
-        const centerLat =
-          PALACE_BUILDINGS.reduce((s, b) => s + b.lat, 0) /
-          PALACE_BUILDINGS.length;
-        const bounds = {
-          minLon: engine.Math.toRadians(centerLon - 0.016),
-          maxLon: engine.Math.toRadians(centerLon + 0.016),
-          minLat: engine.Math.toRadians(centerLat - 0.012),
-          maxLat: engine.Math.toRadians(centerLat + 0.012),
-        };
+        const EV = engine.CameraEventType;
+        ctrl.lookEventTypes = [];               // 기본 free-look 끔(직접 구현으로 대체)
+        ctrl.rotateEventTypes = [];             // 왼쪽 드래그 orbit 제거
+        ctrl.translateEventTypes = [];          // 이동(상하좌우)은 WASD가 담당
+        ctrl.tiltEventTypes = [];               // 중클릭/틸트 제거
+        ctrl.zoomEventTypes = [EV.WHEEL, EV.PINCH]; // 오른쪽 드래그 줌 제거(휠/핀치만)
 
-        // ── 3. 틸트 제한: 수평선 25° 이상 기울이지 못하도록 차단 (maxPolarAngle ≈ 65°) ──
-        // Cesium pitch 0=수평, -π/2=수직하강. -25° 이상(더 수평)이 되면 클리핑 너머 공허가 보임
-        const MAX_PITCH = -((5 * Math.PI) / 180);   // 틸트 제한 완화(거의 수평까지 허용) — 공허 보일 수 있음
+        // 시야각(pitch) 한계: 위로는 수평 위 +30°까지(올려보기 가능), 아래로는 거의 수직(-88°)까지.
+        //  (위로 더 보고 싶으면 30을 키우면 됨. 단 너무 키우면 클리핑 너머 검은 공허가 보일 수 있음)
+        const MAX_PITCH = (30 * Math.PI) / 180;
+        const MIN_PITCH = -((88 * Math.PI) / 180);
 
+        // 왼쪽 드래그 = 시야 회전. 좌우=heading, 상하=pitch(위 한계까지). 카메라 위치는 안 바뀜.
+        //  (좌우가 반대로 느껴지면 dx 부호, 상하가 반대면 dy 부호를 뒤집으면 됨)
+        const SSE = engine.ScreenSpaceEventType;
+        const lookHandler = new engine.ScreenSpaceEventHandler(viewer.scene.canvas);
+        let lookDragging = false, lookLastX = 0, lookLastY = 0;
+        lookHandler.setInputAction((e) => {
+          lookDragging = true;
+          lookLastX = e.position.x;
+          lookLastY = e.position.y;
+        }, SSE.LEFT_DOWN);
+        lookHandler.setInputAction((e) => {
+          if (!lookDragging) return;
+          const dx = e.endPosition.x - lookLastX;
+          const dy = e.endPosition.y - lookLastY;
+          lookLastX = e.endPosition.x;
+          lookLastY = e.endPosition.y;
+          if (!dx && !dy) return;
+          const cam = viewer.camera;
+          const heading = cam.heading + dx * 0.0035;           // 좌우 회전
+          let pitch = cam.pitch - dy * 0.0035;                 // 상하 회전(드래그 위=올려봄)
+          pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, pitch));
+          cam.setView({ orientation: { heading, pitch, roll: 0 } });
+          requestRender();
+        }, SSE.MOUSE_MOVE);
+        lookHandler.setInputAction(() => { lookDragging = false; }, SSE.LEFT_UP);
+
+        // 위쪽 시야각 한계만 유지(조작 종료 시 안전망) — 위치 경계 제한은 제거(지도 전체 탐색)
         viewer.camera.moveEnd.addEventListener(() => {
-          const pos = viewer.camera.positionCartographic;
-          const lon = engine.Math.clamp(
-            pos.longitude,
-            bounds.minLon,
-            bounds.maxLon,
-          );
-          const lat = engine.Math.clamp(
-            pos.latitude,
-            bounds.minLat,
-            bounds.maxLat,
-          );
-          const h = engine.Math.clamp(
-            pos.height,
-            ctrl.minimumZoomDistance,
-            ctrl.maximumZoomDistance,
-          );
-          const pitch = Math.min(viewer.camera.pitch, MAX_PITCH);
-          const tol = 1e-8;
-          const moved =
-            Math.abs(lon - pos.longitude) > tol ||
-            Math.abs(lat - pos.latitude) > tol ||
-            Math.abs(h - pos.height) > tol;
-          const tilted = Math.abs(pitch - viewer.camera.pitch) > tol;
-          if (moved || tilted) {
+          if (viewer.camera.pitch > MAX_PITCH) {
             viewer.scene.camera.setView({
-              destination: engine.Cartesian3.fromRadians(lon, lat, h),
               orientation: {
                 heading: viewer.camera.heading,
-                pitch,
+                pitch: MAX_PITCH,
                 roll: viewer.camera.roll,
               },
             });
           }
-
         });
 
         viewer.camera.moveStart.addEventListener(requestRender);
@@ -2201,15 +2133,29 @@
           // 초기 락: VWorld 정착에 안 밀리게 시작 카메라를 잠깐 강제 유지
           if (initLock > 0 && !userMoved) { setInitialView(); initLock--; }
           const viewer = getVWorldViewer();
-          if (viewer && viewer.camera) {
+          const engine = window.Cesium;
+          if (viewer && viewer.camera && engine) {
             const cam = viewer.camera;
             const h = cam.positionCartographic ? cam.positionCartographic.height : 500;
             const step = Math.max(2.5, h * 0.014); // 고도 비례 속도
             let moved = false;
-            if (keyMove.w) { cam.moveForward(step); moved = true; }
-            if (keyMove.s) { cam.moveBackward(step); moved = true; }
-            if (keyMove.a) { cam.moveLeft(step); moved = true; }
-            if (keyMove.d) { cam.moveRight(step); moved = true; }
+            // 지면 평면 기준 수평 전/후·좌/우 벡터(나침반 heading 기준).
+            //  카메라가 아래로 기울어 있어도 고도는 그대로 유지 → "줌"이 아니라 순수 평면 이동.
+            const C3 = engine.Cartesian3;
+            const enu = engine.Transforms.eastNorthUpToFixedFrame(cam.positionWC);
+            const east = C3.fromCartesian4(engine.Matrix4.getColumn(enu, 0, new engine.Cartesian4()), new C3());
+            const north = C3.fromCartesian4(engine.Matrix4.getColumn(enu, 1, new engine.Cartesian4()), new C3());
+            const hd = cam.heading, sinH = Math.sin(hd), cosH = Math.cos(hd);
+            const fwd = C3.normalize(
+              C3.add(C3.multiplyByScalar(east, sinH, new C3()),
+                     C3.multiplyByScalar(north, cosH, new C3()), new C3()), new C3());
+            const right = C3.normalize(
+              C3.add(C3.multiplyByScalar(east, cosH, new C3()),
+                     C3.multiplyByScalar(north, -sinH, new C3()), new C3()), new C3());
+            if (keyMove.w) { cam.move(fwd, step); moved = true; }    // 앞으로(상)
+            if (keyMove.s) { cam.move(fwd, -step); moved = true; }   // 뒤로(하)
+            if (keyMove.a) { cam.move(right, -step); moved = true; } // 왼쪽(좌)
+            if (keyMove.d) { cam.move(right, step); moved = true; }  // 오른쪽(우)
             if (moved) {
               if (typeof syncBuildingPositions === "function") syncBuildingPositions();
               if (typeof requestRender === "function") requestRender();
@@ -2217,100 +2163,9 @@
           }
         } catch (e) {}
         updateMinimap(); // 매 프레임 미니맵을 카메라 현위치에 동기(드래그·WASD·비행 모두)
-        updateOffscreenIndicators(); // 화면 밖(지나간) 건물 방향 아이콘
         requestAnimationFrame(wasdTick);
       }
       requestAnimationFrame(wasdTick);
-
-      // ── 화면 밖 건물 방향 표시 — 지나간/안 보이는 한옥을 화면 가장자리(주로 하단)에 아이콘으로 ──
-      function ensureIndicators() {
-        let c = document.getElementById("offscreenIndicators");
-        if (!c) {
-          c = document.createElement("div");
-          c.id = "offscreenIndicators";
-          (document.querySelector(".palace-shell") || document.body).appendChild(c);
-        }
-        if (c.children.length === 0) {
-          PALACE_BUILDINGS.forEach((b, i) => {
-            const color = (PALACE_ANCHORS[i] && PALACE_ANCHORS[i].color) || "#a9d8c8";
-            const el = document.createElement("button");
-            el.className = "osi";
-            el.id = "osi-" + i;
-            el.type = "button";
-            el.style.setProperty("--c", color);
-            el.title = `${i + 1}. ${b.title} 방향`;
-            el.innerHTML = `<span class="osi-arrow"></span><span class="osi-num">${i + 1}</span>`;
-            el.style.display = "none";
-            el.addEventListener("click", () => { try { stopTour(false); } catch (e) {} flyToAnchor(i); });
-            c.appendChild(el);
-          });
-        }
-      }
-      function updateOffscreenIndicators() {
-        const viewer = getVWorldViewer();
-        const C = window.Cesium;
-        if (!viewer || !C || !viewer.scene || !viewer.camera) return;
-        ensureIndicators();
-        const cam = viewer.camera;
-        const W = window.innerWidth, H = window.innerHeight;
-        const cx = W / 2, cy = H / 2;
-        const ml = 42, mr = 42, mt = 70, mb = 130; // 가장자리 여백(하단 네비 위)
-        const scratch = new C.Cartesian3();
-        const items = [];
-        PALACE_BUILDINGS.forEach((b, i) => {
-          const el = document.getElementById("osi-" + i);
-          if (!el) return;
-          const world = C.Cartesian3.fromDegrees(b.lon, b.lat, 30);
-          const toB = C.Cartesian3.subtract(world, cam.positionWC, scratch);
-          const fwd = C.Cartesian3.dot(toB, cam.directionWC);
-          const right = C.Cartesian3.dot(toB, cam.rightWC);
-          const up = C.Cartesian3.dot(toB, cam.upWC);
-          const dist = C.Cartesian3.magnitude(toB) || 1;
-          let onScreen = false, px, py;
-          if (fwd > 1) {
-            const win = C.SceneTransforms.wgs84ToWindowCoordinates(viewer.scene, world);
-            if (win && Number.isFinite(win.x)) {
-              px = win.x; py = win.y;
-              onScreen = px >= 0 && px <= W && py >= 0 && py <= H;
-            }
-          }
-          if (onScreen) { el.style.display = "none"; return; }
-          let dirx, diry;
-          if (fwd > 1 && px !== undefined) {
-            dirx = px - cx; diry = py - cy;            // 앞쪽이지만 프레임 밖
-          } else {
-            dirx = right; diry = Math.abs(up) + dist * 0.6; // 뒤쪽(지나감) → 아래로 치우침
-          }
-          const ang = Math.atan2(diry, dirx);
-          const ex = Math.cos(ang), ey = Math.sin(ang);
-          let t = Infinity;
-          if (ex > 0) t = Math.min(t, (W - mr - cx) / ex);
-          else if (ex < 0) t = Math.min(t, (ml - cx) / ex);
-          if (ey > 0) t = Math.min(t, (H - mb - cy) / ey);
-          else if (ey < 0) t = Math.min(t, (mt - cy) / ey);
-          if (!Number.isFinite(t) || t < 0) t = 0;
-          items.push({ el, x: cx + ex * t, y: cy + ey * t, ang });
-        });
-        // 같은 가장자리에서 겹치는 아이콘을 가로로 펼침(최소 간격 40px)
-        const GAP = 40;
-        items.sort((a, b) => a.x - b.x);
-        for (let k = 1; k < items.length; k++) {
-          if (items[k].x - items[k - 1].x < GAP) items[k].x = items[k - 1].x + GAP;
-        }
-        // 오른쪽으로 밀려 화면을 넘으면 왼쪽으로 되감기
-        const maxX = W - mr;
-        for (let k = items.length - 1; k >= 0; k--) {
-          if (items[k].x > maxX) items[k].x = maxX - (items.length - 1 - k) * GAP;
-        }
-        items.forEach((it) => {
-          it.el.style.display = "flex";
-          it.el.style.left = it.x + "px";
-          it.el.style.top = it.y + "px";
-          const arrow = it.el.querySelector(".osi-arrow");
-          if (arrow)
-            arrow.style.transform = `translate(-50%, -50%) rotate(${it.ang + Math.PI / 2}rad) translateY(-21px)`;
-        });
-      }
 
       function initBuildings() {
         const layer = qs("buildingLayer");
@@ -2355,11 +2210,18 @@
         syncBuildingPositions();
       }
 
+      // [임시] room-02(dining)·room-03(loft) 입장은 당분간 막아둠. 다시 켜려면 이 배열을 비우면 됨.
+      const DISABLED_ROOMS = ["room-02", "room-03"];
+
       function openBuilding(index = activeIndex) {
         const building =
           PALACE_BUILDINGS[
             Math.max(0, Math.min(PALACE_BUILDINGS.length - 1, index))
           ];
+        if (DISABLED_ROOMS.includes(building.id)) {
+          setStatus(`${building.title}: 현재 입장 비활성화 상태입니다.`);
+          return; // 코드는 유지하되 실행만 막음(room2/room3 불러오기 임시 중지)
+        }
         location.href = building.page;
       }
 
@@ -2386,20 +2248,6 @@
       }
 
       function attachEvents() {
-        qs("saveKey").addEventListener("click", () => {
-          const value = qs("apiKeyInput").value.trim();
-          if (!value) {
-            setStatus("VWorld 인증키를 입력해 주세요.");
-            return;
-          }
-          localStorage.setItem(STORAGE_KEY, value);
-          location.reload();
-        });
-        qs("clearKey").addEventListener("click", () => {
-          localStorage.removeItem(STORAGE_KEY);
-          qs("apiKeyInput").value = "";
-          setStatus("저장된 VWorld 키를 지웠습니다.");
-        });
         qs("tourBtn").addEventListener("click", playTour);
         qs("stopTourBtn").addEventListener("click", () => stopTour(true));
         qs("prevBtn").addEventListener("click", () => {
@@ -2569,6 +2417,13 @@
           placeAll(null);
         }
       }
+
+      // 건물에서 history.back()으로 돌아오면 bfcache(뒤로가기 캐시)로 복원되며
+      // 지도/입력 상태가 멈춰 WASD·시야 조작이 안 먹는다 → 복원 시 새로고침해 완전 재초기화.
+      // (키는 localStorage에 있어 즉시 다시 로드됨. 일반 첫 로드는 persisted=false라 영향 없음)
+      window.addEventListener("pageshow", (e) => {
+        if (e.persisted) location.reload();
+      });
 
       initBuildings();
       attachEvents();
