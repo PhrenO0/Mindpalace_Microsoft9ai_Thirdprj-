@@ -72,11 +72,13 @@
 
       .scene-vignette {
         z-index: 2;
-        /* 아주 약한 비네팅 — 가장자리만 살짝 어둡게 해 중앙 집중(시야 방해 X) */
+        /* 서울 중심만 밝게, 주변부(서울 외곽)는 비네팅으로 강하게 어둡게 → 서울시 집중 */
         background: radial-gradient(
-          128% 122% at 50% 46%,
-          transparent 62%,
-          rgba(4, 6, 7, 0.26) 100%
+          82% 82% at 50% 47%,
+          transparent 28%,
+          rgba(4, 6, 7, 0.38) 60%,
+          rgba(4, 6, 7, 0.74) 83%,
+          rgba(4, 6, 7, 0.95) 100%
         );
       }
 
@@ -1255,14 +1257,16 @@
       const STORAGE_KEY = "VWORLD_API_KEY";
       // 첫 화면 — 교보빌딩 앞(북쪽)에서 세종대로 따라 북향, 광화문/경복궁 몰입.
       // (카메라 지상 위치 그대로. flyTo는 목표점 해석이 달라 시작은 직접 setView 사용)
+      // 시작 카메라 = 종로구 일대 상공 조망(경복궁·광화문·창덕궁·종묘·보신각·청계광장 등 한눈에).
+      //  (위치/각도/높이만 바꾸면 시작 뷰 조절 가능. height는 maximumZoomDistance 이내)
       const GWANGHWAMUN = {
-        lon: 126.97689,
-        lat: 37.5689,
-        height: 185,
+        lon: 126.9885,
+        lat: 37.5575,
+        height: 1980,
         heading: 0,
-        pitch: -19,
+        pitch: -35,
       };
-      // 시작 카메라를 정확히 그 위치/각도로 직접 배치(클램프 -25 안쪽, 공허 없음).
+      // 시작 카메라를 정확히 그 위치/각도로 직접 배치.
       function setInitialView() {
         try {
           const v = getVWorldViewer();
@@ -1637,6 +1641,7 @@
             postRenderHooked = true;
           }
           // loadGLBModel(); // [임시 비활성화] korean_gate 5개 배치 끔(다시 켜려면 주석 해제)
+          addLandmarkMarkers(); // 종로구 일대 명소 10곳 마커 표시
           window.setTimeout(hideMapLoader, 500);
         }, 1800);
       }
@@ -1649,21 +1654,38 @@
           return;
         }
 
-        // ※ 지도 전체 확장: 기존 1km 반경 클리핑 제거 → VWorld 지도/타일을 전부 렌더링.
-        //   (성능을 위해 타일셋·지형 화질만 낮춰 유지)
+        // ── 서울시 영역(중심 ±18km)만 건물 타일셋 렌더 → 서울 밖 건물은 클리핑으로 컷 ──
+        //   (성능↑ + 비네팅과 일치. 글로브 기본지도는 클리핑 안 하고 비네팅으로만 어둡게 처리)
+        const SEOUL_LON = 126.9780, SEOUL_LAT = 37.5665; // 서울 중심(시청 부근)
+        const SEOUL_RADIUS = 18000.0;                    // m, 대략 서울시 범위(키우면 더 넓게)
+        const seoulMatrix = engine.Transforms.eastNorthUpToFixedFrame(
+          engine.Cartesian3.fromDegrees(SEOUL_LON, SEOUL_LAT),
+        );
+        const makeSeoulPlanes = () =>
+          new engine.ClippingPlaneCollection({
+            planes: [
+              new engine.ClippingPlane(new engine.Cartesian3(1, 0, 0), SEOUL_RADIUS),
+              new engine.ClippingPlane(new engine.Cartesian3(-1, 0, 0), SEOUL_RADIUS),
+              new engine.ClippingPlane(new engine.Cartesian3(0, 1, 0), SEOUL_RADIUS),
+              new engine.ClippingPlane(new engine.Cartesian3(0, -1, 0), SEOUL_RADIUS),
+            ],
+            modelMatrix: seoulMatrix,
+            unionClippingRegions: true,
+          });
 
-        // 빌딩 등 3D 타일셋 화질 낮추기 → 렌더 속도 개선.
-        //  maximumScreenSpaceError 가 클수록 더 거친(저화질) LOD로 그려 GPU/네트워크 부담↓.
-        //  (기본 16 → 32. 더 빠르게: 48~64, 더 선명하게: 24 정도로 조절)
-        const LOW_QUALITY_SSE = 32;
+        // 빌딩 3D 타일셋: 서울 영역 클리핑 + LOD 임계.
+        //  maximumScreenSpaceError 가 작을수록 더 높은 고도/먼 거리에서도 건물이 렌더됨(대신 부하↑).
+        //  (건물을 더 높은 곳에서도 보이게 64→24로 낮춤. 더 멀리서 보려면 더 낮추고, 더 빠르게는 키움)
+        const LOW_QUALITY_SSE = 24;
         const lowerTilesetQuality = (p) => {
           try {
             p.maximumScreenSpaceError = LOW_QUALITY_SSE;
-            p.dynamicScreenSpaceError = true; // 멀리 있는 타일은 더 거칠게(원경 가속)
+            p.dynamicScreenSpaceError = false; // 거리별 화질 완화 끔 → 먼/높은 곳 건물도 렌더
+            p.clippingPlanes = makeSeoulPlanes(); // 서울 밖 건물 컷(타일셋마다 별도 생성)
           } catch {}
         };
 
-        // 타일셋(빌딩 등) 화질만 낮춤 (클리핑은 적용하지 않음 → 전체 표시)
+        // 타일셋(빌딩 등) 화질 낮춤 + 서울 클리핑 적용
         let tilesetCount = 0;
         for (let i = 0; i < viewer.scene.primitives.length; i++) {
           const p = viewer.scene.primitives.get(i);
@@ -1683,7 +1705,10 @@
         // 글로브(지형·위성): 클리핑 없이 화질만 낮춰 가속
         viewer.scene.globe.backFaceCulling = true;
         viewer.scene.globe.showSkirts = false;
-        viewer.scene.globe.maximumScreenSpaceError = 4; // 지형 화질↓(기본 2)로 추가 가속
+        viewer.scene.globe.maximumScreenSpaceError = 8; // 지형 화질↓(기본 2)로 추가 가속
+        try { viewer.resolutionScale = 0.7; } catch {}    // 렌더 해상도↓(픽셀 수↓ → 속도↑)
+        try { viewer.scene.fog.enabled = true; viewer.scene.fog.density = 0.0006; } catch {} // 원경 안개로 먼 타일 부하↓
+        try { viewer.scene.postProcessStages.fxaa.enabled = false; } catch {} // 안티에일리어싱 끔(속도↑)
 
         applyCameraConstraints();
       }
@@ -1703,7 +1728,7 @@
 
         // ── 카메라 이동·줌 제한 ────────────────────────────────────────────────
         const ctrl = viewer.scene.screenSpaceCameraController;
-        ctrl.maximumZoomDistance = 1500;
+        ctrl.maximumZoomDistance = 3500; // 카메라-지면 거리. -35° 기울기에서 고도 ≈2000m까지 휠 줌아웃 가능
         ctrl.minimumZoomDistance = 60;
 
         const EV = engine.CameraEventType;
@@ -2210,8 +2235,8 @@
         syncBuildingPositions();
       }
 
-      // [임시] room-02(dining)·room-03(loft) 입장은 당분간 막아둠. 다시 켜려면 이 배열을 비우면 됨.
-      const DISABLED_ROOMS = ["room-02", "room-03"];
+      // room-02·room-03 입장 재활성화(번호 마커 2·3번으로 연결). 막으려면 id를 다시 넣으면 됨.
+      const DISABLED_ROOMS = [];
 
       function openBuilding(index = activeIndex) {
         const building =
@@ -2324,6 +2349,113 @@
             renderUi();
           }
         });
+      }
+
+      // ── 종로구 일대 주요 명소 10곳 마커 ──
+      // h = 해당 건물(구조물) 대략 높이(m). 마커는 이 높이 + 50m 위에 띄움.
+      const LANDMARKS = [
+        { name: "경복궁", lon: 126.9770, lat: 37.5796, h: 22 },
+        { name: "광화문", lon: 126.9769, lat: 37.5759, h: 18 },
+        { name: "청계광장", lon: 126.9788, lat: 37.5693, h: 5 },
+        { name: "덕수궁", lon: 126.9751, lat: 37.5658, h: 18 },
+        { name: "숭례문", lon: 126.9753, lat: 37.5600, h: 30 },
+        { name: "보신각", lon: 126.9832, lat: 37.5703, h: 15 },
+        { name: "남산서울타워", lon: 126.9882, lat: 37.5512, h: 237 },
+        { name: "창덕궁", lon: 126.9910, lat: 37.5794, h: 20 },
+        { name: "종묘", lon: 126.9942, lat: 37.5746, h: 16 },
+        { name: "흥인지문", lon: 127.0094, lat: 37.5712, h: 25 },
+      ];
+
+      function addLandmarkMarkers() {
+        const viewer = (window.ws3d && window.ws3d.viewer) || getVWorldViewer();
+        const engine = window.Cesium;
+        if (!viewer || !engine) return;
+        const roomPage = (id) =>
+          (PALACE_BUILDINGS.find((b) => b.id === id) || {}).page;
+        // 빨간 번호 핀 아이콘 생성(원형 머리 + 아래 꼭지 + 흰 숫자) — 사진 모양.
+        const makeNumberPin = (num) => {
+          const W = 56, H = 74, cx = 28, cyc = 27, rad = 23;
+          const cv = document.createElement("canvas");
+          cv.width = W; cv.height = H;
+          const g = cv.getContext("2d");
+          g.beginPath();                       // 아래 꼬리(삼각형)
+          g.moveTo(cx, H - 1);
+          g.lineTo(cx - 13, cyc + 13);
+          g.lineTo(cx + 13, cyc + 13);
+          g.closePath();
+          g.fillStyle = "#e23b3b"; g.fill();
+          g.beginPath();                       // 머리(원)
+          g.arc(cx, cyc, rad, 0, Math.PI * 2);
+          g.fillStyle = "#e23b3b"; g.fill();
+          g.lineWidth = 3; g.strokeStyle = "#ffffff"; g.stroke();
+          g.fillStyle = "#ffffff";             // 흰 숫자
+          g.font = "bold 26px 'Malgun Gothic', Arial";
+          g.textAlign = "center"; g.textBaseline = "middle";
+          g.fillText(String(num), cx, cyc + 1);
+          return cv;
+        };
+
+        LANDMARKS.forEach((m, i) => {
+          viewer.entities.add({
+            name: m.name,
+            // 해당 건물 높이(m.h) + 50m 위에 띄움(지면 기준)
+            position: engine.Cartesian3.fromDegrees(m.lon, m.lat, (m.h || 0) + 50),
+            billboard: {
+              image: makeNumberPin(i + 1),
+              verticalOrigin: engine.VerticalOrigin.BOTTOM, // 핀 꼭지가 위치에 닿게
+              scale: 0.7,
+              heightReference: engine.HeightReference.RELATIVE_TO_GROUND,
+              disableDepthTestDistance: Number.POSITIVE_INFINITY, // 항상 보이게
+              scaleByDistance: new engine.NearFarScalar(300, 0.85, 9000, 0.32),
+            },
+            label: {
+              text: m.name, // 이름(번호는 핀 안에)
+              font: "bold 13px 'Malgun Gothic', sans-serif",
+              fillColor: engine.Color.fromCssColorString("#f6f2e8"),
+              outlineColor: engine.Color.fromCssColorString("#0c0e0d"),
+              outlineWidth: 3,
+              style: engine.LabelStyle.FILL_AND_OUTLINE,
+              verticalOrigin: engine.VerticalOrigin.TOP, // 핀 아래에 이름표
+              pixelOffset: new engine.Cartesian2(0, 4),
+              showBackground: true,
+              backgroundColor: engine.Color.fromCssColorString("rgba(7,10,11,0.78)"),
+              backgroundPadding: new engine.Cartesian2(8, 5),
+              heightReference: engine.HeightReference.RELATIVE_TO_GROUND,
+              disableDepthTestDistance: Number.POSITIVE_INFINITY,
+              scaleByDistance: new engine.NearFarScalar(300, 1.1, 9000, 0.5),
+            },
+          });
+        });
+
+        // 입장: 마커가 아니라 "해당 건물"을 클릭하면 방으로 들어감.
+        //  클릭한 지점의 실제 지표 좌표를 구해, 2번(광화문)·3번(청계광장) 위치와 가까우면(≈120m) 입장.
+        const enterTargets = [
+          { lon: LANDMARKS[1].lon, lat: LANDMARKS[1].lat, page: roomPage("room-02") }, // 2번 광화문 → room2(dining)
+          { lon: LANDMARKS[2].lon, lat: LANDMARKS[2].lat, page: roomPage("room-03") }, // 3번 청계광장 → room3(loft)
+        ];
+        const handler = new engine.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((click) => {
+          let cart = null;
+          try {
+            const p = viewer.scene.pickPosition(click.position); // 건물 표면 3D 좌표
+            if (engine.defined(p)) cart = engine.Cartographic.fromCartesian(p);
+          } catch {}
+          if (!cart) {
+            const e = viewer.camera.pickEllipsoid(click.position, engine.Ellipsoid.WGS84);
+            if (e) cart = engine.Cartographic.fromCartesian(e);
+          }
+          if (!cart) return;
+          const lon = engine.Math.toDegrees(cart.longitude);
+          const lat = engine.Math.toDegrees(cart.latitude);
+          for (const t of enterTargets) {
+            if (!t.page) continue;
+            const dy = (lat - t.lat) * 111320;
+            const dx = (lon - t.lon) * 111320 * Math.cos((t.lat * Math.PI) / 180);
+            if (Math.hypot(dx, dy) < 120) { location.href = t.page; return; }
+          }
+        }, engine.ScreenSpaceEventType.LEFT_CLICK);
+
+        setStatus("명소 10곳 마커 표시 — 2번(광화문)·3번(청계광장) 건물을 클릭하면 방으로 입장합니다.");
       }
 
       function loadGLBModel() {
