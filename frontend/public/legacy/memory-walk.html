@@ -336,7 +336,8 @@
     function __orientPano() {                            // 게이트(이미지 중심, 기준 -Z)를 정면 방향 f로 회전 + 테마 보정
       if (!__pano) return;
       const f = __panoFwd || new THREE.Vector3(0, 0, -1);
-      const base = Math.atan2(-f.x, -f.z);              // scale.x=-1 보정 포함: rotation.y=atan2(-fx,-fz) → 게이트가 f를 향함
+      // 게이트(이미지 중심 u=0.5)는 구 UV상 +X에 매핑, scale.x=-1로 -X가 기준 → rotation.y=atan2(fz,-fx)면 게이트가 f를 향함
+      const base = Math.atan2(f.z, -f.x);
       __pano.rotation.y = base + (THEME && THEME.bearing != null ? THEME.bearing * Math.PI / 180 : 0);
     }
     // 정면 방향 벡터 f(카메라가 바라보는 방향)를 받아 파노라마의 랜드마크가 그 방향 정중앙에 오도록 회전
