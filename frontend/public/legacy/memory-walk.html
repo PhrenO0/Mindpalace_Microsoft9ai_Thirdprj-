@@ -265,9 +265,9 @@
     // ── 랜드마크 테마(&lm=) — 방을 랜드마크와 의미적으로 결합: 이름·하늘색·복귀 라벨 ──
     const LM_THEMES = {
       gwanghwamun:   { name:"광화문의 방",   hanja:"光化門",  sky:0x16213e, hemi:0xbfd0ff, line:"조선의 정문, 새벽의 남빛",
-                       palace:"public/data/palace-gwanghwamun.json",  bg:"public/assets/bg/gwanghwamun.jpg" },
+                       palace:"public/data/palace-gwanghwamun.json",  bg:"public/assets/bg/gwanghwamun.jpg", bearing:180 },
       gyeongbokgung: { name:"경복궁의 방",   hanja:"景福宮",  sky:0x1d2b24, hemi:0xcfe8d8, line:"법궁의 깊은 녹음",
-                       palace:"public/data/palace-gyeongbokgung.json", bg:"public/assets/bg/gyeongbokgung.jpg" },
+                       palace:"public/data/palace-gyeongbokgung.json", bg:"public/assets/bg/gyeongbokgung.jpg", bearing:180 },
       namsan:        { name:"남산타워의 방", hanja:"南山",    sky:0x0e1a2b, hemi:0xaac4e8, line:"서울 야경의 블루" },
       cheonggye:     { name:"청계천의 방",   hanja:"淸溪川",  sky:0x122a33, hemi:0xb8e2e8, line:"물길의 청록" },
       sungnyemun:    { name:"숭례문의 방",   hanja:"崇禮門",  sky:0x251d16, hemi:0xe8d2b0, line:"옛 성문의 횃불빛" },
@@ -613,7 +613,8 @@
       spawnAt(spawn);
       // 배경 랜드마크를 "정면"에 자동 배치: 스폰→방중심 방향 = 시작 시야 정면
       if (window.__placeBackdrop) {
-        const dx = center.x - spawn.x, dz = center.z - spawn.z;
+        const ctr = bounds.getCenter(new THREE.Vector3());   // buildRoute 스코프엔 center 없음 → 지역 계산
+        const dx = ctr.x - spawn.x, dz = ctr.z - spawn.z;
         window.__placeBackdrop(bounds.min.y, Math.atan2(dx, -dz));
       }
       $("nav").style.display = "";
