@@ -358,7 +358,11 @@
     sun.shadow.bias = -0.0004; scene.add(sun, sun.target);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; controls.dampingFactor = 0.09; controls.rotateSpeed = 0.6;
+    controls.enableDamping = true; controls.dampingFactor = 0.09; controls.rotateSpeed = 0.55;
+    controls.enablePan = false;                                 // 패닝 금지(방 밖으로 밀려나지 않게)
+    controls.enableZoom = false;                                // 휠 줌(달리) 금지 — 방 안 고정, 이동은 WASD
+    controls.minPolarAngle = THREE.MathUtils.degToRad(50);      // 위로 ~40°까지(하늘·랜드마크 상부)
+    controls.maxPolarAngle = THREE.MathUtils.degToRad(135);     // 아래로 ~45°까지(바닥 마커) — 바닥 밑·천장 위로 못 넘어감
 
     const loader = new GLTFLoader();
     const draco = new DRACOLoader();
@@ -616,7 +620,7 @@
       $("miniCv").style.display = "block";
       const mapped = route.filter(h => h.entity).length;
       setStatus(`동선 ${route.length}개 지점 · 학습 ${mapped}개 배치 · <b>다음 →</b>으로 투어 시작`);
-      activeIdx = -1; renderDots(-1); overviewCam(true);   // 첫 화면 = 방 전체 조망(다음 → 으로 투어 시작)
+      activeIdx = -1; renderDots(-1); roomEntryView(true);   // 첫 화면 = 방 안 눈높이(정면 광화문·마커, 다음 →으로 투어)
     }
     // 방 전체가 한눈에 들어오는 넓은 조망(첫 화면·둘러보기). 방 안 모서리·천장 바로 아래에서
     //   반대편을 내려다본다 → 천장이 닫힌 방(cozy)도 내부가 다 보인다. instant=true면 즉시.
@@ -628,6 +632,16 @@
         bounds.min.y + Math.max(sz.y * 0.82, sz.y - 0.35),   // 천장 살짝 아래
         bounds.max.z - sz.z * 0.07);
       flyTo(camPos, new THREE.Vector3(c.x, bounds.min.y + sz.y * 0.3, c.z), instant ? 0 : 900);
+    }
+    // 첫 화면·홈 = 방 안 눈높이 1인칭. 입구(스폰)에서 방중심·랜드마크를 정면으로, 약간 아래로(마커 프레이밍).
+    //   overviewCam(천장 조망)은 방을 "상자"처럼 보이게 해 폐기 — 방 안에 선 경험을 강하게.
+    function roomEntryView(instant){
+      const c = bounds.getCenter(new THREE.Vector3());
+      const p = spawnPos ? spawnPos.clone() : new THREE.Vector3(c.x, bounds.min.y + 1.5, c.z);
+      const tgt = new THREE.Vector3(c.x, p.y - 0.32, c.z);      // 살짝 아래로
+      const settle = () => { fpsReady = false; enterFPS(); };    // 도착 후 1인칭(반경 0.9)으로 고정
+      if (instant){ camera.position.copy(p); controls.target.copy(tgt); controls.update(); settle(); }
+      else flyTo(p, tgt, 700, settle);
     }
 
     function nearestRoute(items, start) {   // items: {pos,label,...} → 경로 순 객체 배열
@@ -827,7 +841,7 @@
       else location.href = THEME ? "vworld_landmarks.html" : "vworld_3d_map_live.html";
     };
     // ⌂ 홈 — 미리 잡아둔 "모든 핫스팟이 가장 잘 보이는" 전체 조망으로.
-    $("homeBtn").onclick = () => { activeIdx = -1; renderDots(-1); $("card").style.display = "none"; overviewCam(false); };
+    $("homeBtn").onclick = () => { activeIdx = -1; renderDots(-1); $("card").style.display = "none"; roomEntryView(false); };
 
     // ── 다음 방 ⏭ — 지도로 안 나가고 방→방 순환 이동. 실제 존재하는 방만(HEAD 체크) ──
     const ROOMS = [
@@ -1301,8 +1315,8 @@
 
     // ── 카메라 비행 ──
     let camTween=null;
-    function flyTo(toPos,toTgt,dur=750){
-      camTween={fromPos:camera.position.clone(),fromTgt:controls.target.clone(),toPos:toPos.clone(),toTgt:toTgt.clone(),t0:performance.now(),dur};
+    function flyTo(toPos,toTgt,dur=750,onDone){
+      camTween={fromPos:camera.position.clone(),fromTgt:controls.target.clone(),toPos:toPos.clone(),toTgt:toTgt.clone(),t0:performance.now(),dur,onDone};
     }
     function spawnAt(pos){
       camera.position.copy(pos);
@@ -1345,7 +1359,7 @@
     addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;});
     addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
     const vel=new THREE.Vector3(); let fpsReady=false;
-    function enterFPS(){ if(fpsReady)return;fpsReady=true; const f=new THREE.Vector3();camera.getWorldDirection(f); controls.target.copy(camera.position).addScaledVector(f,2.0); }
+    function enterFPS(){ if(fpsReady)return;fpsReady=true; const f=new THREE.Vector3();camera.getWorldDirection(f); controls.target.copy(camera.position).addScaledVector(f,0.9); } // 반경 0.9 → 드래그해도 거의 제자리 회전(방 안)
     function walk(dt){
       const fwd=new THREE.Vector3();camera.getWorldDirection(fwd);fwd.y=0; if(fwd.lengthSq()<1e-6)return; fwd.normalize();
       const right=new THREE.Vector3().crossVectors(fwd,UP).normalize(), wish=new THREE.Vector3();
@@ -1366,13 +1380,24 @@
       if(bi>=0 && bi!==activeIdx){ activeIdx=bi; refreshMarkers(); showCard(route[bi]); renderDots(bi); }
     }
 
+    // 어떤 경우(궤도 회전·관성)에도 카메라가 방 밖으로 못 나가게 강제 — 트윈 중엔 패스(경로는 방 안).
+    function clampInsideRoom(){
+      if(camTween || !isFinite(bounds.min.x)) return;
+      const m=0.35;
+      const nx=Math.min(Math.max(camera.position.x,bounds.min.x+m),bounds.max.x-m);
+      const nz=Math.min(Math.max(camera.position.z,bounds.min.z+m),bounds.max.z-m);
+      const ny=Math.min(Math.max(camera.position.y,bounds.min.y+0.4),bounds.max.y-0.15); // 천장 위·바닥 밑 금지
+      const dx=nx-camera.position.x, dz=nz-camera.position.z, dy=ny-camera.position.y;
+      if(dx||dz||dy){ camera.position.set(nx,ny,nz); controls.target.x+=dx; controls.target.y+=dy; controls.target.z+=dz; }
+    }
+
     let prev=performance.now();
     function tick(now){
       const dt=Math.min((now-prev)/1000,0.05); prev=now;
       if(camTween){ const k=Math.min(1,(now-camTween.t0)/(camTween.dur||1)); const e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
         camera.position.lerpVectors(camTween.fromPos,camTween.toPos,e); controls.target.lerpVectors(camTween.fromTgt,camTween.toTgt,e);
-        if(k>=1)camTween=null; }
-      walk(dt); controls.update();
+        if(k>=1){ const d=camTween.onDone; camTween=null; if(d)d(); } }
+      walk(dt); controls.update(); clampInsideRoom();
       // 파노라마 구는 카메라를 따라옴(무한히 먼 360° 배경) — 어디로 걸어도 같은 풍경, 지평선은 눈높이 고정.
       if (window.__sky) window.__sky.position.copy(camera.position);
       renderer.render(scene,camera); drawMini(); requestAnimationFrame(tick);
