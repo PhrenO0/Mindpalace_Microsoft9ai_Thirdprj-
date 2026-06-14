@@ -1777,6 +1777,12 @@
       // 하단 번호 도트 색(원래 디자인 — 다양한 톤)
       const TAB_COLORS = ["#95c8bd","#9db8d2","#a8d8c9","#cf9286","#9ac78f","#86bcb4","#7fb0c6","#b6c98f","#caa18f","#9fc7b0"];
 
+      // 마커별 연결된 방(memory-walk). 현재 2번(광화문)·3번(청계광장)만 방이 있음.
+      const LANDMARK_ROOMS = {
+        1: "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/dining_kitchen_baked.glb&hotspots=public/data/dining-hotspots.json", // 2번 광화문 → dining
+        2: "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/loft.glb&hotspots=public/data/loft-hotspots.json", // 3번 청계광장 → loft
+      };
+
       // ── 대시보드/네비게이션용 10개 정거장(마커와 동일) ──
       const STOPS = LANDMARKS.map((m, i) => {
         const o = m.cam || {};
@@ -1792,7 +1798,7 @@
             heading: o.heading != null ? o.heading : 0,
             pitch: o.pitch != null ? o.pitch : -35,
           },
-          page: null, // 방(세종대로 5개) 제거됨 — 명소 마커만 표시
+          page: LANDMARK_ROOMS[i] || null, // 2·3번만 방 연결
         };
       });
 
@@ -1823,8 +1829,9 @@
           return cv;
         };
 
+        const entityRoom = new Map();
         LANDMARKS.forEach((m, i) => {
-          viewer.entities.add({
+          const ent = viewer.entities.add({
             name: m.name,
             // 해당 건물 높이(m.h) + 25m 위에 띄움(지면 기준)
             position: engine.Cartesian3.fromDegrees(m.lon, m.lat, (m.h || 0) + 25),
@@ -1853,9 +1860,19 @@
               scaleByDistance: new engine.NearFarScalar(300, 1.1, 9000, 0.5),
             },
           });
+          if (LANDMARK_ROOMS[i]) entityRoom.set(ent, LANDMARK_ROOMS[i]);
         });
 
-        setStatus("종로구 일대 명소 10곳을 지도에 표시했습니다.");
+        // 2·3번 핀을 클릭하면 연결된 방(memory-walk)으로 입장.
+        const handler = new engine.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((click) => {
+          const picked = viewer.scene.pick(click.position);
+          if (engine.defined(picked) && picked.id && entityRoom.has(picked.id)) {
+            location.href = entityRoom.get(picked.id);
+          }
+        }, engine.ScreenSpaceEventType.LEFT_CLICK);
+
+        setStatus("종로구 명소 10곳 — 2번(광화문)·3번(청계광장) 핀을 누르면 방으로 입장합니다.");
       }
 
       // 건물에서 history.back()으로 돌아오면 bfcache(뒤로가기 캐시)로 복원되며
