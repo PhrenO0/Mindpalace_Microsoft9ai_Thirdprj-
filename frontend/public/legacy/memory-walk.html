@@ -31,6 +31,11 @@
            backdrop-filter:blur(18px) saturate(1.1);border-radius:18px;
            box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);}
     .kicker{color:var(--gold);font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;}
+    .lmicon{width:46px;height:46px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.05);color:var(--gold);margin:10px 0 4px;}
+    .lmicon svg{width:28px;height:28px;}
+    .lmicon[hidden]{display:none;}
+    .cimg{width:100%;max-height:172px;object-fit:cover;border-radius:10px;margin:8px 0 4px;display:block;border:1px solid var(--line);}
+    .cimg[hidden]{display:none;}
     /* 상단 타이틀 */
     .top{top:16px;left:16px;width:min(320px,calc(100vw - 32px));padding:13px 16px;}
     .top .backbtn{display:inline-flex;align-items:center;gap:5px;margin-bottom:9px;border:1px solid var(--line);
@@ -150,6 +155,7 @@
           u.searchParams.set("lite", window.LITE ? "0" : "1"); location.href = u.toString(); };
       })();
     </script>
+    <div class="lmicon" id="lmIcon" hidden></div>
     <div class="kicker">Memory Palace · 1인칭 워크스루</div>
     <h1 id="palaceTitle">기억 궁전</h1>
     <p id="roomName">방 로드 중…</p>
@@ -160,6 +166,7 @@
     <div class="body">
       <div class="head"><span class="num" id="cNum">1</span><span class="type" id="cType"></span></div>
       <h2 id="cTitle"></h2>
+      <img class="cimg" id="cImg" hidden alt="" />
       <div class="furn" id="cFurn"></div>
       <div class="cap" id="cCap"></div>
       <div class="desc" id="cDesc"></div>
@@ -265,9 +272,9 @@
     // ── 랜드마크 테마(&lm=) — 방을 랜드마크와 의미적으로 결합: 이름·하늘색·복귀 라벨 ──
     const LM_THEMES = {
       gwanghwamun:   { name:"광화문의 방",   hanja:"光化門",  sky:0x16213e, hemi:0xbfd0ff, line:"조선의 정문, 새벽의 남빛",
-                       palace:"public/data/palace-gwanghwamun.json",  bg:"public/assets/bg/gwanghwamun.jpg" },
+                       palace:"public/data/palace-gwanghwamun.json",  bg:"public/assets/bg/gwanghwamun.jpg", cardImage:"public/assets/bg/gwanghwamun-card.jpg" },
       gyeongbokgung: { name:"경복궁의 방",   hanja:"景福宮",  sky:0x1d2b24, hemi:0xcfe8d8, line:"법궁의 깊은 녹음",
-                       palace:"public/data/palace-gyeongbokgung.json", bg:"public/assets/bg/gyeongbokgung.jpg" },
+                       palace:"public/data/palace-gyeongbokgung.json", bg:"public/assets/bg/gyeongbokgung.jpg", cardImage:"public/assets/bg/gyeongbokgung-card.jpg" },
       namsan:        { name:"남산타워의 방", hanja:"南山",    sky:0x0e1a2b, hemi:0xaac4e8, line:"서울 야경의 블루" },
       cheonggye:     { name:"청계천의 방",   hanja:"淸溪川",  sky:0x122a33, hemi:0xb8e2e8, line:"물길의 청록" },
       sungnyemun:    { name:"숭례문의 방",   hanja:"崇禮門",  sky:0x251d16, hemi:0xe8d2b0, line:"옛 성문의 횃불빛" },
@@ -278,7 +285,15 @@
       heunginjimun:  { name:"흥인지문의 방", hanja:"興仁之門", sky:0x2b1f14, hemi:0xf0d8b0, line:"동대문 시장의 불빛" },
     };
     const LM = P.get("lm");
-    const THEME = (LM && LM_THEMES[LM]) || null;
+    let THEME = (LM && LM_THEMES[LM]) || null;
+    // 동적 랜드마크: 검색 페이지 등에서 실시간으로 다른 곳을 넘겨도(LM_THEMES에 없어도) 이름/카테고리로 최소 테마 구성.
+    //   → 좌상단 아이콘·제목이 즉시 적용됨. lmName(이름)·lmCat(카테고리)·lmDesc·lmHanja URL 파라미터 사용.
+    if (!THEME && P.get("lmName")) {
+      const nm = P.get("lmName").trim();
+      THEME = { name: /방$/.test(nm) ? nm : nm + "의 방", hanja: P.get("lmHanja") || "",
+                line: P.get("lmDesc") || "", sky: 0x16213e, hemi: 0xbfd0ff,
+                cat: P.get("lmCat") || "", dynamic: true };
+    }
     // 입장 인트로 — 현판 한자가 떴다가 방이 드러나며 사라짐(랜드마크 입장임을 몸으로 느끼게)
     if (THEME) {
       const d = document.createElement("div");
@@ -332,29 +347,41 @@
     // 랜드마크 배경 — 360° 등거리 파노라마(equirectangular)를 구 안쪽에 그대로 매핑.
     //   이 이미지는 평면 원근샷이 아니라 "구를 펼친" 2:1 파노라마라 왜곡·이음새·중복 없이 정확히 감긴다.
     //   광장 바닥·하늘·주변 빌딩·산이 사진 자체에 포함 → 방이 광장 한복판에 선 느낌이 자동으로.
-    let __pano = null, __panoFwd = null;
-    function __orientPano() {                            // 게이트(이미지 중심, 기준 -Z)를 정면 방향 f로 회전 + 테마 보정
-      if (!__pano) return;
-      const f = __panoFwd || new THREE.Vector3(0, 0, -1);
-      // 게이트(이미지 중심 u=0.5)는 구 UV상 +X에 매핑, scale.x=-1로 -X가 기준 → rotation.y=atan2(fz,-fx)면 게이트가 f를 향함
-      const base = Math.atan2(f.z, -f.x);
-      __pano.rotation.y = base + (THEME && THEME.bearing != null ? THEME.bearing * Math.PI / 180 : 0);
+    // ── 랜드마크 정체성 아이콘 (LLM 없이 — 이름/카테고리 키워드 추론) ──
+    //   유명 10곳은 물론, 검색 페이지에서 실시간으로 넘어온 임의 랜드마크도 이름만으로 적절한 아이콘 선택.
+    //   (파노라마 배경은 철회 — 방은 천장 덮인 닫힌 공간, 정체성은 이 아이콘으로. 배경색은 테마 하늘색 유지.)
+    const ICON_PATHS = {
+      gate:    '<path d="M3 9h18M5 9l2-3.5h10L19 9M6.5 9v10M17.5 9v10M6.5 19h11"/>',
+      palace:  '<path d="M3 10h18M12 4 4 8h16zM6 10v8M18 10v8M6 18h12"/>',
+      tower:   '<path d="M10 21V9M14 21V9M9.2 9h5.6l-1.1-3h-3.4zM12 6V3M8 21h8"/>',
+      mountain:'<path d="M3 19 9.5 8l3.5 4.5L16 8l5 11z"/>',
+      water:   '<path d="M3 8c2.5-2 5.5-2 8 0s5.5 2 8 0M3 13c2.5-2 5.5-2 8 0s5.5 2 8 0M3 18c2.5-2 5.5-2 8 0s5.5 2 8 0"/>',
+      shrine:  '<path d="M3 9h18M12 4 5 8h14zM7 9v9M17 9v9M11 12h2v6h-2z"/>',
+      bell:    '<path d="M12 3a5 5 0 0 1 5 5v5H7V8a5 5 0 0 1 5-5zM5 16h14M10.5 19h3"/>',
+      park:    '<path d="M12 21v-6M12 15a5.5 5.5 0 1 0-4.4-2.2A4 4 0 0 0 12 15z"/>',
+      market:  '<path d="M4.5 8 6 5h12l1.5 3M4.5 8h15M6 8.5 6.6 20h10.8L18 8.5M4.5 8a2 2 0 0 0 3.7 0 2 2 0 0 0 3.8 0 2 2 0 0 0 3.8 0 2 2 0 0 0 3.7 0"/>',
+      bridge:  '<path d="M2 16c5 0 7-5 10-5s5 5 10 5M2 16v3M22 16v3M8 14.5V19M16 14.5V19"/>',
+      pin:     '<path d="M12 2c-3.9 0-7 3-7 6.8 0 5 7 12.2 7 12.2s7-7.2 7-12.2C19 5 15.9 2 12 2z"/><circle cx="12" cy="9" r="2.3"/>'
+    };
+    function lmCategory(theme){
+      if (theme && theme.icon && ICON_PATHS[theme.icon]) return theme.icon;   // 명시 override
+      const n = (theme && theme.cat ? theme.cat + " " : "") + (theme && theme.name ? theme.name : "");
+      if (/타워|탑/.test(n)) return "tower";
+      if (/문|대문/.test(n)) return "gate";
+      if (/궁|정전|전각/.test(n)) return "palace";
+      if (/묘|사당/.test(n)) return "shrine";
+      if (/각|종/.test(n)) return "bell";
+      if (/청계|천|강|호수|폭포|광장/.test(n)) return "water";
+      if (/산|봉|령/.test(n)) return "mountain";
+      if (/시장|상가/.test(n)) return "market";
+      if (/사찰|절|암자/.test(n)) return "shrine";
+      if (/공원|숲|수목원/.test(n)) return "park";
+      if (/다리|대교/.test(n)) return "bridge";
+      return "pin";
     }
-    // 정면 방향 벡터 f(카메라가 바라보는 방향)를 받아 파노라마의 랜드마크가 그 방향 정중앙에 오도록 회전
-    window.__placeBackdrop = (floorY, fwd) => { if (fwd) __panoFwd = fwd.clone(); __orientPano(); };
-    if (THEME && THEME.bg && !ENV) {
-      scene.background = new THREE.Color(0x9fb6d4);       // 로드 전 하늘빛(깜빡임 방지)
-      new THREE.TextureLoader().load(THEME.bg, t => {
-        t.colorSpace = THREE.SRGBColorSpace;
-        t.anisotropy = (typeof _maxAniso !== 'undefined') ? _maxAniso : 1;
-        const SKY_R = 100, segW = LITE ? 40 : 64, segH = LITE ? 24 : 40;
-        const sky = new THREE.Mesh(
-          new THREE.SphereGeometry(SKY_R, segW, segH),
-          new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, depthWrite: false, fog: false, toneMapped: false }));
-        sky.scale.x = -1;                                 // BackSide 좌우반전 보정(360 뷰어 표준 트릭) — 글자·배치 정상화
-        sky.renderOrder = -2; sky.frustumCulled = false; scene.add(sky);
-        __pano = sky; window.__sky = sky; __orientPano();
-      }, undefined, () => {});
+    function landmarkIcon(theme){
+      const k = lmCategory(theme);
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[k]||ICON_PATHS.pin}</svg>`;
     }
     scene.add(new THREE.HemisphereLight(THEME ? THEME.hemi : 0xffffff, 0x444444, 0.4));  // 랜드마크 톤 조명
     const sun = new THREE.DirectionalLight(0xfff4e6, 1.9); sun.castShadow = !LITE;
@@ -412,8 +439,6 @@
       model.traverse(c => {
         if (!c.isMesh) return;
         if (backs.has(c)) { c.visible = false; return; }   // 배경 숨김(시야·바운즈 오염 방지)
-        // 배경 사진 테마면 천장 제거(이름 기반) → 하늘을 보면 랜드마크 풍경이 보이게
-        if (THEME && THEME.bg && /ceiling|roof/i.test(c.name || "")) { c.visible = false; return; }
         const mats = Array.isArray(c.material)?c.material:[c.material];
         mats.forEach(m => { if (m){ m.side = THREE.DoubleSide; m.needsUpdate = true; } });
         c.castShadow = true; c.receiveShadow = true;
@@ -426,33 +451,7 @@
       });
       scene.add(model);
       bounds = new THREE.Box3(); model.traverse(c => { if (c.isMesh && c.visible) bounds.expandByObject(c); });
-      // 배경 사진 테마: 천장 제거.
-      //  ① 분리된 천장 메쉬면 숨김("꼭대기의 얇고 넓은 판" 판정)
-      //  ② 벽과 한 덩어리(일체형)면 메쉬로는 못 떼므로 클리핑 평면(clipping plane)으로
-      //     천장 높이 위를 렌더에서 잘라낸다 → 위를 보면 배경(랜드마크)이 보인다.
-      if (THEME && THEME.bg) {
-        const top = bounds.max.y;
-        const area = (bounds.max.x - bounds.min.x) * (bounds.max.z - bounds.min.z);
-        let hid = false;
-        model.traverse(c => {
-          if (!c.isMesh || !c.visible || backs.has(c)) return;
-          const b = new THREE.Box3().setFromObject(c);
-          const s = b.getSize(new THREE.Vector3());
-          if (s.y < 0.3 && b.min.y > top - 0.5 && s.x * s.z > area * 0.3) { c.visible = false; hid = true; }
-        });
-        if (!hid) {                                   // 일체형 → 위를 잘라 하늘 개방
-          renderer.localClippingEnabled = true;
-          const plane = new THREE.Plane(new THREE.Vector3(0, -1, 0), top - 0.3);  // y ≤ top-0.3만 보임
-          model.traverse(c => {
-            if (!c.isMesh || !c.visible) return;
-            (Array.isArray(c.material) ? c.material : [c.material]).forEach(m => {
-              if (m) { m.clippingPlanes = [plane]; m.clipShadows = true; m.needsUpdate = true; }
-            });
-          });
-        }
-        bounds = new THREE.Box3(); model.traverse(c => { if (c.isMesh && c.visible) bounds.expandByObject(c); });
-        if (!hid) bounds.max.y = Math.min(bounds.max.y, top - 0.3);   // 클리핑 후 실효 높이
-      }
+      // (파노라마 철회: 천장 제거/클리핑 없음 — 방은 천장 덮인 닫힌 공간으로 유지)
       buildFurnRects(model, backs);   // 2D 평면도용 가구 발자국(footprint)
       // 같은 라벨 가까운 앵커 병합(수납장 패널 여러 개 → 하나)
       anchors = mergeAnchors(anchors, 1.0);
@@ -546,6 +545,7 @@
         document.querySelector(".top .kicker").textContent = `Memory Palace · ${lmName}`;
         $("roomName").textContent = `${THEME.line} · ${room.name}`;
         $("backBtn").textContent = `← ${lmName}으로`;
+        const ic = $("lmIcon"); if (ic) { ic.innerHTML = landmarkIcon(THEME); ic.hidden = false; ic.title = lmName; }  // 좌상단 정체성 아이콘(이름 추론)
       }
       const entities = (room.kept||[]).slice().sort((a,b)=>(a.rank||99)-(b.rank||99));
       buildRoute(entities);
@@ -635,7 +635,7 @@
     }
     // 첫 화면·홈 = 방 안 눈높이 1인칭, 방 "정면"(부엌 카운터 벽)을 직교로 마주봄.
     //   ① 마커가 많은 쪽(부엌)을 가장 가까운 벽 축으로 스냅 → 대각선이 아닌 똑바른 정면
-    //   ② 카메라를 그 반대쪽 벽 근처에 두고 정면을 바라봄 ③ 파노라마 게이트를 같은 정면 방향에 정렬.
+    //   ② 카메라를 그 반대쪽 벽 근처에 두고 정면을 바라봄.
     function roomEntryView(instant){
       const c = bounds.getCenter(new THREE.Vector3());
       const sz = bounds.getSize(new THREE.Vector3());
@@ -649,7 +649,6 @@
       const dist = Math.max(0.8, halfFwd - 0.7);              // 정면 벽 반대쪽 끝(방 안)
       const p = new THREE.Vector3(c.x - fwd.x * dist, bounds.min.y + 1.55, c.z - fwd.z * dist);
       const tgt = new THREE.Vector3(c.x + fwd.x * 0.3, p.y - 0.18, c.z + fwd.z * 0.3); // 정면 + 살짝 아래
-      if (window.__placeBackdrop) window.__placeBackdrop(bounds.min.y, fwd);  // 게이트를 같은 정면에 정렬
       const settle = () => { fpsReady = false; enterFPS(); };
       if (instant){ camera.position.copy(p); controls.target.copy(tgt); controls.update(); settle(); }
       else flyTo(p, tgt, 700, settle);
@@ -804,6 +803,7 @@
     $("modal").onclick = e => { if (e.target === $("modal")) $("modal").classList.remove("open"); };
 
     // ── 카드 표시 + 이동 ──
+    function setCardImage(src){ const im=$("cImg"); if(src){ im.src=src; im.hidden=false; } else { im.hidden=true; im.removeAttribute("src"); } }
     function showCard(h) {
       const e = h.entity;
       $("cNum").textContent = h.number;
@@ -812,6 +812,7 @@
         $("cType").textContent = e.type || "";
         $("cTitle").textContent = e.title;
         $("cFurn").textContent = `📍 ${furnKO(h.label)}에 배치`;
+        setCardImage(e.image || (THEME && THEME.cardImage) || "");   // 엔티티별 이미지 우선, 없으면 랜드마크 공통
         $("cCap").textContent = e.caption || "";
         $("cDesc").textContent = e.description || "";
         if ((e.related||[]).length) {
@@ -826,6 +827,7 @@
         $("cType").textContent = "가구";
         $("cTitle").textContent = furnKO(h.label);
         $("cFurn").textContent = `📍 ${h.number}번째 지점`;
+        setCardImage("");
         $("cCap").textContent = "";
         $("cDesc").textContent = "이 자리에 기억을 배치할 수 있어요. (학습 항목 미지정)";
       }
@@ -1348,9 +1350,7 @@
       const ceilMat=new THREE.MeshStandardMaterial({color:0xf3f0ea,roughness:1,side:THREE.DoubleSide});
       const shell=new THREE.Group();
       const fl=new THREE.Mesh(new THREE.PlaneGeometry(W,D),floorMat);fl.rotation.x=-Math.PI/2;fl.position.set(cx,fy,cz);fl.receiveShadow=true;shell.add(fl);
-      if (!(THEME && THEME.bg)) {   // 배경 사진 테마면 천장 생략(하늘로 열림)
-        const ce=new THREE.Mesh(new THREE.PlaneGeometry(W,D),ceilMat);ce.rotation.x=Math.PI/2;ce.position.set(cx,fy+H,cz);shell.add(ce);
-      }
+      const ce=new THREE.Mesh(new THREE.PlaneGeometry(W,D),ceilMat);ce.rotation.x=Math.PI/2;ce.position.set(cx,fy+H,cz);shell.add(ce);  // 천장(항상 덮음 — 파노라마 철회)
       const SILL=0.9,HEADB=2.0,JAMB=0.6,WT=0.08;
       const wb=(sx,sy,sz_,px,py,pz)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz_),wallMat);m.position.set(px,py,pz);m.castShadow=true;m.receiveShadow=true;shell.add(m);};
       const wall=(len,px,pz,horiz)=>{ if(horiz){wb(len,SILL,WT,px,fy+SILL/2,pz);wb(len,H-HEADB,WT,px,fy+(HEADB+H)/2,pz);wb(JAMB,HEADB-SILL,WT,px-len/2+JAMB/2,fy+(SILL+HEADB)/2,pz);wb(JAMB,HEADB-SILL,WT,px+len/2-JAMB/2,fy+(SILL+HEADB)/2,pz);}
@@ -1409,8 +1409,6 @@
         camera.position.lerpVectors(camTween.fromPos,camTween.toPos,e); controls.target.lerpVectors(camTween.fromTgt,camTween.toTgt,e);
         if(k>=1){ const d=camTween.onDone; camTween=null; if(d)d(); } }
       walk(dt); controls.update(); clampInsideRoom();
-      // 파노라마 구는 카메라를 따라옴(무한히 먼 360° 배경) — 어디로 걸어도 같은 풍경, 지평선은 눈높이 고정.
-      if (window.__sky) window.__sky.position.copy(camera.position);
       renderer.render(scene,camera); drawMini(); requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
