@@ -1,6 +1,6 @@
 import "./styles.css";
 
-const LEGACY_ENTRY = "/legacy/vworld_3d_map_live.html";
+const LEGACY_ENTRY = "/legacy/vworld_landmarks.html";
 
 export default function App() {
   return (
