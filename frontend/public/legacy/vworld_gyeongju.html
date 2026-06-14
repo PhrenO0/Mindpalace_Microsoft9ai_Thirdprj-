@@ -933,11 +933,11 @@
       //  (위치/각도/높이만 바꾸면 시작 뷰 조절 가능. height는 maximumZoomDistance 이내)
       // 시작: 7번 남산타워(lat 37.5512)보다 남쪽에서 북향 → 10개 마커가 모두 북쪽 시야에 들어옴.
       const GWANGHWAMUN = {
-        lon: 129.2700,
-        lat: 35.7650,
-        height: 7000,
+        lon: 129.2820,
+        lat: 35.7720,
+        height: 10000,
         heading: 0,
-        pitch: -50,
+        pitch: -55,
       };
       // 시작 카메라를 정확히 그 위치/각도로 직접 배치.
       function setInitialView() {
@@ -1210,7 +1210,7 @@
 
         // ── 카메라 이동·줌 제한 ────────────────────────────────────────────────
         const ctrl = viewer.scene.screenSpaceCameraController;
-        ctrl.maximumZoomDistance = 12000; // 경주: 명소 분포가 넓어 줌아웃 여유를 크게 둠
+        ctrl.maximumZoomDistance = 16000; // 경주: 명소 분포가 넓어 줌아웃 여유를 크게 둠
         ctrl.minimumZoomDistance = 60;
 
         const EV = engine.CameraEventType;
@@ -1756,8 +1756,8 @@
       // cam = 번호 클릭 시 카메라 오버라이드(없으면 기본: 245m 남쪽·북향·pitch -35).
       //   latOff(+북/-남), lonOff(+동/-서), heading(도), height(m), pitch(도)
       const LANDMARKS = [
-        { name: "불국사", lon: 129.3320, lat: 35.7900, h: 30, desc: "유네스코 세계문화유산. 다보탑·석가탑 등 신라 불교예술의 정수." },
-        { name: "석굴암", lon: 129.3490, lat: 35.7951, h: 80, desc: "토함산 인공 석굴 사찰. 본존불상은 세계적 조각 걸작." },
+        { name: "불국사", lon: 129.3320, lat: 35.7900, h: 12, desc: "유네스코 세계문화유산. 다보탑·석가탑 등 신라 불교예술의 정수." },
+        { name: "석굴암", lon: 129.3490, lat: 35.7951, h: 8, desc: "토함산 인공 석굴 사찰. 본존불상은 세계적 조각 걸작." },
         { name: "첨성대", lon: 129.2190, lat: 35.8347, h: 9, desc: "동양에서 가장 오래된 천문 관측대. 밤이면 경주 최고의 야경 명소." },
         { name: "동궁과 월지", lon: 129.2265, lat: 35.8350, h: 10, desc: "신라 왕궁의 별궁 터(구 안압지). 연못에 비친 정자 야경이 환상적." },
         { name: "대릉원(천마총)", lon: 129.2120, lat: 35.8302, h: 15, desc: "신라 왕·귀족의 고분군 23기. 천마총 내부 관람·포토존." },
@@ -1770,6 +1770,22 @@
 
       // 하단 번호 도트 색(원래 디자인 — 다양한 톤)
       const TAB_COLORS = ["#95c8bd","#9db8d2","#a8d8c9","#cf9286","#9ac78f","#86bcb4","#7fb0c6","#b6c98f","#caa18f","#9fc7b0"];
+
+      // 마커(0-based 인덱스) → 연결된 방(memory-walk). 각 방은 Azure Vision 스캔 hotspots JSON.
+      const ROOM_BLOB = "https://9aiteam1.blob.core.windows.net/models/";
+      const mkRoom = (glb, hot) => `memory-walk.html?glb=${ROOM_BLOB}${glb}&hotspots=public/data/${hot}`;
+      const LANDMARK_ROOMS = {
+        0: mkRoom("dining_kitchen_baked.glb", "dining-hotspots.json"),                  // 1 불국사
+        1: mkRoom("loft.glb", "loft-hotspots.json"),                                    // 2 석굴암
+        2: mkRoom("living_room.glb", "living_room-hotspots.json"),                      // 3 첨성대
+        3: mkRoom("room_paris.glb", "room_paris-hotspots.json"),                        // 4 동궁과 월지
+        4: mkRoom("office_room.glb", "office_room-hotspots.json"),                      // 5 대릉원(천마총)
+        5: mkRoom("school_class_room.glb", "school_class_room-hotspots.json"),          // 6 경주 월정교
+        6: mkRoom("neusa_frois.glb", "neusa_frois-hotspots.json"),                      // 7 국립경주박물관
+        7: mkRoom("modern_bedroom.glb", "modern_bedroom-hotspots.json"),                // 8 황리단길
+        8: mkRoom("ps1_phasmophobia.glb", "ps1_phasmophobia-hotspots.json"),            // 9 보문관광단지
+        9: mkRoom("front_room_first_pass.glb", "front_room_first_pass-hotspots.json"),  // 10 경주타워
+      };
 
       // ── 대시보드/네비게이션용 10개 정거장(마커와 동일) ──
       const STOPS = LANDMARKS.map((m, i) => {
@@ -1786,7 +1802,7 @@
             heading: o.heading != null ? o.heading : 0,
             pitch: o.pitch != null ? o.pitch : -35,
           },
-          page: null, // 방(세종대로 5개) 제거됨 — 명소 마커만 표시
+          page: LANDMARK_ROOMS[i] || null, // 마커별 방
         };
       });
 
@@ -1817,11 +1833,12 @@
           return cv;
         };
 
+        const entityRoom = new Map();
         LANDMARKS.forEach((m, i) => {
-          viewer.entities.add({
+          const ent = viewer.entities.add({
             name: m.name,
-            // 해당 건물 높이(m.h) + 25m 위에 띄움(지면 기준)
-            position: engine.Cartesian3.fromDegrees(m.lon, m.lat, (m.h || 0) + 25),
+            // 해당 구조물 높이(m.h) + 5m 위에 띄움(지면 기준) — 객체 바로 위에 붙게
+            position: engine.Cartesian3.fromDegrees(m.lon, m.lat, (m.h || 0) + 5),
             billboard: {
               image: makeNumberPin(i + 1),
               verticalOrigin: engine.VerticalOrigin.BOTTOM, // 핀 꼭지가 위치에 닿게
@@ -1847,9 +1864,19 @@
               scaleByDistance: new engine.NearFarScalar(300, 1.1, 9000, 0.5),
             },
           });
+          if (LANDMARK_ROOMS[i]) entityRoom.set(ent, LANDMARK_ROOMS[i]);
         });
 
-        setStatus("경주 일대 명소 10곳을 지도에 표시했습니다.");
+        // 핀을 클릭하면 연결된 방(memory-walk)으로 입장.
+        const handler = new engine.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((click) => {
+          const picked = viewer.scene.pick(click.position);
+          if (engine.defined(picked) && picked.id && entityRoom.has(picked.id)) {
+            location.href = entityRoom.get(picked.id);
+          }
+        }, engine.ScreenSpaceEventType.LEFT_CLICK);
+
+        setStatus("경주 명소 10곳 — 핀을 누르면 방으로 입장합니다.");
       }
 
       // 건물에서 history.back()으로 돌아오면 bfcache(뒤로가기 캐시)로 복원되며
