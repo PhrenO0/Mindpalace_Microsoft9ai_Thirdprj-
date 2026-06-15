@@ -42,22 +42,18 @@ jobs:
             exit 1
           fi
           cp requirements.txt startup.sh package/
+          # legacy/public/data 에 cities가 있으면 legacy/data 로 정규화(vworld_map은 legacy/data 사용)
           if [ ! -f package/frontend/public/legacy/data/cities.json ] && [ -f package/frontend/public/legacy/public/data/cities.json ]; then
             echo "Normalizing nested legacy/public/data into legacy/data"
             mkdir -p package/frontend/public/legacy/data
             cp -r package/frontend/public/legacy/public/data/. package/frontend/public/legacy/data/
           fi
-          if [ ! -f package/frontend/public/legacy/data/cities.json ]; then
-            echo "::error::Missing package/frontend/public/legacy/data/cities.json. Upload/commit frontend/public/legacy/data/cities.json and frontend/public/legacy/data/cities/*.json."
-            find frontend -maxdepth 5 -type f | sort | sed -n '1,160p'
-            exit 1
+          # cities 데이터(vworld_map용)는 아직 준비 중일 수 있음 → 없어도 배포는 진행(실패 대신 경고).
+          if [ -f package/frontend/public/legacy/data/cities.json ] && [ -d package/frontend/public/legacy/data/cities ]; then
+            echo "Packaged city files: $(find package/frontend/public/legacy/data/cities -name '*.json' | wc -l)"
+          else
+            echo "::warning::cities 데이터(legacy/data/cities.json, data/cities/) 미존재 — vworld_map 도시데이터 없이 배포(나머지 페이지는 정상)."
           fi
-          if [ ! -d package/frontend/public/legacy/data/cities ]; then
-            echo "::error::Missing package/frontend/public/legacy/data/cities directory."
-            find frontend -maxdepth 5 -type d | sort
-            exit 1
-          fi
-          echo "Packaged city files: $(find package/frontend/public/legacy/data/cities -name '*.json' | wc -l)"
 
       - uses: actions/setup-python@v5
         with:
