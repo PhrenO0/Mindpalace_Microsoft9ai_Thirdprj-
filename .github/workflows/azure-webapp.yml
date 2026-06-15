@@ -42,6 +42,11 @@ jobs:
             exit 1
           fi
           cp requirements.txt startup.sh package/
+          if [ ! -f package/frontend/public/legacy/data/cities.json ] && [ -f package/frontend/public/legacy/public/data/cities.json ]; then
+            echo "Normalizing nested legacy/public/data into legacy/data"
+            mkdir -p package/frontend/public/legacy/data
+            cp -r package/frontend/public/legacy/public/data/. package/frontend/public/legacy/data/
+          fi
           if [ ! -f package/frontend/public/legacy/data/cities.json ]; then
             echo "::error::Missing package/frontend/public/legacy/data/cities.json. Upload/commit frontend/public/legacy/data/cities.json and frontend/public/legacy/data/cities/*.json."
             find frontend -maxdepth 5 -type f | sort | sed -n '1,160p'
