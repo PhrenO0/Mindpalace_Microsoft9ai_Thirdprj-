@@ -1,0 +1,6 @@
+{
+  "roomId": "hintze_hall",
+  "generatedBy": "personal-room-scanner-3d (Azure AI Vision, farthest-point coverage)",
+  "note": "흥인지문 방. 박물관 홀(개방 공간)이라 가구 대신 창문·조각상·전시물 위주로 검출됨. 동선·라벨·선별은 memory-walk 파이프라인 처리.",
+  "hotspots": [{"slot":1,"object":"window","detectedClass":"window","confidence":0.61,"markerPosition":[-1.075,1.284,0.991]},{"slot":2,"object":"person","detectedClass":"person","confidence":0.55,"markerPosition":[0,1.025,-2.689]},{"slot":3,"object":"container","detectedClass":"container","confidence":0.51,"markerPosition":[-0.375,1.118,-2.55]},{"slot":4,"object":"window","detectedClass":"window","confidence":0.59,"markerPosition":[-1.572,0.966,-2.847]},{"slot":5,"object":"aircraft","detectedClass":"aircraft","confidence":0.56,"markerPosition":[-0.277,1.162,5.109]},{"slot":6,"object":"person","detectedClass":"person","confidence":0.76,"markerPosition":[-1.699,1.17,2.532]},{"slot":7,"object":"window","detectedClass":"window","confidence":0.63,"markerPosition":[-1.705,1.034,2.58]},{"slot":8,"object":"window","detectedClass":"window","confidence":0.6,"markerPosition":[0.991,1.307,-0.868]}]
+}
