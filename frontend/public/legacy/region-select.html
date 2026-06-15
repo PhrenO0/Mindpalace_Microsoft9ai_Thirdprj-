@@ -4,44 +4,69 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>기억궁전 — 지역 선택</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
 <style>
   :root{ color-scheme:dark;
     --bg:#080a09; --panel:rgba(16,20,18,.72); --line:rgba(220,230,222,.14);
     --text:#f4f1ea; --muted:rgba(244,241,234,.62); --accent:#a9d8c8; --accent2:#8fc9b5; --gold:#dcc079; }
   *{box-sizing:border-box;}
-  body{margin:0; min-height:100vh; padding:56px 0 80px;
+  body{margin:0; min-height:100vh; padding:46px 0 80px;
     font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
     color:var(--text); -webkit-font-smoothing:antialiased; overflow-x:hidden;
     background:
       radial-gradient(60% 50% at 50% -5%, rgba(169,216,200,.16), transparent 60%),
       radial-gradient(50% 40% at 85% 100%, rgba(220,192,121,.10), transparent 60%),
       var(--bg);}
-  body::before{content:""; position:fixed; inset:0; pointer-events:none; opacity:.5; z-index:0;
-    background-image:linear-gradient(rgba(169,216,200,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(169,216,200,.05) 1px,transparent 1px);
-    background-size:46px 46px; mask:radial-gradient(80% 70% at 50% 30%,#000,transparent 75%);}
   .wrap{position:relative; z-index:1; width:min(1180px, calc(100vw - 44px)); margin:0 auto;}
-  .head{text-align:center; margin-bottom:18px;}
+  .head{text-align:center; margin-bottom:16px;}
   .kicker{color:var(--gold); font-size:12px; font-weight:800; letter-spacing:.18em; text-transform:uppercase;}
-  h1{margin:14px 0 8px; font-size:clamp(28px,5vw,46px); font-weight:900; letter-spacing:-.03em; line-height:1.05;}
+  h1{margin:12px 0 8px; font-size:clamp(26px,5vw,42px); font-weight:900; letter-spacing:-.03em; line-height:1.05;}
   h1 .grad{background:linear-gradient(120deg,var(--accent),var(--gold)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
   .sub{color:var(--muted); font-size:clamp(13px,2.2vw,16px); line-height:1.6; max-width:560px; margin:0 auto;}
-  /* 검색 + 통계 */
-  .toolbar{display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; margin:26px 0 30px;}
+  .toolbar{display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; margin:22px 0 14px;}
   .search{display:flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--line);
     border-radius:999px; background:var(--panel); backdrop-filter:blur(14px); min-width:min(360px,90vw);}
   .search input{flex:1; border:0; outline:0; background:transparent; color:var(--text); font-size:14px;}
   .search input::placeholder{color:var(--muted);}
   .stat{color:var(--muted); font-size:12.5px;}
   .stat b{color:var(--accent);}
-  /* 권역 섹션 */
-  .region{margin:0 0 30px;}
-  .region-head{display:flex; align-items:center; gap:10px; margin:0 4px 14px; padding-bottom:10px;
-    border-bottom:1px solid var(--line);}
+  .dashlinks{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:0 0 18px;}
+  .dashlinks .dl{display:inline-flex; align-items:center; gap:7px; padding:10px 16px; border:1px solid var(--line);
+    border-radius:999px; background:var(--panel); backdrop-filter:blur(12px); color:var(--text);
+    text-decoration:none; font-size:13px; font-weight:800; transition:transform .14s, border-color .14s, background .14s;}
+  .dashlinks .dl:hover{transform:translateY(-2px); border-color:rgba(169,216,200,.5); background:rgba(169,216,200,.14);}
+  .dashlinks .dl .di{font-size:15px;}
+  /* 지도 */
+  #map{height:min(56vh,560px); border:1px solid var(--line); border-radius:18px; overflow:hidden;
+    background:#0c1311; box-shadow:0 18px 48px rgba(0,0,0,.4); margin-bottom:8px;}
+  .leaflet-container{background:#0c1311; font-family:inherit;}
+  .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#111815; color:var(--text); border:1px solid var(--line);}
+  .leaflet-popup-content{margin:10px 12px; font-size:13px;}
+  .leaflet-popup-content a{color:var(--accent); font-weight:800; text-decoration:none;}
+  .leaflet-bar a{background:#141b18; color:var(--text); border-bottom:1px solid var(--line);}
+  .leaflet-bar a:hover{background:#1c2521;}
+  .city-pin{position:relative; width:18px; height:18px;}
+  .city-pin .dot{position:absolute; left:50%; top:50%; width:12px; height:12px; margin:-6px 0 0 -6px;
+    border-radius:50%; background:var(--c,#e23b3b); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.6);}
+  .city-pin.soon .dot{background:#6b756f; border-color:rgba(255,255,255,.6);}
+  .city-pin.ready .ring{position:absolute; left:50%; top:50%; width:12px; height:12px; margin:-6px 0 0 -6px;
+    border-radius:50%; border:2px solid var(--c,#e23b3b); animation:pulse 1.8s ease-out infinite;}
+  @keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+  .maphint{text-align:center; color:var(--muted); font-size:12px; margin:6px 0 26px;}
+  /* 목록(보조) */
+  .region{margin:0 0 26px;}
+  .region-head{display:flex; align-items:center; gap:10px; margin:0 4px 14px; padding-bottom:10px; border-bottom:1px solid var(--line);}
   .region-head .ic{font-size:20px;}
   .region-head h2{margin:0; font-size:17px; font-weight:900; letter-spacing:-.01em;}
   .region-head .cnt{margin-left:auto; color:var(--muted); font-size:12px;}
+  .listToggle{display:block; margin:8px auto 18px; padding:9px 18px; border:1px solid var(--line); border-radius:999px;
+    background:var(--panel); color:var(--text); font-size:13px; font-weight:800; cursor:pointer;}
+  .listToggle:hover{border-color:rgba(169,216,200,.5);}
+  #listWrap{display:none;}
+  #listWrap.open{display:block;}
   .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(176px,1fr)); gap:14px;}
-  .box{position:relative; display:flex; flex-direction:column; gap:8px; min-height:118px; padding:16px 16px 14px;
+  .box{position:relative; display:flex; flex-direction:column; gap:8px; min-height:108px; padding:15px 16px 13px;
     border:1px solid var(--line); border-radius:16px; background:var(--panel); backdrop-filter:blur(14px);
     box-shadow:0 14px 36px rgba(0,0,0,.34); text-decoration:none; color:var(--text);
     transition:transform .16s, box-shadow .16s, border-color .16s;}
@@ -55,14 +80,8 @@
   .pill{align-self:flex-start; padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:800;
     border:1px solid var(--line); color:var(--muted);}
   .box.ready .pill{color:var(--accent2); border-color:rgba(143,201,181,.4);}
-  .dashlinks{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:-12px 0 30px;}
-  .dashlinks .dl{display:inline-flex; align-items:center; gap:7px; padding:10px 16px; border:1px solid var(--line);
-    border-radius:999px; background:var(--panel); backdrop-filter:blur(12px); color:var(--text);
-    text-decoration:none; font-size:13px; font-weight:800; transition:transform .14s, border-color .14s, background .14s;}
-  .dashlinks .dl:hover{transform:translateY(-2px); border-color:rgba(169,216,200,.5); background:rgba(169,216,200,.14);}
-  .dashlinks .dl .di{font-size:15px;}
-  .foot{margin-top:26px; color:var(--muted); font-size:12px; text-align:center;}
-  .empty{color:var(--muted); text-align:center; padding:40px 0; display:none;}
+  .foot{margin-top:18px; color:var(--muted); font-size:12px; text-align:center;}
+  .empty{color:var(--muted); text-align:center; padding:30px 0; display:none;}
 </style>
 </head>
 <body>
@@ -70,7 +89,7 @@
     <div class="head">
       <div class="kicker">VWorld · 장소법 기억궁전</div>
       <h1>어디의 <span class="grad">기억궁전</span>으로 갈까요?</h1>
-      <p class="sub">실제 3D 지도 위 랜드마크에 공부할 내용을 배치하고, 같은 길·같은 자리를 걸으며 외우는 학습 공간입니다. 도시를 골라 시작하세요.</p>
+      <p class="sub">지도 위 핀을 눌러 그 도시의 3D 기억궁전으로 들어갑니다. 같은 길·같은 자리를 걸으며 외우는 학습 공간입니다.</p>
     </div>
 
     <div class="toolbar">
@@ -86,59 +105,101 @@
       <a class="dl" href="glb-customizer.html"><span class="di">🧩</span> 방 GLB 커스터마이즈</a>
     </div>
 
-    <div id="regions"></div>
-    <div class="empty" id="empty">검색 결과가 없습니다.</div>
+    <div id="map"></div>
+    <p class="maphint">🔴 이용 가능 도시 · ⚪ 준비 중 — 핀을 클릭하면 입장합니다. 휠로 확대/축소.</p>
+
+    <button class="listToggle" id="listToggle">▾ 목록으로 보기 (전체 도시)</button>
+    <div id="listWrap">
+      <div id="regions"></div>
+      <div class="empty" id="empty">검색 결과가 없습니다.</div>
+    </div>
 
     <div class="foot">랜드마크 핀을 눌러 다가가고, 마우스 드래그로 둘러보며 <b>WASD</b>로 걷습니다.</div>
   </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
 <script>
   // ── VWorld 키: 받은 ?key= 를 저장하고, 각 지도 링크로 그대로 전달 ──
   const KEY = new URLSearchParams(location.search).get("key");
   if (KEY) { try { localStorage.setItem("VWORLD_API_KEY", KEY); } catch(e){} }
   const withKey = (href) => KEY ? href + (href.includes("?") ? "&" : "?") + "key=" + encodeURIComponent(KEY) : href;
+  const cityHref = (slug) => withKey("vworld_map.html?city=" + encodeURIComponent(slug));
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
   const regionsEl = document.getElementById("regions");
   const emptyEl = document.getElementById("empty");
-  let DATA = { regions: [] };
+  let DATA = { regions: [] };     // cities.json (이름/ready/권역)
+  let CENTERS = {};               // cities-centers.json (slug→{lat,lon,zoom})
+  let map = null, markers = [];   // {marker, city, slug}
 
+  // ── 지도 ──
+  function initMap(){
+    map = L.map("map", { zoomControl:true, attributionControl:true, scrollWheelZoom:true })
+      .setView([36.4, 127.8], 7);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19, subdomains:"abcd",
+      attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(map);
+  }
+  function pinIcon(ready){
+    return L.divIcon({
+      className:"", iconSize:[18,18], iconAnchor:[9,9],
+      html:`<div class="city-pin ${ready?"ready":"soon"}">${ready?'<span class="ring"></span>':''}<span class="dot"></span></div>`
+    });
+  }
+  function buildMarkers(){
+    const all = DATA.regions.flatMap(r => r.cities.map(c => ({...c, region:r.region})));
+    all.forEach(c => {
+      const ctr = CENTERS[c.slug];
+      if (!ctr) return;
+      const m = L.marker([ctr.lat, ctr.lon], { icon: pinIcon(!!c.ready), title: c.name, riseOnHover:true });
+      const body = c.ready
+        ? `<b>${esc(c.name)}</b><br><span style="color:var(--muted)">${esc(c.region)}</span><br><a href="${cityHref(c.slug)}">기억궁전 입장 →</a>`
+        : `<b>${esc(c.name)}</b><br><span style="color:var(--muted)">${esc(c.region)} · 준비 중</span>`;
+      m.bindPopup(body);
+      if (c.ready) m.on("click", () => { /* 팝업 후 바로 입장은 팝업 링크로 */ });
+      m.addTo(map);
+      markers.push({ marker:m, city:c, slug:c.slug, name:c.name });
+    });
+  }
+  function filterMarkers(f){
+    let firstReady = null;
+    markers.forEach(({marker, city, name}) => {
+      const hit = !f || name.toLowerCase().includes(f) || city.slug.toLowerCase().includes(f) || (city.region||"").toLowerCase().includes(f);
+      const el = marker.getElement();
+      if (el) el.style.display = hit ? "" : "none";
+      if (hit && city.ready && !firstReady) firstReady = marker;
+    });
+    if (f && firstReady){ map.setView(firstReady.getLatLng(), 12); }
+  }
+
+  // ── 목록(보조) ──
   function cityCard(c){
     if (c.ready){
       const a = document.createElement("a");
       a.className = "box ready";
-      a.href = withKey("vworld_map.html?city=" + encodeURIComponent(c.slug));
-      a.innerHTML =
-        `<h3>${c.name}</h3>` +
-        `<span class="pill">10개 명소</span>` +
-        `<span class="meta">지도 열기 →</span>`;
+      a.href = cityHref(c.slug);
+      a.innerHTML = `<h3>${esc(c.name)}</h3><span class="pill">10개 명소</span><span class="meta">지도 열기 →</span>`;
       return a;
     }
     const d = document.createElement("div");
     d.className = "box soon";
-    d.innerHTML =
-      `<h3>${c.name}</h3>` +
-      `<span class="pill">준비 중</span>` +
-      `<span class="meta">곧 공개</span>`;
+    d.innerHTML = `<h3>${esc(c.name)}</h3><span class="pill">준비 중</span><span class="meta">곧 공개</span>`;
     return d;
   }
-
-  function render(filter){
+  function renderList(filter){
     const f = (filter||"").trim().toLowerCase();
-    regionsEl.innerHTML = "";
-    let shown = 0;
+    regionsEl.innerHTML = ""; let shown = 0;
     DATA.regions.forEach(r => {
       const cities = r.cities.filter(c =>
-        !f || c.name.toLowerCase().includes(f) || c.slug.toLowerCase().includes(f) || r.region.toLowerCase().includes(f)
-      );
+        !f || c.name.toLowerCase().includes(f) || c.slug.toLowerCase().includes(f) || r.region.toLowerCase().includes(f));
       if (!cities.length) return;
       shown += cities.length;
-      const sec = document.createElement("section");
-      sec.className = "region";
+      const sec = document.createElement("section"); sec.className = "region";
       const readyN = cities.filter(c=>c.ready).length;
-      sec.innerHTML =
-        `<div class="region-head"><span class="ic">${r.icon||"📍"}</span>` +
-        `<h2>${r.region}</h2><span class="cnt">${readyN}/${cities.length} 이용 가능</span></div>` +
-        `<div class="grid"></div>`;
+      sec.innerHTML = `<div class="region-head"><span class="ic">${r.icon||"📍"}</span>` +
+        `<h2>${esc(r.region)}</h2><span class="cnt">${readyN}/${cities.length} 이용 가능</span></div><div class="grid"></div>`;
       const grid = sec.querySelector(".grid");
       cities.forEach(c => grid.appendChild(cityCard(c)));
       regionsEl.appendChild(sec);
@@ -146,18 +207,24 @@
     emptyEl.style.display = shown ? "none" : "block";
   }
 
-  fetch("data/cities.json")
-    .then(r => r.json())
-    .then(data => {
-      DATA = data;
-      const all = data.regions.flatMap(r => r.cities);
-      document.getElementById("readyCount").textContent = all.filter(c=>c.ready).length;
-      document.getElementById("totalCount").textContent = all.filter(c=>!c.ready).length;
-      render("");
-    })
-    .catch(() => { regionsEl.innerHTML = '<p class="foot">도시 목록을 불러오지 못했습니다.</p>'; });
+  function applyFilter(v){ filterMarkers((v||"").trim().toLowerCase()); renderList(v); }
 
-  document.getElementById("q").addEventListener("input", (e) => render(e.target.value));
+  Promise.all([
+    fetch("data/cities.json").then(r=>r.json()),
+    fetch("public/data/cities-centers.json").then(r=>r.json()).catch(()=>({}))
+  ]).then(([cities, centers]) => {
+    DATA = cities; CENTERS = centers;
+    const all = cities.regions.flatMap(r => r.cities);
+    document.getElementById("readyCount").textContent = all.filter(c=>c.ready).length;
+    document.getElementById("totalCount").textContent = all.filter(c=>!c.ready).length;
+    initMap(); buildMarkers(); renderList("");
+  }).catch(() => { regionsEl.innerHTML = '<p class="foot">도시 목록을 불러오지 못했습니다.</p>'; document.getElementById("listWrap").classList.add("open"); });
+
+  document.getElementById("q").addEventListener("input", e => applyFilter(e.target.value));
+  document.getElementById("listToggle").addEventListener("click", () => {
+    const w = document.getElementById("listWrap"); const open = w.classList.toggle("open");
+    document.getElementById("listToggle").textContent = (open?"▴ 목록 접기":"▾ 목록으로 보기 (전체 도시)");
+  });
 </script>
 </body>
 </html>

@@ -4,22 +4,27 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>GLB 커스텀 — 랜드마크 방 디자인</title>
-<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"
+  integrity="sha384-Ftcjj/GNLxPvzNDftO/oryXB9aGxsGZY9JGqsXG0uUKgQDl9RfDgsx9NJ/4IVNPe" crossorigin="anonymous"></script>
 <style>
   :root{ color-scheme:dark; --bg:#080a09; --panel:rgba(16,20,18,.78); --panel2:rgba(20,26,23,.94);
     --line:rgba(220,230,222,.14); --text:#f4f1ea; --muted:rgba(244,241,234,.6); --accent:#a9d8c8; --gold:#dcc079; }
   *{box-sizing:border-box;}
   body{margin:0; height:100vh; display:flex; flex-direction:column; overflow:hidden;
     font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif; color:var(--text); background:var(--bg);}
-  .top{display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); background:rgba(8,10,9,.9);}
+  .top{display:flex; align-items:center; gap:10px; padding:12px 18px; border-bottom:1px solid var(--line); background:rgba(8,10,9,.9); flex-wrap:wrap;}
   .top a.home{padding:7px 11px; border:1px solid var(--line); border-radius:8px; color:var(--text); text-decoration:none; font-size:12.5px;}
   .top a.home:hover{background:rgba(169,216,200,.12);}
   .kicker{color:var(--gold); font-size:10.5px; font-weight:800; letter-spacing:.13em; text-transform:uppercase;}
   .top h1{font-size:17px; margin:0;}
-  .main{flex:1; display:grid; grid-template-columns:248px 1fr; min-height:0;}
+  .top .palacebtn{margin-left:auto; display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border:1px solid var(--line);
+    border-radius:8px; font-size:12px; cursor:pointer; background:rgba(255,255,255,.05);}
+  .top .palacebtn:hover{background:rgba(169,216,200,.12);}
+  .main{flex:1; display:grid; grid-template-columns:268px 1fr; min-height:0;}
   /* 좌측: 랜드마크 인덱스 */
   .side{border-right:1px solid var(--line); overflow:auto; padding:10px;}
   .side .hd{font-size:10.5px; font-weight:800; letter-spacing:.1em; color:var(--gold); text-transform:uppercase; padding:6px 8px;}
+  .side .palaceName{font-size:11px; color:var(--muted); padding:0 8px 8px;}
   .lmrow{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; cursor:pointer; border:1px solid transparent;}
   .lmrow:hover{background:rgba(169,216,200,.1);}
   .lmrow.sel{background:rgba(169,216,200,.16); border-color:rgba(169,216,200,.4);}
@@ -27,27 +32,58 @@
     color:var(--gold); border:1px solid var(--line); border-radius:8px;}
   .lmrow .ic svg{width:20px;height:20px;}
   .lmrow .nm{font-weight:700; font-size:13.5px;}
-  .lmrow .rm{font-size:10.5px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;}
+  .lmrow .rm{font-size:10.5px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;}
+  .lmrow .chap{display:block; margin-top:3px; font-size:10.5px; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;}
+  .lmrow .chap .b{display:inline-block; background:rgba(169,216,200,.16); border-radius:5px; padding:0 5px; margin-right:4px; font-weight:800;}
   /* 가운데: 뷰어 + 로더 */
   .center{display:flex; flex-direction:column; min-width:0; padding:14px 18px; overflow:auto;}
-  .viewerbox{position:relative; flex:0 0 auto; height:min(52vh,520px); border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#0d1210;}
+  .viewerbox{position:relative; flex:0 0 auto; height:min(50vh,500px); border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#0d1210;}
   model-viewer{width:100%; height:100%; --poster-color:transparent;}
   .viewerbox iframe{width:100%; height:100%; border:0; display:none;}
-  .vlabel{position:absolute; top:10px; left:12px; font-size:12px; background:rgba(8,10,9,.7); padding:5px 10px; border-radius:8px; border:1px solid var(--line);}
+  .vlabel{position:absolute; top:10px; left:12px; font-size:12px; background:rgba(8,10,9,.7); padding:5px 10px; border-radius:8px; border:1px solid var(--line); z-index:3;}
+  /* 뷰 도구(내부/외부) */
+  .viewtools{position:absolute; top:10px; right:12px; display:flex; gap:6px; z-index:3;}
+  .viewtools button{padding:6px 10px; font-size:11.5px; border:1px solid var(--line); border-radius:8px; cursor:pointer;
+    background:rgba(8,10,9,.72); color:var(--text);}
+  .viewtools button:hover{background:rgba(169,216,200,.16);}
+  .viewtools button.on{background:rgba(169,216,200,.22); border-color:rgba(169,216,200,.5);}
+  /* 로드 오버레이(대용량 자동로드 방지) */
+  .loadover{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    background:radial-gradient(60% 60% at 50% 40%, rgba(169,216,200,.08), #0d1210); z-index:2;}
+  .loadover.hide{display:none;}
+  .loadover .glbnm{font-size:12.5px; color:var(--muted);}
+  .loadover .loadbtn{padding:11px 20px; border-radius:10px; background:#2b6; color:#04130a; font-weight:900; border:0; cursor:pointer; font-size:14px;}
+  .loadover .loadbtn:hover{filter:brightness(1.08);}
+  .loadover .prog{font-size:12px; color:var(--accent); min-height:16px;}
+  .assignbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; padding:12px 14px;
+    border:1px solid var(--line); border-radius:12px; background:var(--panel);}
+  .assignbar .cur{font-size:12.5px; color:var(--muted);}
+  .assignbar .cur b{color:var(--text);}
+  /* 학습 결합 패널 */
+  .learn{margin-top:14px; border:1px solid var(--line); border-radius:12px; padding:13px 15px; background:var(--panel);}
+  .learn h3{margin:0 0 4px; font-size:13px; color:var(--accent);}
+  .learn .chline{font-size:12px; color:var(--muted); margin-bottom:9px;}
+  .learn .chline b{color:var(--text);}
+  .learn .items{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px;}
+  .learn .it{border:1px solid var(--line); border-radius:9px; padding:8px 10px; background:rgba(255,255,255,.03);}
+  .learn .it .t{font-size:12px; font-weight:700;}
+  .learn .it .ty{font-size:10.5px; color:var(--gold); margin-top:2px;}
+  .learn .it .ds{font-size:11px; color:var(--muted); margin-top:3px; line-height:1.45; max-height:48px; overflow:hidden;}
+  .learn .none{font-size:12px; color:var(--muted);}
+  .learn .go{display:inline-flex; margin-top:10px; padding:8px 14px; border-radius:9px; background:rgba(169,216,200,.16);
+    border:1px solid rgba(169,216,200,.4); color:var(--text); text-decoration:none; font-size:12.5px; font-weight:800;}
+  .learn .go:hover{background:rgba(169,216,200,.26);}
   .loaders{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;}
   @media(max-width:760px){ .main{grid-template-columns:1fr;} .side{max-height:30vh;} .loaders{grid-template-columns:1fr;} }
   .card{border:1px solid var(--line); border-radius:12px; padding:12px 13px; background:var(--panel);}
   .card h3{font-size:12.5px; margin:0 0 8px; color:var(--accent);}
   .card .desc{font-size:11px; color:var(--muted); margin:0 0 8px; line-height:1.5;}
+  .card .desc a{color:var(--accent);}
   input[type=text]{width:100%; padding:8px 10px; border-radius:8px; background:var(--panel2); color:var(--text); border:1px solid var(--line); font-size:12.5px;}
   .btn{display:inline-flex; align-items:center; gap:6px; cursor:pointer; border:1px solid var(--line); background:rgba(255,255,255,.06);
     color:var(--text); border-radius:8px; padding:8px 12px; font-size:12.5px; margin-top:8px;}
   .btn:hover{background:rgba(169,216,200,.12);}
   .btn.primary{background:#2b6; border-color:#2b6; color:#04130a; font-weight:800;}
-  .assignbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; padding:12px 14px;
-    border:1px solid var(--line); border-radius:12px; background:var(--panel);}
-  .assignbar .cur{font-size:12.5px; color:var(--muted);}
-  .assignbar .cur b{color:var(--text);}
   .msg{font-size:12px; color:var(--gold); min-height:16px; margin-top:6px;}
 </style>
 </head>
@@ -57,14 +93,30 @@
     <a class="home" href="room-shopping.html">🛍 방 고르기</a>
     <a class="home" href="vworld_map.html">🗺 3D 지도</a>
     <div><div class="kicker">Memory Palace · GLB 커스텀</div><h1 id="title">랜드마크 방 디자인 바꾸기</h1></div>
+    <label class="palacebtn">📂 학습 JSON 바꾸기<input id="palaceFile" type="file" accept=".json,application/json" hidden /></label>
   </div>
   <div class="main">
-    <aside class="side"><div class="hd">랜드마크 인덱스</div><div id="lmlist"></div></aside>
+    <aside class="side">
+      <div class="hd">랜드마크 인덱스</div>
+      <div class="palaceName" id="palaceName">학습 콘텐츠를 불러오는 중…</div>
+      <div id="lmlist"></div>
+    </aside>
     <section class="center">
       <div class="viewerbox">
         <span class="vlabel" id="vlabel">방 미리보기</span>
-        <model-viewer id="mv" camera-controls auto-rotate shadow-intensity="1" exposure="1" interaction-prompt="none"></model-viewer>
+        <div class="viewtools" id="viewtools" style="display:none;">
+          <button id="btnOut" class="on" title="모델을 바깥에서 둘러보기">외부 둘러보기</button>
+          <button id="btnIn" title="방 안쪽에서 보기">내부 진입</button>
+        </div>
+        <model-viewer id="mv" camera-controls interaction-prompt="none" shadow-intensity="1" exposure="1"
+          camera-orbit="0deg 72deg 110%" min-camera-orbit="auto auto 0%" max-camera-orbit="auto 179deg 400%"
+          field-of-view="55deg" min-field-of-view="20deg" max-field-of-view="110deg" style="display:none;"></model-viewer>
         <iframe id="sk" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>
+        <div class="loadover" id="loadover">
+          <div class="glbnm" id="loadName">방을 선택하세요</div>
+          <button class="loadbtn" id="loadBtn">▶ 이 방 불러오기</button>
+          <div class="prog" id="loadProg">대용량 모델은 클릭할 때만 받습니다(로딩 절약).</div>
+        </div>
       </div>
 
       <div class="assignbar">
@@ -72,6 +124,12 @@
         <button class="btn primary" id="assignBtn">↑ 미리보기 GLB를 이 랜드마크에 지정</button>
         <button class="btn" id="exportBtn">landmarks.json 내보내기</button>
         <span class="msg" id="msg"></span>
+      </div>
+
+      <div class="learn" id="learn">
+        <h3>📖 이 방에 배정된 학습 내용</h3>
+        <div class="chline" id="learnChap">학습 콘텐츠를 불러오면 각 방에 어울리는 챕터가 자동 배정됩니다.</div>
+        <div class="items" id="learnItems"></div>
       </div>
 
       <div class="loaders">
@@ -84,7 +142,7 @@
         </div>
         <div class="card">
           <h3>② Sketchfab 모델 임베드</h3>
-          <p class="desc">스케치팹 모델 주소/ID를 넣으면 그 모델 뷰어를 임베드해 둘러봄. (전체 사이트는 임베드 불가 — <a href="https://sketchfab.com/feed" target="_blank" style="color:var(--accent)">새 탭에서 찾기</a>) 실제 방 적용은 ①의 .glb URL/파일로.</p>
+          <p class="desc">스케치팹 <b>모델 주소/ID</b>를 넣으면 그 모델 뷰어를 임베드해 둘러봄. 전체 사이트는 임베드 불가(X-Frame-Options) — 모델은 <a href="https://sketchfab.com/search?type=models" target="_blank" rel="noopener">새 탭에서 검색</a> 후 주소를 가져오세요. 실제 방 적용은 ①의 .glb로.</p>
           <input type="text" id="skUrl" placeholder="sketchfab.com/3d-models/…-xxxxx  또는  모델ID" />
           <button class="btn" id="skBtn">모델 임베드</button>
           <button class="btn" id="skClose">임베드 닫기</button>
@@ -107,12 +165,39 @@
   const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const $ = id => document.getElementById(id);
 
-  let LIB = null, sel = null, previewGlb = null;   // previewGlb = 현재 미리보기 중인 glb(URL)
-  const OVERRIDE_KEY = "glb_overrides";             // {landmarkId: glbUrl}
+  const P = new URLSearchParams(location.search);
+  const PALACE_URL = P.get("palace") || "public/data/korean_history.palace.json";
+  let LIB = null, PAL = null, sel = null, previewGlb = null, pendingSrc = null;
+  let ASSIGN = {};   // landmarkId -> { chapter, idx }
+  const OVERRIDE_KEY = "glb_overrides";
   const loadOverrides = () => { try { return JSON.parse(localStorage.getItem(OVERRIDE_KEY)||"{}"); } catch { return {}; } };
   const saveOverrides = o => localStorage.setItem(OVERRIDE_KEY, JSON.stringify(o));
   const resolveGlb = g => g.startsWith("BLOB:") ? (LIB.blobBase + g.slice(5)) : g;
   const glbOf = lm => { const ov = loadOverrides(); return ov[lm.id] || resolveGlb(lm.glb); };
+  const msg = t => { $("msg").textContent = t; };
+
+  // ── 추천 점수(room-shopping과 동일, 규칙 기반·LLM 0) ──
+  function scoreFor(text, lm){
+    const hay = text.toLowerCase(); let s=0; const hit=[];
+    (lm.tags||[]).forEach(t => { if (hay.includes(String(t).toLowerCase())){ s+=2; hit.push(t); } });
+    if (hay.includes(lm.name.toLowerCase())) s+=3;
+    if (lm.region && hay.includes(lm.region.split(" ")[0].toLowerCase())) s+=1;
+    return { s, hit };
+  }
+  // 챕터→랜드마크 그리디 배정(중복 없이) → ASSIGN[lmId] = {chapter, idx}
+  function computeAssign(){
+    ASSIGN = {};
+    if (!PAL || !LIB) return;
+    const corpus = (PAL.palace?.source?.corpus) || PAL.palace?.title || "";
+    const chapters = PAL.rooms || [];
+    const used = new Set();
+    chapters.forEach((ch, i) => {
+      const text = `${ch.name} ${ch.summary||""} ${corpus}`;
+      const ranked = LIB.landmarks.map(lm => ({ lm, ...scoreFor(text, lm) })).sort((a,b)=>b.s-a.s);
+      const pick = ranked.find(r => !used.has(r.lm.id)) || ranked[0];
+      if (pick){ used.add(pick.lm.id); ASSIGN[pick.lm.id] = { chapter: ch, idx: i }; }
+    });
+  }
 
   function renderList(){
     const el = $("lmlist"); el.innerHTML = "";
@@ -121,21 +206,93 @@
       const row = document.createElement("div");
       row.className = "lmrow" + (sel && sel.id===lm.id ? " sel":"");
       const glbName = (ov || lm.glb).split("/").pop().replace("BLOB:","");
-      row.innerHTML = `<div class="ic">${iconSvg(lm.icon)}</div><div><div class="nm">${esc(lm.name)}</div><div class="rm">${esc(glbName)}${ov?" ✎":""}</div></div>`;
+      const a = ASSIGN[lm.id];
+      const chapHtml = a
+        ? `<span class="chap"><span class="b">챕터 ${a.idx+1}</span>${esc(a.chapter.name)}</span>`
+        : `<span class="chap" style="color:var(--muted)">학습 미배정</span>`;
+      row.innerHTML = `<div class="ic">${iconSvg(lm.icon)}</div><div style="min-width:0">`+
+        `<div class="nm">${esc(lm.name)}</div>`+
+        `<div class="rm">${esc(glbName)}${ov?" ✎":""}</div>${chapHtml}</div>`;
       row.onclick = () => selectLm(lm);
       el.appendChild(row);
     });
   }
-  function showModel(url){
-    previewGlb = url; $("sk").style.display="none"; const mv=$("mv"); mv.style.display="block"; mv.src=url;
+
+  // ── 미리보기: 대용량 자동로드 방지(클릭 시 로드) ──
+  function showLoadPrompt(url){
+    pendingSrc = url;
+    $("mv").style.display="none"; $("sk").style.display="none";
+    $("loadover").classList.remove("hide");
+    $("loadName").textContent = url.split("/").pop().slice(0,46);
+    $("loadProg").textContent = "대용량 모델은 클릭할 때만 받습니다(로딩 절약).";
+    $("viewtools").style.display="none";
     $("vlabel").textContent = "방 미리보기 · " + url.split("/").pop().slice(0,40);
   }
+  function loadNow(){
+    if (!pendingSrc) return;
+    const mv = $("mv");
+    $("sk").style.display="none"; mv.style.display="block";
+    $("loadProg").textContent = "불러오는 중… 0%";
+    mv.src = pendingSrc; previewGlb = pendingSrc;
+    setView("out");
+  }
+  function showModel(url){           // 직접 URL/파일 → 즉시 로드
+    pendingSrc = url; previewGlb = url;
+    $("loadover").classList.add("hide");
+    const mv = $("mv"); $("sk").style.display="none"; mv.style.display="block"; mv.src = url;
+    $("vlabel").textContent = "방 미리보기 · " + url.split("/").pop().slice(0,40);
+    $("viewtools").style.display="flex"; setView("out");
+  }
+  function setView(mode){
+    const mv = $("mv");
+    if (mode==="in"){
+      mv.cameraTarget = "auto auto auto";
+      mv.cameraOrbit = "0deg 88deg 4%";
+      mv.fieldOfView = "100deg";
+      $("btnIn").classList.add("on"); $("btnOut").classList.remove("on");
+    } else {
+      mv.cameraOrbit = "0deg 72deg 110%";
+      mv.fieldOfView = "55deg";
+      $("btnOut").classList.add("on"); $("btnIn").classList.remove("on");
+    }
+    if (mv.jumpCameraToGoal) { try{ mv.jumpCameraToGoal(); }catch(e){} }
+  }
+
   function selectLm(lm){
     sel = lm; renderList();
     $("curLm").textContent = lm.name;
     const g = glbOf(lm); $("curGlb").textContent = g.split("/").pop();
-    showModel(g);
+    previewGlb = g;                  // 로드 전이라도 '지정'은 가능
+    showLoadPrompt(g);
+    renderLearn(lm);
   }
+
+  function renderLearn(lm){
+    const a = ASSIGN[lm.id];
+    const chEl = $("learnChap"), itEl = $("learnItems");
+    if (!a){ chEl.innerHTML = `<span style="color:var(--muted)">이 랜드마크에는 배정된 학습 챕터가 없습니다(학습 항목 수보다 방이 많음).</span>`; itEl.innerHTML=""; return; }
+    const ch = a.chapter, kept = ch.kept || [];
+    const glb = encodeURIComponent(glbOf(lm));
+    const url = `memory-walk.html?glb=${glb}&hotspots=${encodeURIComponent(lm.hotspots||"")}&lm=${lm.id}&palace=${encodeURIComponent(PALACE_URL)}&room=${encodeURIComponent(ch.id||"")}`;
+    chEl.innerHTML = `<b>챕터 ${a.idx+1} · ${esc(ch.name)}</b> — 학습 항목 ${kept.length}개. ${esc(ch.summary||"")}`;
+    itEl.innerHTML = kept.length
+      ? kept.slice(0,8).map(k => `<div class="it"><div class="t">${esc(k.title||k.id||"")}</div>`+
+          `${k.type?`<div class="ty">${esc(k.type)}</div>`:""}`+
+          `${k.summary||k.description?`<div class="ds">${esc(k.summary||k.description)}</div>`:""}</div>`).join("")
+        + (kept.length>8?`<div class="it" style="display:flex;align-items:center;justify-content:center;color:var(--muted)">+${kept.length-8}개 더</div>`:"")
+      : `<div class="none">이 챕터에 등록된 학습 항목이 없습니다.</div>`;
+    if (!$("learnGo")){ const a2=document.createElement("a"); a2.id="learnGo"; a2.className="go"; $("learn").appendChild(a2); }
+    $("learnGo").textContent = "이 학습 내용으로 방 입장 →"; $("learnGo").href = url;
+  }
+
+  // ── 버튼들 ──
+  $("loadBtn").onclick = loadNow;
+  $("btnIn").onclick = () => setView("in");
+  $("btnOut").onclick = () => setView("out");
+  $("mv").addEventListener("progress", e => {
+    const p = Math.round((e.detail.totalProgress||0)*100);
+    $("loadProg").textContent = p<100 ? `불러오는 중… ${p}%` : "완료 — 드래그로 둘러보기 · '내부 진입'으로 방 안쪽 보기";
+  });
   $("assignBtn").onclick = () => {
     if (!sel) { msg("왼쪽에서 랜드마크를 먼저 선택하세요."); return; }
     if (!previewGlb) { msg("미리보기 중인 GLB가 없습니다."); return; }
@@ -146,7 +303,7 @@
   $("exportBtn").onclick = () => {
     const ov = loadOverrides();
     const out = JSON.parse(JSON.stringify(LIB));
-    out.landmarks.forEach(lm => { if (ov[lm.id]) lm.glb = ov[lm.id]; });   // 지정된 것 반영(절대URL로)
+    out.landmarks.forEach(lm => { if (ov[lm.id]) lm.glb = ov[lm.id]; });
     const a=document.createElement("a");
     a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:"application/json"}));
     a.download="landmarks.json"; a.click();
@@ -158,15 +315,32 @@
     const raw = $("skUrl").value.trim(); if(!raw) return;
     const m = raw.match(/([0-9a-f]{32})/i) || raw.match(/-([0-9a-zA-Z]{32})/);
     const id = m ? m[1] : raw.split("/").pop();
-    $("mv").style.display="none"; const sk=$("sk"); sk.style.display="block";
+    $("mv").style.display="none"; $("loadover").classList.add("hide"); $("viewtools").style.display="none";
+    const sk=$("sk"); sk.style.display="block";
     sk.src = `https://sketchfab.com/models/${id}/embed?autostart=1&ui_theme=dark`;
     $("vlabel").textContent = "Sketchfab 임베드 · 미리보기용(방 적용은 .glb URL/파일)";
   };
-  $("skClose").onclick = () => { $("sk").style.display="none"; $("sk").src=""; $("mv").style.display="block"; };
-  const msg = t => { $("msg").textContent = t; };
+  $("skClose").onclick = () => { $("sk").style.display="none"; $("sk").src=""; if (sel) showLoadPrompt(glbOf(sel)); };
+  $("palaceFile").addEventListener("change", e => {
+    const f = e.target.files[0]; if (!f) return;
+    f.text().then(t => { PAL = JSON.parse(t); afterPalace(); msg("학습 콘텐츠 교체됨 — 배정 갱신."); })
+      .catch(err => msg("학습 JSON 읽기 실패: " + err.message));
+  });
 
-  fetch("public/data/landmarks.json").then(r=>r.json()).then(lib=>{ LIB=lib; renderList(); selectLm(lib.landmarks[0]); })
-    .catch(e=>{ $("lmlist").innerHTML = `<p style="color:#fd8;padding:10px">landmarks.json 로드 실패: ${e.message}</p>`; });
+  function afterPalace(){
+    $("palaceName").textContent = (PAL.palace?.title || "학습 콘텐츠") + (PAL.rooms? ` · ${PAL.rooms.length}개 챕터`:"");
+    computeAssign(); renderList(); if (sel) renderLearn(sel);
+  }
+
+  // ── 부트 ──
+  fetch("public/data/landmarks.json").then(r=>r.json()).then(lib=>{
+    LIB = lib;
+    return fetch(PALACE_URL).then(r=>r.ok?r.json():null).catch(()=>null);
+  }).then(pal=>{
+    PAL = pal;
+    if (PAL) afterPalace(); else { $("palaceName").textContent = "학습 콘텐츠 없음 — 상단에서 JSON을 불러오세요."; renderList(); }
+    if (LIB.landmarks[0]) selectLm(LIB.landmarks[0]);
+  }).catch(e=>{ $("lmlist").innerHTML = `<p style="color:#fd8;padding:10px">landmarks.json 로드 실패: ${e.message}</p>`; });
 </script>
 </body>
 </html>
