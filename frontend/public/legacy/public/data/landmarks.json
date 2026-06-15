@@ -1,0 +1,16 @@
+{
+  "note": "방 디자인 라이브러리(추천·쇼핑용). 현재 서울 종로 10곳 = repo에 있는 것 전부. 84개로 확장 시 같은 형식으로 추가.",
+  "blobBase": "https://9aiteam1.blob.core.windows.net/models/",
+  "landmarks": [
+    { "id":"gwanghwamun",  "name":"광화문",   "region":"서울 종로", "icon":"gate",     "glb":"public/assets/rooms/dining_kitchen_baked.glb", "hotspots":"public/data/dining-hotspots.json", "thumb":"public/assets/bg/gwanghwamun-card.jpg",   "tags":["조선","건국","통치","정문","정도전","인물","제도"] },
+    { "id":"gyeongbokgung","name":"경복궁",   "region":"서울 종로", "icon":"palace",   "glb":"BLOB:living_room.glb",          "hotspots":"public/data/living_room-hotspots.json",      "thumb":"public/assets/bg/gyeongbokgung-card.jpg", "tags":["조선","궁궐","법궁","통치","왕권","세종","제도","정치"] },
+    { "id":"cheonggye",    "name":"청계천",   "region":"서울 종로", "icon":"water",    "glb":"public/assets/rooms/loft.glb",  "hotspots":"public/data/loft-hotspots.json",             "tags":["도시","물길","영조","청계천","개혁","후기"] },
+    { "id":"deoksugung",   "name":"덕수궁",   "region":"서울 종로", "icon":"palace",   "glb":"BLOB:room_paris.glb",           "hotspots":"public/data/room_paris-hotspots.json",       "tags":["궁궐","근대","대한제국","개혁","정조","후기"] },
+    { "id":"sungnyemun",   "name":"숭례문",   "region":"서울 종로", "icon":"gate",     "glb":"BLOB:office_room.glb",          "hotspots":"public/data/office_room-hotspots.json",      "tags":["성문","한양도성","방어","왜란","임진왜란","국보","군사"] },
+    { "id":"bosingak",     "name":"보신각",   "region":"서울 종로", "icon":"bell",     "glb":"BLOB:school_class_room.glb",    "hotspots":"public/data/school_class_room-hotspots.json", "tags":["종","종로","교육","학문","사림","서원","문화"] },
+    { "id":"namsan",       "name":"남산서울타워","region":"서울 중구","icon":"tower",  "glb":"BLOB:ps1_phasmophobia.glb",     "hotspots":"public/data/ps1_phasmophobia-hotspots.json", "tags":["현대","전망","도시","서울"] },
+    { "id":"changdeokgung","name":"창덕궁",   "region":"서울 종로", "icon":"palace",   "glb":"BLOB:modern_bedroom.glb",      "hotspots":"public/data/modern_bedroom-hotspots.json",   "tags":["궁궐","후원","자연","문화","유네스코","정조","후기"] },
+    { "id":"jongmyo",      "name":"종묘",     "region":"서울 종로", "icon":"shrine",   "glb":"BLOB:neusa_frois.glb",         "hotspots":"public/data/neusa_frois-hotspots.json",      "tags":["제례","유교","왕실","사림","문화","사당","붕당"] },
+    { "id":"heunginjimun", "name":"흥인지문", "region":"서울 종로", "icon":"gate",     "glb":"public/assets/rooms/hintze_hall.glb", "hotspots":"public/data/hintze_hall-hotspots.json", "tags":["동대문","성문","시장","상업","실학","후기"] }
+  ]
+}

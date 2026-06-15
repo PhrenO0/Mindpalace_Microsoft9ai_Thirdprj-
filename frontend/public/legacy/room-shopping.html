@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>방 디자인 고르기 — 기억궁전</title>
+<style>
+  :root{ color-scheme:dark; --bg:#080a09; --panel:rgba(16,20,18,.72); --panel2:rgba(20,26,23,.94);
+    --line:rgba(220,230,222,.14); --text:#f4f1ea; --muted:rgba(244,241,234,.62); --accent:#a9d8c8; --gold:#dcc079; }
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+    color:var(--text); background:radial-gradient(60% 50% at 50% -5%, rgba(169,216,200,.14), transparent 60%), var(--bg);
+    -webkit-font-smoothing:antialiased; padding:0 0 60px;}
+  .top{position:sticky; top:0; z-index:10; backdrop-filter:blur(10px); background:rgba(8,10,9,.82);
+    border-bottom:1px solid var(--line); padding:16px 22px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .top .home{display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--line);
+    border-radius:9px; color:var(--text); text-decoration:none; font-size:13px;}
+  .top .home:hover{background:rgba(169,216,200,.12);}
+  .kicker{color:var(--gold); font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;}
+  h1{font-size:20px; margin:2px 0 0;}
+  .sub{color:var(--muted); font-size:12.5px; margin-top:2px;}
+  .wrap{max-width:980px; margin:24px auto 0; padding:0 22px;}
+  .filebtn{display:inline-flex; align-items:center; gap:6px; cursor:pointer; padding:8px 12px; border:1px solid var(--line);
+    border-radius:9px; font-size:13px; background:rgba(255,255,255,.05);}
+  .filebtn:hover{background:rgba(169,216,200,.12);}
+  .chap{display:flex; gap:18px; align-items:stretch; padding:16px; border:1px solid var(--line); border-radius:16px;
+    background:var(--panel); margin-bottom:14px;}
+  .chap .meta{flex:1; min-width:0;}
+  .chap .cidx{font-size:11px; font-weight:800; color:var(--gold);}
+  .chap h2{font-size:16px; margin:3px 0 5px;}
+  .chap .csum{font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .chap .ckept{font-size:11.5px; color:var(--accent); margin-top:6px;}
+  .pick{flex:0 0 300px; display:flex; flex-direction:column; gap:9px; border-left:1px solid var(--line); padding-left:18px;}
+  @media(max-width:680px){ .chap{flex-direction:column;} .pick{flex-basis:auto; border-left:none; border-top:1px solid var(--line); padding-left:0; padding-top:14px;} }
+  .rmcard{display:flex; align-items:center; gap:11px;}
+  .rmcard .ic{flex:0 0 42px; width:42px; height:42px; display:flex; align-items:center; justify-content:center;
+    color:var(--gold); border:1px solid var(--line); border-radius:11px; background:rgba(255,255,255,.05); overflow:hidden;}
+  .rmcard .ic svg{width:26px; height:26px;} .rmcard .ic img{width:100%;height:100%;object-fit:cover;}
+  .rmcard .nm{font-weight:800; font-size:15px;}
+  .rmcard .rg{font-size:11.5px; color:var(--muted);}
+  .why{font-size:11.5px; color:var(--accent); min-height:16px;}
+  .why .tag{display:inline-block; background:rgba(169,216,200,.14); border-radius:999px; padding:1px 8px; margin:2px 3px 0 0;}
+  select{width:100%; padding:8px 10px; border-radius:9px; background:var(--panel2); color:var(--text); border:1px solid var(--line); font-size:12.5px;}
+  .go{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; border-radius:10px;
+    background:#2b6; color:#04130a; font-weight:800; text-decoration:none; font-size:13.5px;}
+  .go:hover{filter:brightness(1.08);}
+  .startbar{position:sticky; bottom:0; margin-top:18px; padding:14px 22px; background:rgba(8,10,9,.92);
+    border-top:1px solid var(--line); display:flex; justify-content:center;}
+  .startbar a{padding:11px 22px; border-radius:12px; background:linear-gradient(120deg,var(--accent),var(--gold));
+    color:#04130a; font-weight:900; text-decoration:none; font-size:14.5px;}
+</style>
+</head>
+<body>
+  <div class="top">
+    <a class="home" href="region-select.html">← 지역 선택</a>
+    <div>
+      <div class="kicker">Memory Palace · 방 디자인 고르기</div>
+      <h1 id="title">학습 콘텐츠에 어울리는 방을 고르세요</h1>
+      <div class="sub" id="sub">학습 내용을 불러오면 챕터마다 가장 어울리는 방을 추천하고, 다른 방으로 바꿔볼 수 있어요.</div>
+    </div>
+    <label class="filebtn" style="margin-left:auto;">📂 다른 학습 JSON<input id="file" type="file" accept=".json,application/json" hidden /></label>
+  </div>
+
+  <div class="wrap" id="list"></div>
+  <div class="startbar"><a id="startBtn" href="#">▶ 첫 챕터부터 시작</a></div>
+
+<script>
+  // ── 아이콘(메모리워크와 동일 카테고리) ──
+  const ICON_PATHS = {
+    gate:'<path d="M3 9h18M5 9l2-3.5h10L19 9M6.5 9v10M17.5 9v10M6.5 19h11"/>',
+    palace:'<path d="M3 10h18M12 4 4 8h16zM6 10v8M18 10v8M6 18h12"/>',
+    tower:'<path d="M10 21V9M14 21V9M9.2 9h5.6l-1.1-3h-3.4zM12 6V3M8 21h8"/>',
+    water:'<path d="M3 8c2.5-2 5.5-2 8 0s5.5 2 8 0M3 13c2.5-2 5.5-2 8 0s5.5 2 8 0M3 18c2.5-2 5.5-2 8 0s5.5 2 8 0"/>',
+    shrine:'<path d="M3 9h18M12 4 5 8h14zM7 9v9M17 9v9M11 12h2v6h-2z"/>',
+    bell:'<path d="M12 3a5 5 0 0 1 5 5v5H7V8a5 5 0 0 1 5-5zM5 16h14M10.5 19h3"/>',
+    pin:'<path d="M12 2c-3.9 0-7 3-7 6.8 0 5 7 12.2 7 12.2s7-7.2 7-12.2C19 5 15.9 2 12 2z"/><circle cx="12" cy="9" r="2.3"/>'
+  };
+  const iconSvg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[k]||ICON_PATHS.pin}</svg>`;
+
+  const P = new URLSearchParams(location.search);
+  const PALACE_URL = P.get("palace") || "public/data/korean_history.palace.json";
+  const resolveGlb = (lib, g) => g.startsWith("BLOB:") ? (lib.blobBase + g.slice(5)) : g;
+
+  // ── 추천 점수: 챕터 텍스트에 랜드마크 태그/이름이 얼마나 겹치나(규칙 기반, LLM 0) ──
+  function scoreFor(chapterText, lm){
+    const hay = chapterText.toLowerCase();
+    let s = 0; const hit = [];
+    (lm.tags||[]).forEach(t => { if (hay.includes(String(t).toLowerCase())) { s += 2; hit.push(t); } });
+    if (hay.includes(lm.name.toLowerCase())) s += 3;
+    if (lm.region && hay.includes(lm.region.split(" ")[0].toLowerCase())) s += 1;
+    return { s, hit };
+  }
+
+  let LIB = null, PAL = null;
+
+  async function boot(file){
+    const lib = await (await fetch("public/data/landmarks.json")).json();
+    LIB = lib;
+    let pal;
+    if (file) pal = JSON.parse(await file.text());
+    else pal = await (await fetch(PALACE_URL)).json();
+    PAL = pal;
+    render();
+  }
+
+  function render(){
+    const lib = LIB.landmarks, corpus = (PAL.palace?.source?.corpus) || PAL.palace?.title || "";
+    document.getElementById("title").textContent = PAL.palace?.title || "학습 콘텐츠";
+    document.getElementById("sub").textContent = corpus + " · 챕터마다 어울리는 방을 추천했어요(다른 방으로 바꿀 수 있음).";
+    const chapters = PAL.rooms || [];
+    // 추천 개수 = min(챕터 수, 라이브러리 수)
+    const N = Math.min(chapters.length, lib.length);
+    // 각 챕터 점수표 + 그리디 배정(중복 없이)
+    const used = new Set(); const assigned = [];
+    const chapScores = chapters.map(ch => {
+      const text = `${ch.name} ${ch.summary||""} ${corpus}`;
+      return lib.map(lm => ({ lm, ...scoreFor(text, lm) })).sort((a,b)=>b.s-a.s);
+    });
+    for (let i=0;i<chapters.length;i++){
+      const ranked = chapScores[i];
+      let pick = ranked.find(r => !used.has(r.lm.id)) || ranked[0];
+      used.add(pick.lm.id); assigned.push(pick.lm.id);
+    }
+
+    const el = document.getElementById("list"); el.innerHTML = "";
+    chapters.forEach((ch, i) => {
+      const ranked = chapScores[i];
+      const card = document.createElement("div"); card.className = "chap";
+      card.innerHTML = `
+        <div class="meta">
+          <div class="cidx">챕터 ${i+1} / ${chapters.length}</div>
+          <h2>${esc(ch.name)}</h2>
+          <div class="csum">${esc(ch.summary||"")}</div>
+          <div class="ckept">학습 항목 ${ (ch.kept||[]).length }개</div>
+        </div>
+        <div class="pick">
+          <div class="rmcard"><div class="ic" data-ic></div><div><div class="nm" data-nm></div><div class="rg" data-rg></div></div></div>
+          <div class="why" data-why></div>
+          <select data-sel></select>
+          <a class="go" data-go>입장 →</a>
+        </div>`;
+      const sel = card.querySelector("[data-sel]");
+      ranked.forEach(r => { const o=document.createElement("option"); o.value=r.lm.id;
+        o.textContent = `${r.lm.name} · ${r.lm.region}${r.s>0?` (적합 ${r.s})`:""}`; sel.appendChild(o); });
+      sel.value = assigned[i];
+      const upd = () => {
+        const lm = lib.find(l => l.id === sel.value);
+        const r = ranked.find(x => x.lm.id === lm.id) || {hit:[]};
+        const ic = card.querySelector("[data-ic]");
+        ic.innerHTML = lm.thumb ? `<img src="${lm.thumb}" alt="">` : iconSvg(lm.icon);
+        card.querySelector("[data-nm]").textContent = lm.name;
+        card.querySelector("[data-rg]").textContent = lm.region;
+        card.querySelector("[data-why]").innerHTML = r.hit && r.hit.length
+          ? `어울리는 점: ` + r.hit.slice(0,4).map(t=>`<span class="tag">${esc(t)}</span>`).join("")
+          : `<span style="color:var(--muted)">직접 고른 방</span>`;
+        const glb = resolveGlb(LIB, lm.glb);
+        const url = `memory-walk.html?glb=${encodeURIComponent(glb)}&hotspots=${encodeURIComponent(lm.hotspots)}&lm=${lm.id}&palace=${encodeURIComponent(PALACE_URL)}&room=${encodeURIComponent(ch.id)}`;
+        card.querySelector("[data-go]").href = url;
+        card.dataset.url = url;
+      };
+      sel.addEventListener("change", upd); upd();
+      el.appendChild(card);
+    });
+    // 첫 챕터부터 시작
+    const first = el.querySelector(".chap");
+    document.getElementById("startBtn").href = first ? first.dataset.url : "#";
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  document.getElementById("file").addEventListener("change", e => { const f=e.target.files[0]; if(f) boot(f); });
+  boot().catch(err => { document.getElementById("list").innerHTML = `<p style="color:#fd8">불러오기 실패: ${err.message}</p>`; });
+</script>
+</body>
+</html>
