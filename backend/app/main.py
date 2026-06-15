@@ -122,8 +122,10 @@ if FRONTEND_DIST.exists():
     app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
 
     @app.get("/")
-    def serve_frontend_index() -> FileResponse:
-        return FileResponse(FRONTEND_DIST / "index.html")
+    def serve_frontend_index() -> RedirectResponse:
+        # 단일 진입점 통합: 루트(/)를 정본 흐름(지역 선택 → 지도 → 방)으로 리다이렉트.
+        #   기존 Mind Palace SPA(dist)는 보존되며 직접 경로로는 접근 가능하나, 진입은 region-select로 일원화.
+        return RedirectResponse("/legacy/region-select.html")
 
     @app.get("/{path:path}")
     def serve_frontend_path(path: str) -> FileResponse:
