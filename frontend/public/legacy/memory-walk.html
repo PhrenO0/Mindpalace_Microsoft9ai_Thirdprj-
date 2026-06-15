@@ -728,6 +728,14 @@
     //   ② 카메라를 그 반대쪽 벽 근처에 두고 정면을 바라봄.
     function roomEntryView(instant){
       const { eye, fwd } = entryFrame();                        // 동선 설계와 동일한 입장 시점(순서와 카메라 일치)
+      // 입장 시점이 지오메트리에 박히는지 검사(박물관 홀 등 큰/불규칙 모델) → 막히면 조망 시점으로 폴백
+      const meshes = []; scene.traverse(c => { if (c.isMesh && c.visible) meshes.push(c); });
+      let near = Infinity;
+      [fwd, fwd.clone().applyAxisAngle(UP, 0.6), fwd.clone().applyAxisAngle(UP, -0.6)].forEach(d => {
+        const h = new THREE.Raycaster(eye.clone(), d.clone().normalize(), 0.01, 6).intersectObjects(meshes, false)[0];
+        if (h) near = Math.min(near, h.distance);
+      });
+      if (near < 0.7) { overviewCam(instant); return; }         // 정면이 0.7m 안에서 막힘 = 카메라 박힘 → 조망
       const p = eye.clone();
       const tgt = new THREE.Vector3(p.x + fwd.x * 0.3, p.y - 0.18, p.z + fwd.z * 0.3); // 정면 + 살짝 아래
       const settle = () => { fpsReady = false; enterFPS(); };
