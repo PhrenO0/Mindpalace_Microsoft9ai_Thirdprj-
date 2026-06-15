@@ -243,7 +243,7 @@
       route.forEach((h,i)=>{ const d=document.createElement("i");
         d.className = i===active ? "on" : (i<active ? "done":"");
         if (h.entity) d.classList.add("study");
-        d.title = `${i+1}. ${h.entity ? h.entity.title : furnKO(h.label)}`; d.onclick = ()=>goTo(i); el.appendChild(d); });
+        d.title = `${i+1}. ${h.entity ? h.entity.title : dispName(h)}`; d.onclick = ()=>goTo(i); el.appendChild(d); });
     }
     const P = new URLSearchParams(location.search);
     const ROOM_GLB = P.get("glb") || "public/assets/rooms/3dfront-livingroom.glb";
@@ -519,9 +519,10 @@
           const hs = (j.hotspots || []).filter(h => Array.isArray(h.markerPosition) && h.detectedClass);
           if (hs.length) {
             anchors = hs.map(h => ({ pos: new THREE.Vector3(...h.markerPosition),
-              label: String(h.detectedClass || h.object || "object").toLowerCase(), name: h.object || "" }));
-            if (j.ordered) anchorsPreOrdered = true;   // 큐레이션된 동선(slot 순서) 그대로 사용
-            setStatus(`스캐너 핫스팟 ${anchors.length}개로 동선 구성${j.ordered ? " (큐레이션 순서)" : ""}`);
+              label: String(h.detectedClass || h.object || "object").toLowerCase(), name: h.object || "",
+              conf: (typeof h.confidence === "number" ? h.confidence : 0.5) }));
+            if (j.manualOrder) anchorsPreOrdered = true;   // manualOrder만 수동 순서 존중(그 외엔 동선 설계 파이프라인)
+            setStatus(`스캐너 핫스팟 ${anchors.length}개로 동선 구성${j.manualOrder ? " (수동 순서)" : " (자동 동선)"}`);
           }
         } catch (e) { console.warn("hotspots 로드 실패 → 이름표 앵커 사용", e); }
       }
@@ -551,6 +552,82 @@
       buildRoute(entities);
     }
 
+    // ── 동선 설계 파이프라인 (시점 프레임 기반) ──
+    //   ① 입장 시점(eye/fwd/right) ② 선별(유니크 전부 + 중복 군집은 4분면 대표) ③ 라벨(시점 기준 앞뒤·좌우)
+    //   ④ 순서(깊이 밴드 + 지그재그, 정면 고정물 우선). 라벨 유무 무관하게 동일 적용.
+    const _med = arr => { const s = arr.slice().sort((a,b)=>a-b), m = s.length>>1;
+      return s.length ? (s.length%2 ? s[m] : (s[m-1]+s[m])/2) : 0; };
+    // 정면 고정물(먼저 보게 됨) — 칠판·교탁·스크린·창문·문·수납/사물함·싱크/냉장고 등
+    const FIXTURE_RE = /board|chalk|white\s*board|black\s*board|screen|tv|projector|podium|teacher|window|door|cabinet|locker|shelf|sink|fridge|refriger|stove|oven|counter|칠판|교탁|스크린|창|문|수납|사물함|선반|싱크|냉장고|가스|오븐/i;
+    function dispName(h){ return (h && h.disp) || furnKO(h.label); }   // 중복엔 시점 기준 라벨, 아니면 클래스명
+
+    // 입장 시점 프레임: 마커 중심이 치우친 벽을 정면(fwd)으로, 반대쪽 벽 근처를 eye로.
+    function entryFrame(){
+      const c = bounds.getCenter(new THREE.Vector3());
+      const sz = bounds.getSize(new THREE.Vector3());
+      const mc = new THREE.Vector3();
+      if (anchors.length){ anchors.forEach(a => mc.add(a.pos)); mc.multiplyScalar(1/anchors.length); } else mc.copy(c);
+      const fx = mc.x - c.x, fz = mc.z - c.z;
+      const fwd = (Math.abs(fx) >= Math.abs(fz)) ? new THREE.Vector3(Math.sign(fx)||1,0,0)
+                                                 : new THREE.Vector3(0,0,Math.sign(fz)||1);
+      const half = Math.abs(fwd.x)*sz.x/2 + Math.abs(fwd.z)*sz.z/2;
+      const eye = new THREE.Vector3(c.x - fwd.x*Math.max(0.8, half-0.7), bounds.min.y+1.55, c.z - fwd.z*Math.max(0.8, half-0.7));
+      const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0,1,0)).normalize();
+      return { eye, fwd, right };
+    }
+
+    // 동선 설계: anchors → 선별·라벨·정렬된 anchors 배열 (minCount=엔티티 수, 최소 보장)
+    function designRoute(minCount){
+      const { eye, fwd, right } = entryFrame();
+      const clsOf = f => (f.a.label || "object").toLowerCase();
+      const feat = anchors.map(a => { const d = a.pos.clone().sub(eye);
+        return { a, depth: d.dot(fwd), lat: d.dot(right) }; });
+      // 클래스별 군집
+      const groups = new Map();
+      feat.forEach(f => { const c = clsOf(f); if(!groups.has(c)) groups.set(c, []); groups.get(c).push(f); });
+      // ② 선별: 유니크 전부 + 중복 군집은 4분면(앞뒤×좌우) 대표(시점 최근접 1개)
+      let picked = [];
+      for (const [, arr] of groups){
+        if (arr.length <= 1){ picked.push(arr[0]); continue; }
+        const dMed = _med(arr.map(f=>f.depth)), lMed = _med(arr.map(f=>f.lat)), quad = {};
+        arr.forEach(f => { const k = (f.depth<=dMed?"F":"B")+(f.lat<lMed?"L":"R"), s = f.depth*f.depth + f.lat*f.lat;
+          if (!quad[k] || s < quad[k]._s){ f._s = s; quad[k] = f; } });
+        picked.push(...Object.values(quad));
+      }
+      // 최소 보장: 엔티티 수보다 적으면 남은 것 중 기존 선택과 가장 먼 것부터 보충(고른 분포)
+      const has = new Set(picked.map(f=>f.a)), rest = feat.filter(f=>!has.has(f.a));
+      while (picked.length < minCount && rest.length){
+        let bi=0, bd=-1;
+        rest.forEach((f,i)=>{ let m=Infinity; picked.forEach(p=>{ const dd=Math.hypot(p.depth-f.depth,p.lat-f.lat); if(dd<m)m=dd; }); if(m>bd){bd=m;bi=i;} });
+        picked.push(rest.splice(bi,1)[0]);
+      }
+      // 상한
+      const CAP = Math.max(minCount, 16);
+      if (picked.length > CAP){ picked.sort((x,y)=>(y.a.conf||.5)-(x.a.conf||.5)); picked.length = CAP; }
+      // ③ 라벨(중복 군집만): 앞/뒤 × 좌/우 (시점 기준)
+      const pg = new Map();
+      picked.forEach(f => { const c = clsOf(f); if(!pg.has(c)) pg.set(c, []); pg.get(c).push(f); });
+      for (const [c, arr] of pg){
+        arr.forEach(f => f.a.disp = null);
+        if (arr.length <= 1) continue;
+        const dMed = _med(arr.map(f=>f.depth)), lMed = _med(arr.map(f=>f.lat)), seen = {};
+        arr.forEach(f => { const base = `${f.depth<=dMed?"앞":"뒤"} ${f.lat<lMed?"왼쪽":"오른쪽"} ${furnKO(c)}`;
+          seen[base] = (seen[base]||0)+1; f.a.disp = seen[base]>1 ? `${base}${seen[base]}` : base; });
+      }
+      // ④ 순서: 깊이 밴드 + 지그재그, 정면 고정물은 첫 밴드로
+      const ds = picked.map(f=>f.depth), dlo = Math.min(...ds), dhi = Math.max(...ds);
+      const N = Math.min(4, Math.max(2, Math.round(picked.length/4)));
+      picked.forEach(f => { f._fix = FIXTURE_RE.test(clsOf(f)) ? 1 : 0;
+        f._band = Math.min(N-1, Math.floor(((f.depth-dlo)/((dhi-dlo)||1))*N));
+        if (f._fix && f.depth <= dlo + (dhi-dlo)*0.5) f._band = 0; });   // 앞쪽 고정물 끌어올림
+      picked.sort((x,y) => {
+        if (x._band !== y._band) return x._band - y._band;              // 가까운 밴드 먼저
+        if (x._fix !== y._fix) return y._fix - x._fix;                  // 같은 밴드 내 고정물 먼저
+        return (x.lat - y.lat) * (x._band % 2 === 0 ? 1 : -1);          // 짝수 밴드 좌→우, 홀수 우→좌(지그재그)
+      });
+      return picked.map(f=>f.a);
+    }
+
     // ── 동선 설계 + 엔티티 매핑 ──
     function buildRoute(entities) {
       if (!anchors.length) { setStatus("이 방에서 가구 앵커를 못 찾았습니다(이름 없는 GLB?)."); return; }
@@ -558,8 +635,8 @@
       const spawn = new THREE.Vector3(bounds.min.x + sz.x*0.12, bounds.min.y + 1.5, bounds.max.z - sz.z*0.12);
       spawnPos = spawn.clone();
       const floor = bounds.min.y;
-      // 1) 동선 순서: 사용자 편집본이면 저장된 순서 그대로, 아니면 최근접 이웃 정렬
-      const ordered = anchorsPreOrdered ? anchors.slice() : nearestRoute(anchors, spawn);
+      // 1) 동선 순서: 수동 순서(편집본·manualOrder)면 그대로, 아니면 동선 설계 파이프라인
+      const ordered = anchorsPreOrdered ? anchors.slice() : designRoute(entities.length);
       // 2) 학습 엔티티 배정 — ① 저장된 직접 바인딩(entityId) 우선(편집·이동·순서변경에도 유지),
       //    ② 남은 엔티티는 타입 친화(typeAffinity)로.
       const entOf = new Map(), used = new Set(), boundEnts = new Set();
@@ -583,7 +660,7 @@
       //     공중에 떠 사물과 분리돼 보였음. → 폐기)
       route = ordered.map((a, i) => {
         const p = a.pos.clone();
-        return { pos: p, label: a.label, name: a.name, entity: entOf.get(a) || null, number: i+1, eye: p.clone() };
+        return { pos: p, label: a.label, name: a.name, disp: a.disp || null, entity: entOf.get(a) || null, number: i+1, eye: p.clone() };
       });
       // 겹쳐 보이는 마커(같은 XZ 0.4m 내)만 황금각 나선으로 x,z 살짝 흩음.
       const _cl = [];
@@ -637,18 +714,9 @@
     //   ① 마커가 많은 쪽(부엌)을 가장 가까운 벽 축으로 스냅 → 대각선이 아닌 똑바른 정면
     //   ② 카메라를 그 반대쪽 벽 근처에 두고 정면을 바라봄.
     function roomEntryView(instant){
-      const c = bounds.getCenter(new THREE.Vector3());
-      const sz = bounds.getSize(new THREE.Vector3());
-      const mc = new THREE.Vector3();                          // 마커(가구) 중심 → 부엌 쪽으로 치우침
-      if (route.length){ route.forEach(h => mc.add(h.pos)); mc.multiplyScalar(1 / route.length); } else mc.copy(c);
-      const fx = mc.x - c.x, fz = mc.z - c.z;
-      const fwd = (Math.abs(fx) >= Math.abs(fz))              // 가장 가까운 벽 축으로 스냅(직교 정면)
-        ? new THREE.Vector3(Math.sign(fx) || 1, 0, 0)
-        : new THREE.Vector3(0, 0, Math.sign(fz) || 1);
-      const halfFwd = Math.abs(fwd.x) * sz.x / 2 + Math.abs(fwd.z) * sz.z / 2;
-      const dist = Math.max(0.8, halfFwd - 0.7);              // 정면 벽 반대쪽 끝(방 안)
-      const p = new THREE.Vector3(c.x - fwd.x * dist, bounds.min.y + 1.55, c.z - fwd.z * dist);
-      const tgt = new THREE.Vector3(c.x + fwd.x * 0.3, p.y - 0.18, c.z + fwd.z * 0.3); // 정면 + 살짝 아래
+      const { eye, fwd } = entryFrame();                        // 동선 설계와 동일한 입장 시점(순서와 카메라 일치)
+      const p = eye.clone();
+      const tgt = new THREE.Vector3(p.x + fwd.x * 0.3, p.y - 0.18, p.z + fwd.z * 0.3); // 정면 + 살짝 아래
       const settle = () => { fpsReady = false; enterFPS(); };
       if (instant){ camera.position.copy(p); controls.target.copy(tgt); controls.update(); settle(); }
       else flyTo(p, tgt, 700, settle);
@@ -768,7 +836,7 @@
         const study = !!h.entity;
         const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = study ? "#dcc079" : "#a9d8c8";
         const fn = document.createElement("span"); fn.className = "fn";
-        fn.textContent = `${h.number}. ` + furnKO(h.label);
+        fn.textContent = `${h.number}. ` + dispName(h);
         const ent = document.createElement("span"); ent.className = "ent" + (study ? "" : " none");
         ent.textContent = study ? h.entity.title : "—";
         const del = document.createElement("button");
@@ -811,7 +879,7 @@
       if (e) {                                   // 학습 항목이 배치된 가구
         $("cType").textContent = e.type || "";
         $("cTitle").textContent = e.title;
-        $("cFurn").textContent = `📍 ${furnKO(h.label)}에 배치`;
+        $("cFurn").textContent = `📍 ${dispName(h)}에 배치`;
         setCardImage(e.image || (THEME && THEME.cardImage) || "");   // 엔티티별 이미지 우선, 없으면 랜드마크 공통
         $("cCap").textContent = e.caption || "";
         $("cDesc").textContent = e.description || "";
@@ -825,7 +893,7 @@
         }
       } else {                                   // 가구만 있는 지점(학습 미배치)
         $("cType").textContent = "가구";
-        $("cTitle").textContent = furnKO(h.label);
+        $("cTitle").textContent = dispName(h);
         $("cFurn").textContent = `📍 ${h.number}번째 지점`;
         setCardImage("");
         $("cCap").textContent = "";
@@ -1056,7 +1124,7 @@
         g.fillStyle = "#0b0f0d"; g.font = "800 8.5px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
         g.fillText(String(n.i + 1), n.dx, n.dz + 0.5);
         g.fillStyle = "rgba(244,241,234,.62)"; g.font = "600 9.5px 'Malgun Gothic',Arial";
-        g.fillText(furnKO(n.h.label), n.dx, n.dz + 17);
+        g.fillText(dispName(n.h), n.dx, n.dz + 17);
       });
       const capRects = [];   // 이미 그린 캡션 박스 — 겹치면 그 캡션은 생략(텍스트 충돌 방지)
       eNodes.filter(n => n.h.ent).forEach(n => {
@@ -1070,7 +1138,7 @@
         g.fillStyle = "#ecd9a0"; g.font = "800 13.5px 'Malgun Gothic',Arial";
         g.fillText(n.h.ent, n.dx, n.dz - 23);                            // 지식(개념) — 주인공
         g.fillStyle = "rgba(244,241,234,.5)"; g.font = "600 9px 'Malgun Gothic',Arial";
-        g.fillText(furnKO(n.h.label), n.dx, n.dz + 23);                  // 어느 사물에 걸렸나
+        g.fillText(dispName(n.h), n.dx, n.dz + 23);                  // 어느 사물에 걸렸나
         // 휠로 확대하면 캡션(설명)이 펼쳐진다 — 이미 그린 캡션과 겹치면 생략(텍스트 충돌 방지)
         if (capOn && n.h.capt) {
           const words = String(n.h.capt);
@@ -1204,7 +1272,7 @@
       if (moveMode) { addMode = false; $("addBtn").style.borderColor = ""; $("addBtn").style.color = ""; }
       $("moveBtn").style.borderColor = moveMode ? "var(--gold)" : "";
       $("moveBtn").style.color = moveMode ? "var(--gold)" : "";
-      setStatus(moveMode ? `✥ <b>#${route[activeIdx].number} ${furnKO(route[activeIdx].label)}</b>를 둘 자리를 화면에서 클릭 (Esc=취소)`
+      setStatus(moveMode ? `✥ <b>#${route[activeIdx].number} ${dispName(route[activeIdx])}</b>를 둘 자리를 화면에서 클릭 (Esc=취소)`
                          : "이동 모드 해제");
     };
     addEventListener("keydown", e => {
@@ -1242,7 +1310,7 @@
       route.splice(i, 1);
       if (activeIdx === i) { activeIdx = -1; $("card").style.display = "none"; }
       else if (activeIdx > i) activeIdx--;
-      renumberRoute(`− <b>${furnKO(h.label)}</b> 삭제 (${route.length}개) — ↶로 되돌리기 가능`);
+      renumberRoute(`− <b>${dispName(h)}</b> 삭제 (${route.length}개) — ↶로 되돌리기 가능`);
     }
     // 지금 route 전체를 localStorage 오버라이드로 저장(스캐너 JSON과 동일 형식) — 새로고침에도 유지.
     function saveOverrideFromRoute() {
