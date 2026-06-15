@@ -595,14 +595,18 @@
       // 클래스별 군집
       const groups = new Map();
       feat.forEach(f => { const c = clsOf(f); if(!groups.has(c)) groups.set(c, []); groups.get(c).push(f); });
-      // ② 선별: 유니크 전부 + 중복 군집은 4분면(앞뒤×좌우) 대표(시점 최근접 1개)
+      // ② 선별: 유니크 전부 + 중복 군집은 "대각선 끝(진짜 모서리)" 4개.
+      //    각 코너는 그 대각선 방향으로 가장 먼 항목 → 오른쪽 끝·왼쪽 끝·앞끝·뒤끝이 확실히 포함됨.
+      //    (이전엔 '시점 최근접'을 골라 가운데로 쏠리고 끝이 빠졌음 → 수정)
+      const CORNERS = { FL: f=>-f.depth-f.lat, FR: f=>-f.depth+f.lat, BL: f=>f.depth-f.lat, BR: f=>f.depth+f.lat };
       let picked = [];
       for (const [, arr] of groups){
         if (arr.length <= 1){ picked.push(arr[0]); continue; }
-        const dMed = _med(arr.map(f=>f.depth)), lMed = _med(arr.map(f=>f.lat)), quad = {};
-        arr.forEach(f => { const k = (f.depth<=dMed?"F":"B")+(f.lat<lMed?"L":"R"), s = f.depth*f.depth + f.lat*f.lat;
-          if (!quad[k] || s < quad[k]._s){ f._s = s; quad[k] = f; } });
-        picked.push(...Object.values(quad));
+        const chosen = new Set();
+        for (const k in CORNERS){ let best=null, bs=-Infinity;
+          arr.forEach(f => { const s = CORNERS[k](f); if (s > bs){ bs = s; best = f; } });
+          if (best) chosen.add(best); }
+        picked.push(...chosen);                          // 작은 군집은 한 항목이 여러 코너 → Set으로 중복 제거
       }
       // 최소 보장: 엔티티 수보다 적으면 남은 것 중 기존 선택과 가장 먼 것부터 보충(고른 분포)
       const has = new Set(picked.map(f=>f.a)), rest = feat.filter(f=>!has.has(f.a));
