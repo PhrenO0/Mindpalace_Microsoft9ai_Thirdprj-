@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GLB 커스텀 — 랜드마크 방 디자인</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>
+  :root{ color-scheme:dark; --bg:#080a09; --panel:rgba(16,20,18,.78); --panel2:rgba(20,26,23,.94);
+    --line:rgba(220,230,222,.14); --text:#f4f1ea; --muted:rgba(244,241,234,.6); --accent:#a9d8c8; --gold:#dcc079; }
+  *{box-sizing:border-box;}
+  body{margin:0; height:100vh; display:flex; flex-direction:column; overflow:hidden;
+    font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif; color:var(--text); background:var(--bg);}
+  .top{display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); background:rgba(8,10,9,.9);}
+  .top a.home{padding:7px 11px; border:1px solid var(--line); border-radius:8px; color:var(--text); text-decoration:none; font-size:12.5px;}
+  .top a.home:hover{background:rgba(169,216,200,.12);}
+  .kicker{color:var(--gold); font-size:10.5px; font-weight:800; letter-spacing:.13em; text-transform:uppercase;}
+  .top h1{font-size:17px; margin:0;}
+  .main{flex:1; display:grid; grid-template-columns:248px 1fr; min-height:0;}
+  /* 좌측: 랜드마크 인덱스 */
+  .side{border-right:1px solid var(--line); overflow:auto; padding:10px;}
+  .side .hd{font-size:10.5px; font-weight:800; letter-spacing:.1em; color:var(--gold); text-transform:uppercase; padding:6px 8px;}
+  .lmrow{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; cursor:pointer; border:1px solid transparent;}
+  .lmrow:hover{background:rgba(169,216,200,.1);}
+  .lmrow.sel{background:rgba(169,216,200,.16); border-color:rgba(169,216,200,.4);}
+  .lmrow .ic{flex:0 0 30px; width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    color:var(--gold); border:1px solid var(--line); border-radius:8px;}
+  .lmrow .ic svg{width:20px;height:20px;}
+  .lmrow .nm{font-weight:700; font-size:13.5px;}
+  .lmrow .rm{font-size:10.5px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;}
+  /* 가운데: 뷰어 + 로더 */
+  .center{display:flex; flex-direction:column; min-width:0; padding:14px 18px; overflow:auto;}
+  .viewerbox{position:relative; flex:0 0 auto; height:min(52vh,520px); border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#0d1210;}
+  model-viewer{width:100%; height:100%; --poster-color:transparent;}
+  .viewerbox iframe{width:100%; height:100%; border:0; display:none;}
+  .vlabel{position:absolute; top:10px; left:12px; font-size:12px; background:rgba(8,10,9,.7); padding:5px 10px; border-radius:8px; border:1px solid var(--line);}
+  .loaders{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;}
+  @media(max-width:760px){ .main{grid-template-columns:1fr;} .side{max-height:30vh;} .loaders{grid-template-columns:1fr;} }
+  .card{border:1px solid var(--line); border-radius:12px; padding:12px 13px; background:var(--panel);}
+  .card h3{font-size:12.5px; margin:0 0 8px; color:var(--accent);}
+  .card .desc{font-size:11px; color:var(--muted); margin:0 0 8px; line-height:1.5;}
+  input[type=text]{width:100%; padding:8px 10px; border-radius:8px; background:var(--panel2); color:var(--text); border:1px solid var(--line); font-size:12.5px;}
+  .btn{display:inline-flex; align-items:center; gap:6px; cursor:pointer; border:1px solid var(--line); background:rgba(255,255,255,.06);
+    color:var(--text); border-radius:8px; padding:8px 12px; font-size:12.5px; margin-top:8px;}
+  .btn:hover{background:rgba(169,216,200,.12);}
+  .btn.primary{background:#2b6; border-color:#2b6; color:#04130a; font-weight:800;}
+  .assignbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; padding:12px 14px;
+    border:1px solid var(--line); border-radius:12px; background:var(--panel);}
+  .assignbar .cur{font-size:12.5px; color:var(--muted);}
+  .assignbar .cur b{color:var(--text);}
+  .msg{font-size:12px; color:var(--gold); min-height:16px; margin-top:6px;}
+</style>
+</head>
+<body>
+  <div class="top">
+    <a class="home" href="region-select.html">← 처음</a>
+    <a class="home" href="room-shopping.html">🛍 방 고르기</a>
+    <div><div class="kicker">Memory Palace · GLB 커스텀</div><h1 id="title">랜드마크 방 디자인 바꾸기</h1></div>
+  </div>
+  <div class="main">
+    <aside class="side"><div class="hd">랜드마크 인덱스</div><div id="lmlist"></div></aside>
+    <section class="center">
+      <div class="viewerbox">
+        <span class="vlabel" id="vlabel">방 미리보기</span>
+        <model-viewer id="mv" camera-controls auto-rotate shadow-intensity="1" exposure="1" interaction-prompt="none"></model-viewer>
+        <iframe id="sk" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>
+      </div>
+
+      <div class="assignbar">
+        <div class="cur">선택: <b id="curLm">—</b> · 현재 방 GLB: <b id="curGlb">—</b></div>
+        <button class="btn primary" id="assignBtn">↑ 미리보기 GLB를 이 랜드마크에 지정</button>
+        <button class="btn" id="exportBtn">landmarks.json 내보내기</button>
+        <span class="msg" id="msg"></span>
+      </div>
+
+      <div class="loaders">
+        <div class="card">
+          <h3>① GLB 파일/URL 불러오기</h3>
+          <p class="desc">직접 .glb 주소를 붙여넣거나 파일을 올리면 바로 미리보기 → 위 버튼으로 랜드마크에 지정.</p>
+          <input type="text" id="glbUrl" placeholder="https://…/model.glb" />
+          <button class="btn" id="glbUrlBtn">URL 불러오기</button>
+          <label class="btn" style="margin-left:6px;">📂 파일<input id="glbFile" type="file" accept=".glb,model/gltf-binary" hidden /></label>
+        </div>
+        <div class="card">
+          <h3>② Sketchfab 모델 임베드</h3>
+          <p class="desc">스케치팹 모델 주소/ID를 넣으면 그 모델 뷰어를 임베드해 둘러봄. (전체 사이트는 임베드 불가 — <a href="https://sketchfab.com/feed" target="_blank" style="color:var(--accent)">새 탭에서 찾기</a>) 실제 방 적용은 ①의 .glb URL/파일로.</p>
+          <input type="text" id="skUrl" placeholder="sketchfab.com/3d-models/…-xxxxx  또는  모델ID" />
+          <button class="btn" id="skBtn">모델 임베드</button>
+          <button class="btn" id="skClose">임베드 닫기</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  const ICON_PATHS = {
+    gate:'<path d="M3 9h18M5 9l2-3.5h10L19 9M6.5 9v10M17.5 9v10M6.5 19h11"/>',
+    palace:'<path d="M3 10h18M12 4 4 8h16zM6 10v8M18 10v8M6 18h12"/>',
+    tower:'<path d="M10 21V9M14 21V9M9.2 9h5.6l-1.1-3h-3.4zM12 6V3M8 21h8"/>',
+    water:'<path d="M3 8c2.5-2 5.5-2 8 0s5.5 2 8 0M3 13c2.5-2 5.5-2 8 0s5.5 2 8 0M3 18c2.5-2 5.5-2 8 0s5.5 2 8 0"/>',
+    shrine:'<path d="M3 9h18M12 4 5 8h14zM7 9v9M17 9v9M11 12h2v6h-2z"/>',
+    bell:'<path d="M12 3a5 5 0 0 1 5 5v5H7V8a5 5 0 0 1 5-5zM5 16h14M10.5 19h3"/>',
+    pin:'<path d="M12 2c-3.9 0-7 3-7 6.8 0 5 7 12.2 7 12.2s7-7.2 7-12.2C19 5 15.9 2 12 2z"/><circle cx="12" cy="9" r="2.3"/>'
+  };
+  const iconSvg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[k]||ICON_PATHS.pin}</svg>`;
+  const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const $ = id => document.getElementById(id);
+
+  let LIB = null, sel = null, previewGlb = null;   // previewGlb = 현재 미리보기 중인 glb(URL)
+  const OVERRIDE_KEY = "glb_overrides";             // {landmarkId: glbUrl}
+  const loadOverrides = () => { try { return JSON.parse(localStorage.getItem(OVERRIDE_KEY)||"{}"); } catch { return {}; } };
+  const saveOverrides = o => localStorage.setItem(OVERRIDE_KEY, JSON.stringify(o));
+  const resolveGlb = g => g.startsWith("BLOB:") ? (LIB.blobBase + g.slice(5)) : g;
+  const glbOf = lm => { const ov = loadOverrides(); return ov[lm.id] || resolveGlb(lm.glb); };
+
+  function renderList(){
+    const el = $("lmlist"); el.innerHTML = "";
+    LIB.landmarks.forEach(lm => {
+      const ov = loadOverrides()[lm.id];
+      const row = document.createElement("div");
+      row.className = "lmrow" + (sel && sel.id===lm.id ? " sel":"");
+      const glbName = (ov || lm.glb).split("/").pop().replace("BLOB:","");
+      row.innerHTML = `<div class="ic">${iconSvg(lm.icon)}</div><div><div class="nm">${esc(lm.name)}</div><div class="rm">${esc(glbName)}${ov?" ✎":""}</div></div>`;
+      row.onclick = () => selectLm(lm);
+      el.appendChild(row);
+    });
+  }
+  function showModel(url){
+    previewGlb = url; $("sk").style.display="none"; const mv=$("mv"); mv.style.display="block"; mv.src=url;
+    $("vlabel").textContent = "방 미리보기 · " + url.split("/").pop().slice(0,40);
+  }
+  function selectLm(lm){
+    sel = lm; renderList();
+    $("curLm").textContent = lm.name;
+    const g = glbOf(lm); $("curGlb").textContent = g.split("/").pop();
+    showModel(g);
+  }
+  $("assignBtn").onclick = () => {
+    if (!sel) { msg("왼쪽에서 랜드마크를 먼저 선택하세요."); return; }
+    if (!previewGlb) { msg("미리보기 중인 GLB가 없습니다."); return; }
+    const ov = loadOverrides(); ov[sel.id] = previewGlb; saveOverrides(ov);
+    msg(`✓ ${sel.name} → ${previewGlb.split("/").pop()} 로 지정(이 브라우저에 저장). 영구 반영은 내보내기 후 커밋.`);
+    renderList(); $("curGlb").textContent = previewGlb.split("/").pop();
+  };
+  $("exportBtn").onclick = () => {
+    const ov = loadOverrides();
+    const out = JSON.parse(JSON.stringify(LIB));
+    out.landmarks.forEach(lm => { if (ov[lm.id]) lm.glb = ov[lm.id]; });   // 지정된 것 반영(절대URL로)
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:"application/json"}));
+    a.download="landmarks.json"; a.click();
+    msg("landmarks.json 다운로드됨 — repo의 public/data/landmarks.json에 덮어쓰고 커밋하면 영구 반영.");
+  };
+  $("glbUrlBtn").onclick = () => { const u=$("glbUrl").value.trim(); if(u) showModel(u); };
+  $("glbFile").addEventListener("change", e => { const f=e.target.files[0]; if(f) showModel(URL.createObjectURL(f)); });
+  $("skBtn").onclick = () => {
+    const raw = $("skUrl").value.trim(); if(!raw) return;
+    const m = raw.match(/([0-9a-f]{32})/i) || raw.match(/-([0-9a-zA-Z]{32})/);
+    const id = m ? m[1] : raw.split("/").pop();
+    $("mv").style.display="none"; const sk=$("sk"); sk.style.display="block";
+    sk.src = `https://sketchfab.com/models/${id}/embed?autostart=1&ui_theme=dark`;
+    $("vlabel").textContent = "Sketchfab 임베드 · 미리보기용(방 적용은 .glb URL/파일)";
+  };
+  $("skClose").onclick = () => { $("sk").style.display="none"; $("sk").src=""; $("mv").style.display="block"; };
+  const msg = t => { $("msg").textContent = t; };
+
+  fetch("public/data/landmarks.json").then(r=>r.json()).then(lib=>{ LIB=lib; renderList(); selectLm(lib.landmarks[0]); })
+    .catch(e=>{ $("lmlist").innerHTML = `<p style="color:#fd8;padding:10px">landmarks.json 로드 실패: ${e.message}</p>`; });
+</script>
+</body>
+</html>
