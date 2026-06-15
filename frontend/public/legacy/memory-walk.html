@@ -36,6 +36,15 @@
     .lmicon[hidden]{display:none;}
     .cimg{width:100%;max-height:172px;object-fit:cover;border-radius:10px;margin:8px 0 4px;display:block;border:1px solid var(--line);}
     .cimg[hidden]{display:none;}
+    .roommenu{position:fixed;top:58px;left:14px;z-index:60;width:236px;max-height:72vh;overflow:auto;
+      background:rgba(16,20,18,.97);border:1px solid var(--line);border-radius:13px;padding:6px;
+      backdrop-filter:blur(10px);box-shadow:0 16px 40px rgba(0,0,0,.55);}
+    .roommenu .rmhd{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);padding:6px 10px 4px;}
+    .roomrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--text);}
+    .roomrow:hover{background:rgba(169,216,200,.13);}
+    .roomrow.cur{opacity:.5;cursor:default;}
+    .roomrow .ic{flex:0 0 26px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:var(--gold);border:1px solid var(--line);border-radius:8px;}
+    .roomrow .ic svg{width:18px;height:18px;}
     /* 상단 타이틀 */
     .top{top:16px;left:16px;width:min(320px,calc(100vw - 32px));padding:13px 16px;}
     .top .backbtn{display:inline-flex;align-items:center;gap:5px;margin-bottom:9px;border:1px solid var(--line);
@@ -160,6 +169,7 @@
     <h1 id="palaceTitle">기억 궁전</h1>
     <p id="roomName">방 로드 중…</p>
   </section>
+  <div class="roommenu" id="roomMenu" style="display:none"></div>
 
   <aside class="panel card" id="card">
     <div class="bar"></div>
@@ -923,28 +933,38 @@
     // ⌂ 홈 — 미리 잡아둔 "모든 핫스팟이 가장 잘 보이는" 전체 조망으로.
     $("homeBtn").onclick = () => { activeIdx = -1; renderDots(-1); $("card").style.display = "none"; roomEntryView(false); };
 
-    // ── 다음 방 ⏭ — 지도로 안 나가고 방→방 순환 이동. 실제 존재하는 방만(HEAD 체크) ──
-    const ROOMS = [
-      { id: "dining", title: "다이닝 키친", glb: "public/assets/rooms/dining_kitchen_baked.glb", hotspots: "public/data/dining-hotspots.json" },
-      { id: "loft",   title: "로프트",      glb: "public/assets/rooms/loft.glb",                 hotspots: "public/data/loft-hotspots.json" },
-      { id: "cozy",   title: "코지 룸",     glb: "public/assets/rooms/cozy.glb",                 hotspots: "public/data/cozy-hotspots.json" },
+    // ── 방 이동 ▾ — 좌상단 버튼 = 랜드마크 방 선택 메뉴(아이콘 포함). 아무 방이나 골라 이동. ──
+    //   10개 랜드마크 ↔ 방 매핑(정본 vworld_jongnogu와 동일). 각 방은 &lm 테마로 정체성(아이콘·현판) 표시.
+    const ROOM_BLOB = "https://9aiteam1.blob.core.windows.net/models/";
+    const LANDMARK_ROOMS = [
+      { lm: "gwanghwamun",   glb: "public/assets/rooms/dining_kitchen_baked.glb", hot: "public/data/dining-hotspots.json" },
+      { lm: "gyeongbokgung", glb: ROOM_BLOB + "living_room.glb",                  hot: "public/data/living_room-hotspots.json" },
+      { lm: "cheonggye",     glb: "public/assets/rooms/loft.glb",                 hot: "public/data/loft-hotspots.json" },
+      { lm: "deoksugung",    glb: ROOM_BLOB + "room_paris.glb",                   hot: "public/data/room_paris-hotspots.json" },
+      { lm: "sungnyemun",    glb: ROOM_BLOB + "office_room.glb",                  hot: "public/data/office_room-hotspots.json" },
+      { lm: "bosingak",      glb: ROOM_BLOB + "school_class_room.glb",            hot: "public/data/school_class_room-hotspots.json" },
+      { lm: "namsan",        glb: ROOM_BLOB + "ps1_phasmophobia.glb",             hot: "public/data/ps1_phasmophobia-hotspots.json" },
+      { lm: "changdeokgung", glb: ROOM_BLOB + "modern_bedroom.glb",              hot: "public/data/modern_bedroom-hotspots.json" },
+      { lm: "jongmyo",       glb: ROOM_BLOB + "neusa_frois.glb",                  hot: "public/data/neusa_frois-hotspots.json" },
+      { lm: "heunginjimun",  glb: ROOM_BLOB + "front_room_first_pass.glb",        hot: "public/data/front_room_first_pass-hotspots.json" },
     ];
-    (async function setupNextRoom() {
-      const cur = ROOMS.findIndex(r => ROOM_GLB.endsWith(r.glb) || r.glb.endsWith(ROOM_GLB));
-      for (let k = 1; k <= ROOMS.length; k++) {
-        const cand = ROOMS[((cur < 0 ? 0 : cur) + k) % ROOMS.length];
-        if (ROOM_GLB.endsWith(cand.glb)) continue;
-        try {
-          const res = await fetch(cand.glb, { method: "HEAD" });
-          if (!res.ok) continue;                       // 없는 방(예: 배포판의 cozy)은 건너뜀
-          const b = $("nextRoomBtn");
-          b.style.display = "inline-flex";
-          b.textContent = `${cand.title} ⏭`;
-          b.title = `다음 방으로 이동: ${cand.title}`;
-          b.onclick = () => location.href = `memory-walk.html?glb=${cand.glb}&hotspots=${cand.hotspots}`;
-          return;
-        } catch {}
-      }
+    (function setupRoomPicker() {
+      const btn = $("nextRoomBtn"), menu = $("roomMenu");
+      btn.style.display = "inline-flex";
+      btn.innerHTML = "⏭ 방 이동 ▾";
+      btn.title = "다른 랜드마크 방으로 이동";
+      menu.innerHTML = `<div class="rmhd">랜드마크 방 선택</div>`;
+      LANDMARK_ROOMS.forEach(r => {
+        const th = LM_THEMES[r.lm], nm = th ? th.name : r.lm, isCur = (LM === r.lm);
+        const row = document.createElement("div");
+        row.className = "roomrow" + (isCur ? " cur" : "");
+        row.innerHTML = `<span class="ic">${landmarkIcon(th)}</span><span>${nm}${isCur ? " · 현재" : ""}</span>`;
+        if (!isCur) row.onclick = () => location.href = `memory-walk.html?glb=${r.glb}&hotspots=${r.hot}&lm=${r.lm}`;
+        menu.appendChild(row);
+      });
+      btn.onclick = (e) => { e.stopPropagation(); menu.style.display = (menu.style.display === "none" ? "block" : "none"); };
+      menu.addEventListener("click", e => e.stopPropagation());
+      document.addEventListener("click", () => { menu.style.display = "none"; });
     })();
 
     // ════════════ 2D 평면도(미니맵 + 편집 대시보드) ════════════
