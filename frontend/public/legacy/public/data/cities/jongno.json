@@ -1,0 +1,149 @@
+{
+  "slug": "jongno",
+  "name": "종로구",
+  "region": "서울특별시",
+  "headline": "광화문 위 기억궁전",
+  "intro": "내부 방은 렌더링하지 않고, 실제 3D 종로 배경 위에 외관 건물만 가볍게 얹습니다.",
+  "center": {
+    "lat": 37.575,
+    "lon": 126.977,
+    "zoom": 14
+  },
+  "start": {
+    "lon": 126.992,
+    "lat": 37.538,
+    "height": 2500,
+    "heading": 0,
+    "pitch": -38
+  },
+  "landmarks": [
+    {
+      "name": "경복궁",
+      "lon": 126.977,
+      "lat": 37.5796,
+      "h": 22,
+      "desc": "조선의 법궁(1395). 종로구의 대표 궁궐.",
+      "cam": {
+        "latOff": -0.0045,
+        "height": 260,
+        "pitch": -32
+      },
+      "lmId": "gyeongbokgung",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/living_room.glb&hotspots=public/data/living_room-hotspots.json"
+    },
+    {
+      "name": "광화문",
+      "lon": 126.9769,
+      "lat": 37.5759,
+      "h": 18,
+      "desc": "경복궁 정문이자 광화문광장의 상징.",
+      "lmId": "gwanghwamun",
+      "room": "memory-walk.html?glb=public/assets/rooms/dining_kitchen_baked.glb&hotspots=public/data/dining-hotspots.json"
+    },
+    {
+      "name": "청계광장",
+      "lon": 126.9788,
+      "lat": 37.5691,
+      "h": 5,
+      "desc": "청계천이 시작되는 도심 속 광장.",
+      "cam": {
+        "lonOff": -0.003,
+        "latOff": 0.0,
+        "heading": 92,
+        "height": 220,
+        "pitch": -26
+      },
+      "lmId": "cheonggye",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/loft.glb&hotspots=public/data/loft-hotspots.json"
+    },
+    {
+      "name": "덕수궁",
+      "lon": 126.9751,
+      "lat": 37.5658,
+      "h": 18,
+      "desc": "대한제국 황궁. 근대 건축이 어우러진 궁궐.",
+      "lmId": "deoksugung",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/room_paris.glb&hotspots=public/data/room_paris-hotspots.json"
+    },
+    {
+      "name": "숭례문",
+      "lon": 126.9753,
+      "lat": 37.56,
+      "h": 30,
+      "desc": "국보 제1호, 한양도성의 남대문.",
+      "cam": {
+        "lonOff": -0.0029,
+        "latOff": -0.002,
+        "heading": 50,
+        "height": 270,
+        "pitch": -25
+      },
+      "lmId": "sungnyemun",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/office_room.glb&hotspots=public/data/office_room-hotspots.json"
+    },
+    {
+      "name": "보신각",
+      "lon": 126.9836,
+      "lat": 37.5697,
+      "h": 15,
+      "desc": "종로 종각. 제야의 종 타종 장소.",
+      "cam": {
+        "lonOff": -0.0014,
+        "latOff": 0.0016,
+        "heading": 135,
+        "height": 230,
+        "pitch": -34
+      },
+      "lmId": "bosingak",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/school_class_room.glb&hotspots=public/data/school_class_room-hotspots.json"
+    },
+    {
+      "name": "남산서울타워",
+      "lon": 126.9882,
+      "lat": 37.5512,
+      "h": 237,
+      "desc": "남산 정상의 전망 타워, 서울 랜드마크.",
+      "cam": {
+        "latOff": -0.0055,
+        "height": 550,
+        "pitch": -14
+      },
+      "lmId": "namsan",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/ps1_phasmophobia.glb&hotspots=public/data/ps1_phasmophobia-hotspots.json"
+    },
+    {
+      "name": "창덕궁",
+      "lon": 126.991,
+      "lat": 37.5794,
+      "h": 20,
+      "desc": "유네스코 세계유산, 자연과 어우러진 궁궐.",
+      "lmId": "changdeokgung",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/modern_bedroom.glb&hotspots=public/data/modern_bedroom-hotspots.json"
+    },
+    {
+      "name": "종묘",
+      "lon": 126.9942,
+      "lat": 37.5746,
+      "h": 16,
+      "desc": "조선 왕조 신주를 모신 유네스코 세계유산.",
+      "lmId": "jongmyo",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/neusa_frois.glb&hotspots=public/data/neusa_frois-hotspots.json"
+    },
+    {
+      "name": "흥인지문",
+      "lon": 127.0094,
+      "lat": 37.5712,
+      "h": 25,
+      "desc": "보물, 한양도성의 동대문.",
+      "cam": {
+        "lonOff": -0.0035,
+        "latOff": -0.0004,
+        "heading": 88,
+        "height": 260,
+        "pitch": -28
+      },
+      "lmId": "heunginjimun",
+      "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/front_room_first_pass.glb&hotspots=public/data/front_room_first_pass-hotspots.json"
+    }
+  ]
+}
