@@ -571,6 +571,22 @@
     const FIXTURE_RE = /board|chalk|white\s*board|black\s*board|screen|tv|projector|podium|teacher|window|door|cabinet|locker|shelf|sink|fridge|refriger|stove|oven|counter|칠판|교탁|스크린|창|문|수납|사물함|선반|싱크|냉장고|가스|오븐/i;
     function dispName(h){ return (h && h.disp) || furnKO(h.label); }   // 중복엔 시점 기준 라벨, 아니면 클래스명
 
+    // ── 전역 공간 디클러스터링 ──
+    //   클래스가 달라도 한 사물/구역(책상 위 의자·컵·모니터 등)에 마커가 몰리는 문제 해결.
+    //   신뢰도(+고정물 가산)가 높은 마커부터 채택하되, 이미 채택한 마커와 minSep(방 크기 비례) 안이면 버려
+    //   3D 공간상 고르게 흩어진 대표 마커만 남긴다(파넌트포인트식).
+    function declusterAnchors(list, minSep){
+      const scored = list.map(a => ({
+        a, w: (typeof a.conf === "number" ? a.conf : 0.5)
+             + (FIXTURE_RE.test(((a.label||"") + " " + (a.name||""))) ? 0.6 : 0)   // 고정물(칠판·창·수납…) 우대
+      })).sort((x,y) => y.w - x.w);
+      const kept = [];
+      for (const { a } of scored){
+        if (kept.every(k => k.pos.distanceTo(a.pos) >= minSep)) kept.push(a);
+      }
+      return kept;
+    }
+
     // 입장 시점 프레임: 마커 중심이 치우친 벽을 정면(fwd)으로, 반대쪽 벽 근처를 eye로.
     function entryFrame(){
       const c = bounds.getCenter(new THREE.Vector3());
@@ -590,7 +606,11 @@
     function designRoute(minCount){
       const { eye, fwd, right } = entryFrame();
       const clsOf = f => (f.a.label || "object").toLowerCase();
-      const feat = anchors.map(a => { const d = a.pos.clone().sub(eye);
+      // ⓪ 전역 공간 분산: 방 크기에 비례한 최소 간격으로 뭉친 마커를 솎아낸다(최소 0.6m).
+      const _sz = bounds.getSize(new THREE.Vector3());
+      const MIN_SEP = Math.min(1.1, Math.max(0.6, 0.10 * Math.max(_sz.x, _sz.z)));
+      const decl = declusterAnchors(anchors, MIN_SEP);
+      const feat = decl.map(a => { const d = a.pos.clone().sub(eye);
         return { a, depth: d.dot(fwd), lat: d.dot(right) }; });
       // 클래스별 군집
       const groups = new Map();

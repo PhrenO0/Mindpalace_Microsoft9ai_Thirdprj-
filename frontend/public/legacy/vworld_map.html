@@ -1916,7 +1916,7 @@
           g.fillStyle = "#e23b3b"; g.fill();
           g.lineWidth = 2.4 * S; g.strokeStyle = "#ffffff"; g.stroke();
           g.fillStyle = "#ffffff";             // 흰 숫자
-          g.font = `bold ${22 * S}px 'Malgun Gothic', Arial`;
+          g.font = `bold ${30 * S}px 'Malgun Gothic', Arial`;
           g.textAlign = "center"; g.textBaseline = "middle";
           g.fillText(String(num), cx, cyc + 1 * S);
           return cv;
@@ -1931,26 +1931,26 @@
             billboard: {
               image: makeNumberPin(i + 1),
               verticalOrigin: engine.VerticalOrigin.BOTTOM, // 핀 꼭지가 위치에 닿게
-              scale: 0.5,
+              scale: 0.7,
               heightReference: engine.HeightReference.RELATIVE_TO_GROUND,
               disableDepthTestDistance: Number.POSITIVE_INFINITY, // 항상 보이게
-              scaleByDistance: new engine.NearFarScalar(300, 0.6, 9000, 0.2),
+              scaleByDistance: new engine.NearFarScalar(300, 0.85, 9000, 0.32),
             },
             label: {
               text: m.name, // 이름(번호는 핀 안에)
-              font: "bold 11px 'Malgun Gothic', sans-serif",
+              font: "bold 13px 'Malgun Gothic', sans-serif",
               fillColor: engine.Color.fromCssColorString("#f6f2e8"),
               outlineColor: engine.Color.fromCssColorString("#0c0e0d"),
               outlineWidth: 3,
               style: engine.LabelStyle.FILL_AND_OUTLINE,
               verticalOrigin: engine.VerticalOrigin.TOP, // 핀 아래에 이름표
-              pixelOffset: new engine.Cartesian2(0, 3),
+              pixelOffset: new engine.Cartesian2(0, 4),
               showBackground: true,
               backgroundColor: engine.Color.fromCssColorString("rgba(7,10,11,0.78)"),
-              backgroundPadding: new engine.Cartesian2(6, 4),
+              backgroundPadding: new engine.Cartesian2(8, 5),
               heightReference: engine.HeightReference.RELATIVE_TO_GROUND,
               disableDepthTestDistance: Number.POSITIVE_INFINITY,
-              scaleByDistance: new engine.NearFarScalar(300, 0.9, 9000, 0.38),
+              scaleByDistance: new engine.NearFarScalar(300, 1.1, 9000, 0.5),
             },
           });
           { const r = roomFor(i, m.name); if (r) entityRoom.set(ent, r); }   // &lm 테마 포함 링크로 입장
