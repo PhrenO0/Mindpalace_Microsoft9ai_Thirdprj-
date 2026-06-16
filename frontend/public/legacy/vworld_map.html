@@ -11,7 +11,7 @@
         --dim: #7f908d;
         --teal: #2f8f76;
         --mint: #3a9e84;
-        --panel: rgba(255, 255, 255, 0.86);
+        --panel: rgba(255, 255, 255, 0.92);
         --panel-strong: #ffffff;
         --line: rgba(26, 44, 36, 0.13);
         --shadow: 0 18px 50px rgba(30, 50, 42, 0.14);
@@ -72,13 +72,13 @@
 
       .scene-vignette {
         z-index: 2;
-        /* 서울 중심만 밝게, 주변부(서울 외곽)는 비네팅으로 강하게 어둡게 → 서울시 집중 */
+        /* 서울 중심만 또렷하게, 주변부는 밝은 페이드(화이트 톤) → 중심 집중 + 밝은 배경 유지 */
         background: radial-gradient(
           82% 82% at 50% 47%,
-          transparent 28%,
-          rgba(4, 6, 7, 0.38) 60%,
-          rgba(4, 6, 7, 0.74) 83%,
-          rgba(4, 6, 7, 0.95) 100%
+          transparent 30%,
+          rgba(243, 245, 242, 0.32) 62%,
+          rgba(243, 245, 242, 0.62) 84%,
+          rgba(243, 245, 242, 0.84) 100%
         );
       }
 
@@ -89,9 +89,9 @@
         background: radial-gradient(
           ellipse at 50% 54%,
           transparent 0%,
-          transparent 58%,
-          rgba(4, 6, 7, 0.12) 86%,
-          rgba(4, 6, 7, 0.28) 100%
+          transparent 60%,
+          rgba(243, 245, 242, 0.14) 86%,
+          rgba(243, 245, 242, 0.32) 100%
         );
       }
 
@@ -1008,7 +1008,7 @@
 
       // 초기 카메라 프레이밍 파라미터(필요시 도시 데이터에서 각도만 조정).
       const START_HEADING = (CITY.start && isFinite(CITY.start.heading)) ? CITY.start.heading : 0;   // 도
-      const START_PITCH = (CITY.start && isFinite(CITY.start.pitch)) ? CITY.start.pitch : -52;        // 도(아래로)
+      const START_PITCH = (CITY.start && isFinite(CITY.start.pitch)) ? CITY.start.pitch : -43;        // 도(아래로) — 오블리크 조망(3D 건물+분포 한눈에)
       const START_RANGE_FACTOR = 3.6; // 바운딩 반경 대비 카메라 거리 배수(명소 10개가 여유 있게 다 들어오는 값)
       // 초기 카메라-중심 거리 추정값(휠 줌아웃 한계도 이 값에 맞춰 → 초기 고도에서 휠 만져도 안 튐).
       const INITIAL_RANGE_EST = Math.max(CITY_BOUNDS.radiusM * START_RANGE_FACTOR, 1800);
