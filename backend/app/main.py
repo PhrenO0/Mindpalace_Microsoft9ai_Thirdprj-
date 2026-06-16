@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -13,12 +14,25 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from . import sketchfab as sk
+
 app = FastAPI(title="Mind Palace API", version="0.1.0")
 ROOT_DIR = Path(__file__).resolve().parents[2]
 FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
 LEGACY_PUBLIC_DIR = ROOT_DIR / "frontend" / "public" / "legacy"
 LEGACY_DIST_DIR = FRONTEND_DIST / "legacy"
 LEGACY_DIR = LEGACY_PUBLIC_DIR if LEGACY_PUBLIC_DIR.exists() else LEGACY_DIST_DIR
+# Sketchfab 가져오기·스캔 결과가 저장되는 곳. /legacy 정적 마운트 아래라 자동 서빙되고,
+# 스캐너·memory-walk가 상대경로(public/imported/...)로 그대로 읽는다.
+IMPORTED_DIR = LEGACY_DIR / "public" / "imported"
+
+# 로컬 개발 편의: 프로젝트 루트의 .env가 있으면 환경변수로 읽는다(없으면 무시 — Azure는 앱 설정 사용).
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT_DIR / ".env")
+except Exception:
+    pass
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,7 +77,61 @@ def health() -> dict:
         "mode": "react-fastapi-legacy-preserved",
         "vworldKeyConfigured": bool(os.getenv("VWORLD_API_KEY")),
         "azureVisionConfigured": bool(azure_endpoint and azure_key),
+        "sketchfabConfigured": bool(sk.token()),
     }
+
+
+class SketchfabImportRequest(BaseModel):
+    uid: str
+
+
+class HotspotsSaveRequest(BaseModel):
+    uid: str
+    name: str | None = None
+    hotspots: list[dict]
+
+
+@app.get("/api/sketchfab/search")
+def sketchfab_search(q: str, cursor: str | None = None) -> dict:
+    """다운로드 가능한 Sketchfab 모델 검색(프록시). 토큰 없이도 결과는 보임(가져오기엔 토큰 필요)."""
+    q = (q or "").strip()
+    if not q:
+        return {"results": [], "next": None}
+    try:
+        return sk.search(q, cursor)
+    except requests.HTTPError as exc:
+        detail = exc.response.text[:400] if exc.response is not None else str(exc)
+        raise HTTPException(status_code=502, detail=f"Sketchfab 검색 실패: {detail}") from exc
+
+
+@app.post("/api/sketchfab/import")
+def sketchfab_import(payload: SketchfabImportRequest) -> dict:
+    """모델을 받아 단일 GLB(텍스처 1k, 20MB 초과 시 압축)로 변환해 저장하고 상대 URL을 반환."""
+    if not sk.token():
+        raise HTTPException(status_code=503, detail="SKETCHFAB_API_TOKEN이 설정되지 않아 다운로드할 수 없습니다.")
+    try:
+        info = sk.import_model(payload.uid, IMPORTED_DIR)
+    except PermissionError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ModuleNotFoundError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"변환 라이브러리가 설치되지 않았습니다({exc.name}). requirements.txt 설치 후 다시 시도하세요.",
+        ) from exc
+    except requests.HTTPError as exc:
+        detail = exc.response.text[:400] if exc.response is not None else str(exc)
+        raise HTTPException(status_code=502, detail=f"Sketchfab 다운로드 실패: {detail}") from exc
+    rel = f"public/imported/{payload.uid}.glb"
+    return {"glbUrl": rel, "absUrl": f"/legacy/{rel}", **info}
+
+
+@app.post("/api/rooms/hotspots")
+def rooms_hotspots(payload: HotspotsSaveRequest) -> dict:
+    """스캐너가 만든 노드(핫스팟)를 memory-walk가 fetch할 JSON으로 저장."""
+    rel = sk.save_hotspots(payload.uid, payload.name, payload.hotspots, IMPORTED_DIR)
+    return {"hotspotsUrl": rel}
 
 
 @app.get("/api/client-config")
