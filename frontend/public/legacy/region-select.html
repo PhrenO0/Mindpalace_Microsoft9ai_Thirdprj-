@@ -8,16 +8,16 @@
   integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
 <style>
   :root{ color-scheme:light;
-    --bg:#f3f5f2; --panel:rgba(255,255,255,.86); --panel2:#ffffff; --panel-strong:#ffffff; --line:rgba(26,44,36,.13);
-    --text:#1b2622; --ink:#1b2622; --muted:rgba(30,42,36,.62); --accent:#2f8f76; --accent2:#3a9e84; --gold:#9a781f;
-    --shadow:0 18px 50px rgba(30,50,42,.14); }
+    --bg:#f5f1ea; --panel:rgba(255,255,255,.86); --panel2:#ffffff; --panel-strong:#ffffff; --line:rgba(51,46,40,.12);
+    --text:#2a241d; --ink:#2a241d; --muted:rgba(42,36,29,.62); --accent:#2c7a63; --accent2:#348a72; --gold:#8a8170;
+    --shadow:0 18px 50px rgba(40,34,26,.14); }
   *{box-sizing:border-box;}
   body{margin:0; min-height:100vh; padding:46px 0 80px;
     font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
     color:var(--text); -webkit-font-smoothing:antialiased; overflow-x:hidden;
     background:
-      radial-gradient(60% 50% at 50% -5%, rgba(47,143,118,.12), transparent 60%),
-      radial-gradient(50% 40% at 85% 100%, rgba(154,120,31,.08), transparent 60%),
+      radial-gradient(60% 50% at 50% -5%, rgba(44,122,99,.12), transparent 60%),
+      radial-gradient(50% 40% at 85% 100%, rgba(138,129,112,.08), transparent 60%),
       var(--bg);}
   .wrap{position:relative; z-index:1; width:min(1180px, calc(100vw - 44px)); margin:0 auto;}
   .head{text-align:center; margin-bottom:16px;}
@@ -36,20 +36,20 @@
   .dashlinks .dl{display:inline-flex; align-items:center; gap:7px; padding:10px 16px; border:1px solid var(--line);
     border-radius:999px; background:var(--panel); backdrop-filter:blur(12px); color:var(--text);
     text-decoration:none; font-size:13px; font-weight:800; transition:transform .14s, border-color .14s, background .14s;}
-  .dashlinks .dl:hover{transform:translateY(-2px); border-color:rgba(47,143,118,.5); background:rgba(47,143,118,.12);}
+  .dashlinks .dl:hover{transform:translateY(-2px); border-color:rgba(44,122,99,.5); background:rgba(44,122,99,.12);}
   .dashlinks .dl .di{font-size:15px;}
   /* 지도 */
   #map{height:min(56vh,560px); border:1px solid var(--line); border-radius:18px; overflow:hidden;
-    background:#e9efe9; box-shadow:0 18px 48px rgba(30,50,42,.14); margin-bottom:8px;}
-  .leaflet-container{background:#e9efe9; font-family:inherit;}
+    background:#ece6da; box-shadow:0 18px 48px rgba(40,34,26,.14); margin-bottom:8px;}
+  .leaflet-container{background:#ece6da; font-family:inherit;}
   .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:rgba(255,255,255,.96); color:var(--text); border:1px solid var(--line);}
   .leaflet-popup-content{margin:10px 12px; font-size:13px;}
   .leaflet-popup-content a{color:var(--accent); font-weight:800; text-decoration:none;}
   .leaflet-bar a{background:rgba(255,255,255,.96); color:var(--text); border-bottom:1px solid var(--line);}
-  .leaflet-bar a:hover{background:rgba(26,44,36,.05);}
+  .leaflet-bar a:hover{background:rgba(51,46,40,.05);}
   .city-pin{position:relative; width:18px; height:18px;}
   .city-pin .dot{position:absolute; left:50%; top:50%; width:12px; height:12px; margin:-6px 0 0 -6px;
-    border-radius:50%; background:var(--c,#e23b3b); border:2px solid #fff; box-shadow:0 1px 4px rgba(30,50,42,.4);}
+    border-radius:50%; background:var(--c,#e23b3b); border:2px solid #fff; box-shadow:0 1px 4px rgba(40,34,26,.4);}
   .city-pin.soon .dot{background:#6b756f; border-color:rgba(255,255,255,.6);}
   .city-pin.ready .ring{position:absolute; left:50%; top:50%; width:12px; height:12px; margin:-6px 0 0 -6px;
     border-radius:50%; border:2px solid var(--c,#e23b3b); animation:pulse 1.8s ease-out infinite;}
@@ -63,16 +63,16 @@
   .region-head .cnt{margin-left:auto; color:var(--muted); font-size:12px;}
   .listToggle{display:block; margin:8px auto 18px; padding:9px 18px; border:1px solid var(--line); border-radius:999px;
     background:var(--panel); color:var(--text); font-size:13px; font-weight:800; cursor:pointer;}
-  .listToggle:hover{border-color:rgba(47,143,118,.5);}
+  .listToggle:hover{border-color:rgba(44,122,99,.5);}
   #listWrap{display:none;}
   #listWrap.open{display:block;}
   .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(176px,1fr)); gap:14px;}
   .box{position:relative; display:flex; flex-direction:column; gap:8px; min-height:108px; padding:15px 16px 13px;
     border:1px solid var(--line); border-radius:16px; background:var(--panel); backdrop-filter:blur(14px);
-    box-shadow:0 14px 36px rgba(30,50,42,.14); text-decoration:none; color:var(--text);
+    box-shadow:0 14px 36px rgba(40,34,26,.14); text-decoration:none; color:var(--text);
     transition:transform .16s, box-shadow .16s, border-color .16s;}
-  a.box:hover{transform:translateY(-3px); border-color:rgba(47,143,118,.5);
-    box-shadow:0 22px 52px rgba(30,50,42,.16), 0 0 0 1px rgba(47,143,118,.2) inset;}
+  a.box:hover{transform:translateY(-3px); border-color:rgba(44,122,99,.5);
+    box-shadow:0 22px 52px rgba(40,34,26,.16), 0 0 0 1px rgba(44,122,99,.2) inset;}
   .box h3{margin:0; font-size:18px; font-weight:900;}
   .box .meta{margin-top:auto; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800;}
   a.box .meta{color:var(--accent);}
@@ -80,7 +80,7 @@
   .box.soon .meta{color:var(--muted);}
   .pill{align-self:flex-start; padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:800;
     border:1px solid var(--line); color:var(--muted);}
-  .box.ready .pill{color:var(--accent2); border-color:rgba(58,158,132,.4);}
+  .box.ready .pill{color:var(--accent2); border-color:rgba(52,138,114,.4);}
   .foot{margin-top:18px; color:var(--muted); font-size:12px; text-align:center;}
   .empty{color:var(--muted); text-align:center; padding:30px 0; display:none;}
 </style>
@@ -90,7 +90,7 @@
     <div class="head">
       <div class="kicker">VWorld · 장소법 기억궁전</div>
       <h1>어디의 <span class="grad">기억궁전</span>으로 갈까요?</h1>
-      <p class="sub">지도 위 핀을 눌러 그 도시의 3D 기억궁전으로 들어갑니다. 같은 길·같은 자리를 걸으며 외우는 학습 공간입니다.</p>
+      <p class="sub">지도 위 핀을 눌러 그 도시의 3D 기억궁전으로 들어갑니다.<br>같은 길·같은 자리를 걸으며 외우는 학습 공간입니다.</p>
     </div>
 
     <div class="toolbar">
