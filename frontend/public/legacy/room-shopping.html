@@ -70,32 +70,39 @@
 
 <script>
   // ── 아이콘(메모리워크와 동일 카테고리) ──
+  // ── 장소(랜드마크) 카테고리 아이콘 — 실제 장소와 관련된 아이콘. memory-walk와 동일 세트/추론 ──
   const ICON_PATHS = {
-    gate:'<path d="M3 9h18M5 9l2-3.5h10L19 9M6.5 9v10M17.5 9v10M6.5 19h11"/>',
-    palace:'<path d="M3 10h18M12 4 4 8h16zM6 10v8M18 10v8M6 18h12"/>',
-    tower:'<path d="M10 21V9M14 21V9M9.2 9h5.6l-1.1-3h-3.4zM12 6V3M8 21h8"/>',
-    water:'<path d="M3 8c2.5-2 5.5-2 8 0s5.5 2 8 0M3 13c2.5-2 5.5-2 8 0s5.5 2 8 0M3 18c2.5-2 5.5-2 8 0s5.5 2 8 0"/>',
-    shrine:'<path d="M3 9h18M12 4 5 8h14zM7 9v9M17 9v9M11 12h2v6h-2z"/>',
-    bell:'<path d="M12 3a5 5 0 0 1 5 5v5H7V8a5 5 0 0 1 5-5zM5 16h14M10.5 19h3"/>',
-    pin:'<path d="M12 2c-3.9 0-7 3-7 6.8 0 5 7 12.2 7 12.2s7-7.2 7-12.2C19 5 15.9 2 12 2z"/><circle cx="12" cy="9" r="2.3"/>'
+    gate:    '<path d="M3 9h18M5 9l2-3.5h10L19 9M6.5 9v10M17.5 9v10M6.5 19h11"/>',
+    palace:  '<path d="M3 10h18M12 4 4 8h16zM6 10v8M18 10v8M6 18h12"/>',
+    tower:   '<path d="M10 21V9M14 21V9M9.2 9h5.6l-1.1-3h-3.4zM12 6V3M8 21h8"/>',
+    mountain:'<path d="M3 19 9.5 8l3.5 4.5L16 8l5 11z"/>',
+    water:   '<path d="M3 8c2.5-2 5.5-2 8 0s5.5 2 8 0M3 13c2.5-2 5.5-2 8 0s5.5 2 8 0M3 18c2.5-2 5.5-2 8 0s5.5 2 8 0"/>',
+    shrine:  '<path d="M3 9h18M12 4 5 8h14zM7 9v9M17 9v9M11 12h2v6h-2z"/>',
+    bell:    '<path d="M12 3a5 5 0 0 1 5 5v5H7V8a5 5 0 0 1 5-5zM5 16h14M10.5 19h3"/>',
+    park:    '<path d="M12 21v-6M12 15a5.5 5.5 0 1 0-4.4-2.2A4 4 0 0 0 12 15z"/>',
+    market:  '<path d="M4.5 8 6 5h12l1.5 3M4.5 8h15M6 8.5 6.6 20h10.8L18 8.5M4.5 8a2 2 0 0 0 3.7 0 2 2 0 0 0 3.8 0 2 2 0 0 0 3.8 0 2 2 0 0 0 3.7 0"/>',
+    bridge:  '<path d="M2 16c5 0 7-5 10-5s5 5 10 5M2 16v3M22 16v3M8 14.5V19M16 14.5V19"/>',
+    house:   '<path d="M4 11 12 4l8 7M6 9.8V19h12V9.8M10 19v-5h4v5"/>',
+    pin:     '<path d="M12 2c-3.9 0-7 3-7 6.8 0 5 7 12.2 7 12.2s7-7.2 7-12.2C19 5 15.9 2 12 2z"/><circle cx="12" cy="9" r="2.3"/>'
   };
-  const iconSvg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[k]||ICON_PATHS.pin}</svg>`;
-
-  // ── 방 카테고리(디자인)별 상세 라인 아이콘 — 스크린샷 대신 깔끔한 아이콘으로 표시 ──
-  const ROOM_ICONS = {
-    dining:    '<path d="M6 3v7a2 2 0 0 0 2 2v9M8 3v6M5 3v6M18 3c-1.6 0-2.2 2.2-2.2 4.3S16.4 12 18 12v9"/>',
-    living:    '<path d="M4 11V8.5A2.5 2.5 0 0 1 6.5 6h11A2.5 2.5 0 0 1 20 8.5V11M3 11h18v6H3zM6 17v2M18 17v2"/>',
-    loft:      '<path d="M4 21V9l8-5 8 5v12M4 13h16M9 21v-5h6v5"/>',
-    paris:     '<path d="M6 21V9a6 6 0 0 1 12 0v12M6 14h12M12 9v12"/>',
-    office:    '<path d="M4 4.5h16v8.5H4zM2 13h20M8.5 17h7M9.5 13v4M14.5 13v4"/>',
-    classroom: '<path d="M3 4h18v11H3zM7 8.5h10M7 11h6M8 19l1.6-4M16 19l-1.6-4"/>',
-    retro:     '<path d="M3 8h13v10H3zM16 10l5-2v10l-5-2M6 21h7M6 11.5h1"/>',
-    bedroom:   '<path d="M3 18v-4.5A2.5 2.5 0 0 1 5.5 11h13a2.5 2.5 0 0 1 2.5 2.5V18M3 18v2M21 18v2M3 14.5h18M7.5 11V8.5h9V11"/>',
-    lounge:    '<path d="M6.5 12V8.5A2 2 0 0 1 8.5 6.5h3a2 2 0 0 1 2 2V12M5.5 12h9v5.5h-9zM7 17.5v2M13 17.5v2M18.5 7h2l-1 6M19.5 19v-6"/>',
-    hall:      '<path d="M3 9l9-5 9 5M5 9.5v8.5M9.5 9.5v8.5M14.5 9.5v8.5M19 9.5v8.5M3 21h18"/>'
-  };
-  const roomIcon = id => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ROOM_ICONS[id]||ICON_PATHS.palace}</svg>`;
-  const roomIconFor = lm => { const d = designByGlb(lm.glb); return roomIcon(d ? d.id : null); };
+  // 랜드마크 이름/명시 아이콘으로 장소 카테고리 추론(구체적 → 일반 순서)
+  function lmCategory(lm){
+    if (lm && lm.icon && ICON_PATHS[lm.icon]) return lm.icon;
+    const n = (lm && lm.name) ? lm.name : "";
+    if (/타워|전망대|탑/.test(n)) return "tower";
+    if (/문|대문/.test(n)) return "gate";
+    if (/궁|정전|전각/.test(n)) return "palace";
+    if (/종묘|사당|사찰|암자|사$/.test(n)) return "shrine";
+    if (/보신각|각|종(?!합)/.test(n)) return "bell";
+    if (/시장|상가|상점/.test(n)) return "market";
+    if (/해수욕장|해변|바다|해안|포구|청계|천|강|호수|폭포|호$/.test(n)) return "water";
+    if (/마을|촌|빌리지/.test(n)) return "house";
+    if (/공원|숲|수목원|정원/.test(n)) return "park";
+    if (/다리|대교/.test(n)) return "bridge";
+    if (/산|봉|령|대$/.test(n)) return "mountain";
+    return "pin";
+  }
+  const placeIconFor = lm => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[lmCategory(lm)]||ICON_PATHS.pin}</svg>`;
 
   const P = new URLSearchParams(location.search);
   const PALACE_URL = P.get("palace") || "public/data/korean_history.palace.json";
@@ -200,7 +207,7 @@
         const lm = lib.find(l => l.id === sel.value);
         const r = ranked.find(x => x.lm.id === lm.id) || {hit:[]};
         const ic = card.querySelector("[data-ic]");
-        ic.innerHTML = roomIconFor(lm);
+        ic.innerHTML = placeIconFor(lm);
         card.querySelector("[data-nm]").textContent = lm.name;
         card.querySelector("[data-rg]").textContent = lm.region;
         card.querySelector("[data-why]").innerHTML = r.hit && r.hit.length

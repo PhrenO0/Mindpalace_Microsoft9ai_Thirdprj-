@@ -381,22 +381,23 @@
       park:    '<path d="M12 21v-6M12 15a5.5 5.5 0 1 0-4.4-2.2A4 4 0 0 0 12 15z"/>',
       market:  '<path d="M4.5 8 6 5h12l1.5 3M4.5 8h15M6 8.5 6.6 20h10.8L18 8.5M4.5 8a2 2 0 0 0 3.7 0 2 2 0 0 0 3.8 0 2 2 0 0 0 3.8 0 2 2 0 0 0 3.7 0"/>',
       bridge:  '<path d="M2 16c5 0 7-5 10-5s5 5 10 5M2 16v3M22 16v3M8 14.5V19M16 14.5V19"/>',
+      house:   '<path d="M4 11 12 4l8 7M6 9.8V19h12V9.8M10 19v-5h4v5"/>',
       pin:     '<path d="M12 2c-3.9 0-7 3-7 6.8 0 5 7 12.2 7 12.2s7-7.2 7-12.2C19 5 15.9 2 12 2z"/><circle cx="12" cy="9" r="2.3"/>'
     };
     function lmCategory(theme){
       if (theme && theme.icon && ICON_PATHS[theme.icon]) return theme.icon;   // 명시 override
       const n = (theme && theme.cat ? theme.cat + " " : "") + (theme && theme.name ? theme.name : "");
-      if (/타워|탑/.test(n)) return "tower";
+      if (/타워|전망대|탑/.test(n)) return "tower";
       if (/문|대문/.test(n)) return "gate";
       if (/궁|정전|전각/.test(n)) return "palace";
-      if (/묘|사당/.test(n)) return "shrine";
-      if (/각|종/.test(n)) return "bell";
-      if (/청계|천|강|호수|폭포|광장/.test(n)) return "water";
-      if (/산|봉|령/.test(n)) return "mountain";
-      if (/시장|상가/.test(n)) return "market";
-      if (/사찰|절|암자/.test(n)) return "shrine";
-      if (/공원|숲|수목원/.test(n)) return "park";
+      if (/종묘|사당|사찰|암자|사$/.test(n)) return "shrine";
+      if (/보신각|각|종(?!합)/.test(n)) return "bell";
+      if (/시장|상가|상점/.test(n)) return "market";
+      if (/해수욕장|해변|바다|해안|포구|청계|천|강|호수|폭포|호$/.test(n)) return "water";
+      if (/마을|촌|빌리지/.test(n)) return "house";
+      if (/공원|숲|수목원|정원/.test(n)) return "park";
       if (/다리|대교/.test(n)) return "bridge";
+      if (/산|봉|령|대$/.test(n)) return "mountain";
       return "pin";
     }
     function landmarkIcon(theme){
