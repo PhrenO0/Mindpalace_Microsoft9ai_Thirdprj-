@@ -299,6 +299,7 @@
   $("palaceFile").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) loadAll(f).catch(err=>$("msg").textContent="읽기 실패: "+err.message); });
   loadAll().catch(err=>{ $("grid").innerHTML=`<p style="color:#b03636">불러오기 실패: ${esc(err.message)}</p>`; });
 </script>
+<script src="nav.js" defer></script>
 <script src="assistant.js" defer></script>
 </body>
 </html>

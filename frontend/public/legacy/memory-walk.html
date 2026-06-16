@@ -143,6 +143,8 @@
     body.dash #editModal{display:flex !important;background:var(--bg);backdrop-filter:none;}
     body.dash #editModal .esheet{width:100%;max-width:none;height:100%;max-height:none;border-radius:0;border:none;}
     body.dash #editClose{display:none;}
+    body.dash #editModal .ebody{align-items:center;}
+    body.dash #editCv{width:min(86vh,96vw) !important;height:min(86vh,96vw) !important;max-width:700px;max-height:700px;}
     .msheet{width:min(420px,calc(100vw - 32px));max-height:min(72vh,640px);padding:0;overflow:hidden;display:flex;flex-direction:column;}
     .mhead{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;}
     .mx{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;}
@@ -1207,7 +1209,7 @@
       g.strokeStyle = "rgba(51,46,40,.45)"; g.lineWidth = 2;
       const [bx, bz] = e2c(bounds.min.x, bounds.min.z);
       g.strokeRect(bx, bz, (bounds.max.x - bounds.min.x) * eScale, (bounds.max.z - bounds.min.z) * eScale);
-      g.fillStyle = "color-mix(in srgb, var(--accent) 10%, transparent)"; g.strokeStyle = "rgba(44,122,99,.26)"; g.lineWidth = 1;
+      g.fillStyle = "rgba(44,122,99,.10)"; g.strokeStyle = "rgba(44,122,99,.26)"; g.lineWidth = 1;
       furnRects.forEach(r => { const [x, z] = e2c(r.x1, r.z1);
         g.fillRect(x, z, (r.x2 - r.x1) * eScale, (r.z2 - r.z1) * eScale); g.strokeRect(x, z, (r.x2 - r.x1) * eScale, (r.z2 - r.z1) * eScale); });
       // ② 노드 표시 위치 계산 — 서로 밀어내 겹침 해소(드래그 중인 노드는 고정)
@@ -1614,6 +1616,7 @@
     if (!DASH) requestAnimationFrame(tick);   // dash(임베드) 모드: 3D 렌더 루프 생략 — 숨긴 씬 대신 2D 대시보드만
     addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   </script>
+<script src="nav.js" defer></script>
 <script src="assistant.js" defer></script>
 
 <script>

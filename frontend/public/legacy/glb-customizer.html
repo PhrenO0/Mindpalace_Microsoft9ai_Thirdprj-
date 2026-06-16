@@ -240,6 +240,7 @@
   const P = new URLSearchParams(location.search);
   const CITY = P.get("city") || "jongno";
   let CITYDATA = null, DESIGNS = [], DESIGN_BLOB = "", PAL = null, THEMES = null, LIB = null;
+  let CONCEPT_PHOTOS = {};   // 개념 대표 사진(concept-photos.json) — title → {thumb,full,wiki}
   let regionLms = [], sel = null, previewGlb = null, pendingSrc = null;
   let ASSIGN = {};   // lmKey -> {chapter, idx}
   const ASSIGN_KEY = "studio_designs";   // { [city]: { [lmKey]: designId } }
@@ -391,9 +392,11 @@
   }
   // 학습 항목 이미지 해석 — 항목 자체/팔레스 이미지맵(맵·배열 모두 대응)
   function itemImage(k){
+    const cp = CONCEPT_PHOTOS[k.title] || CONCEPT_PHOTOS[k.id];
     return imgUrl(k.image || k.img || (Array.isArray(k.images)&&k.images[0]) || k.thumb)
       || fromImages(PAL && PAL.palace && PAL.palace.images, k)
-      || fromImages(PAL && PAL.images, k) || "";
+      || fromImages(PAL && PAL.images, k)
+      || (cp && (cp.thumb || cp.full)) || "";
   }
   // 사용자가 바꾼 순서 저장/적용 — memory-walk과 공유하는 키(mw_itemorder:<city>:<roomId>)
   const orderKey = ch => `mw_itemorder:${CITY}:${(ch && (ch.id||ch.name))||""}`;
@@ -531,10 +534,12 @@
     fetch(`public/data/cities/${CITY}.json`).then(r=>r.ok?r.json():null).catch(()=>null),
     fetch("public/data/room-designs.json").then(r=>r.json()),
     fetch("public/data/region-themes.json").then(r=>r.ok?r.json():null).catch(()=>null),
-    fetch("public/data/landmarks.json").then(r=>r.ok?r.json():null).catch(()=>null)
-  ]).then(([city, rd, themes, lib]) => {
+    fetch("public/data/landmarks.json").then(r=>r.ok?r.json():null).catch(()=>null),
+    fetch("public/data/concept-photos.json").then(r=>r.ok?r.json():null).catch(()=>null)
+  ]).then(([city, rd, themes, lib, cphotos]) => {
     if (!city){ $("lmlist").innerHTML = `<p style="color:#8a8170;padding:10px">지역 데이터(${esc(CITY)})를 찾을 수 없습니다.</p>`; return; }
     CITYDATA = city; DESIGNS = rd.designs||[]; DESIGN_BLOB = rd.blobBase||""; THEMES = themes; LIB = lib;
+    CONCEPT_PHOTOS = (cphotos && cphotos.concepts) || {};
     // 지역 랜드마크 정규화 + jongno의 lmId/아이콘/태그 보강
     regionLms = (city.landmarks||[]).map(lm => {
       const o = Object.assign({}, lm);
@@ -559,6 +564,7 @@
     });
   }).catch(e => { $("lmlist").innerHTML = `<p style="color:#8a8170;padding:10px">로드 실패: ${esc(e.message)}</p>`; });
 </script>
+<script src="nav.js" defer></script>
 <script src="assistant.js" defer></script>
 </body>
 </html>

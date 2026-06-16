@@ -74,11 +74,11 @@
         z-index: 2;
         /* 서울 중심만 또렷하게, 주변부는 밝은 페이드(화이트 톤) → 중심 집중 + 밝은 배경 유지 */
         background: radial-gradient(
-          82% 82% at 50% 47%,
-          transparent 30%,
-          rgba(245, 241, 234, 0.32) 62%,
-          rgba(245, 241, 234, 0.62) 84%,
-          rgba(245, 241, 234, 0.84) 100%
+          90% 90% at 50% 47%,
+          transparent 50%,
+          rgba(245, 241, 234, 0.06) 76%,
+          rgba(245, 241, 234, 0.14) 92%,
+          rgba(245, 241, 234, 0.22) 100%
         );
       }
 
@@ -1306,7 +1306,7 @@
         // 빌딩 3D 타일셋: 서울 영역 클리핑 + LOD 임계.
         //  maximumScreenSpaceError 가 작을수록 더 높은 고도/먼 거리에서도 건물이 렌더됨(대신 부하↑).
         //  (건물을 더 높은 곳에서도 보이게 64→24로 낮춤. 더 멀리서 보려면 더 낮추고, 더 빠르게는 키움)
-        const LOW_QUALITY_SSE = 32;
+        const LOW_QUALITY_SSE = 16;
         const lowerTilesetQuality = (p) => {
           try {
             p.maximumScreenSpaceError = LOW_QUALITY_SSE;
@@ -1349,10 +1349,10 @@
         // 글로브(지형·위성): 클리핑 없이 화질만 낮춰 가속
         viewer.scene.globe.backFaceCulling = true;
         viewer.scene.globe.showSkirts = false;
-        viewer.scene.globe.maximumScreenSpaceError = 12; // 지형 화질↓(기본 2)로 추가 가속
-        try { viewer.resolutionScale = 0.9; } catch {}    // 렌더 해상도 약간↓(픽셀 수 ~19%↓ → FPS↑, 라벨은 거의 유지)
-        try { viewer.scene.fog.enabled = true; viewer.scene.fog.density = 0.0006; } catch {} // 원경 안개로 먼 타일 부하↓
-        try { viewer.scene.postProcessStages.fxaa.enabled = false; } catch {} // 안티에일리어싱 끔(속도↑)
+        viewer.scene.globe.maximumScreenSpaceError = 6; // 지형 화질(낮을수록 선명, 기본 2)
+        try { viewer.useBrowserRecommendedResolution = false; viewer.resolutionScale = 1.0; } catch {} // 화면 픽셀 밀도로 렌더(레티나 선명)
+        try { viewer.scene.fog.enabled = true; viewer.scene.fog.density = 0.00012; } catch {} // 원경 안개 약하게(과한 흐릿함 제거)
+        try { viewer.scene.postProcessStages.fxaa.enabled = true; } catch {} // FXAA 켜서 에지 매끈하게
 
         applyCameraConstraints();
       }
@@ -1941,23 +1941,26 @@
         if (!viewer || !engine) return;
         // 빨간 번호 핀 아이콘 생성(원형 머리 + 아래 꼭지 + 흰 숫자) — 사진 모양.
         const makeNumberPin = (num) => {
-          const S = 3; // 슈퍼샘플 배율 → 고해상도 텍스처로 선명하게(작게 줄여 표시)
-          const W = 42 * S, H = 56 * S, cx = 21 * S, cyc = 20 * S, rad = 17 * S;
+          const S = 4; // 슈퍼샘플 배율 → 고해상도 텍스처로 선명하게
+          const W = 44 * S, H = 58 * S, cx = 22 * S, cyc = 21 * S, rad = 18 * S;
           const cv = document.createElement("canvas");
           cv.width = W; cv.height = H;
           const g = cv.getContext("2d");
+          g.shadowColor = "rgba(0,0,0,0.32)"; g.shadowBlur = 5 * S; g.shadowOffsetY = 2.5 * S;
           g.beginPath();                       // 아래 꼬리(삼각형)
-          g.moveTo(cx, H - 1);
-          g.lineTo(cx - 10 * S, cyc + 10 * S);
-          g.lineTo(cx + 10 * S, cyc + 10 * S);
+          g.moveTo(cx, H - 2 * S);
+          g.lineTo(cx - 10 * S, cyc + 9 * S);
+          g.lineTo(cx + 10 * S, cyc + 9 * S);
           g.closePath();
-          g.fillStyle = "#e23b3b"; g.fill();
-          g.beginPath();                       // 머리(원)
-          g.arc(cx, cyc, rad, 0, Math.PI * 2);
-          g.fillStyle = "#e23b3b"; g.fill();
-          g.lineWidth = 2.4 * S; g.strokeStyle = "#ffffff"; g.stroke();
+          g.fillStyle = "#c92a2a"; g.fill();
+          g.shadowBlur = 4 * S;                 // 머리(원) — 입체 그라디언트
+          const grad = g.createRadialGradient(cx - rad * 0.35, cyc - rad * 0.4, rad * 0.2, cx, cyc, rad);
+          grad.addColorStop(0, "#ff7066"); grad.addColorStop(0.55, "#e8443d"); grad.addColorStop(1, "#c92a2a");
+          g.beginPath(); g.arc(cx, cyc, rad, 0, Math.PI * 2); g.fillStyle = grad; g.fill();
+          g.shadowColor = "transparent"; g.shadowBlur = 0; g.shadowOffsetY = 0;
+          g.lineWidth = 3 * S; g.strokeStyle = "#ffffff"; g.stroke();
           g.fillStyle = "#ffffff";             // 흰 숫자
-          g.font = `bold ${30 * S}px 'Malgun Gothic', Arial`;
+          g.font = `bold ${27 * S}px 'Malgun Gothic', Arial`;
           g.textAlign = "center"; g.textBaseline = "middle";
           g.fillText(String(num), cx, cyc + 1 * S);
           return cv;
@@ -1972,26 +1975,28 @@
             billboard: {
               image: makeNumberPin(i + 1),
               verticalOrigin: engine.VerticalOrigin.BOTTOM, // 핀 꼭지가 위치에 닿게
-              scale: 0.7,
+              scale: 0.52,
               heightReference: engine.HeightReference.RELATIVE_TO_GROUND,
               disableDepthTestDistance: Number.POSITIVE_INFINITY, // 항상 보이게
-              scaleByDistance: new engine.NearFarScalar(300, 0.85, 9000, 0.32),
+              scaleByDistance: new engine.NearFarScalar(500, 1.0, 8000, 0.55),
+              translucencyByDistance: new engine.NearFarScalar(2000, 1.0, 11000, 0.4), // 원거리 페이드(혼잡↓)
             },
             label: {
               text: m.name, // 이름(번호는 핀 안에)
-              font: "bold 13px 'Malgun Gothic', sans-serif",
-              fillColor: engine.Color.fromCssColorString("#f5f0e8"),
-              outlineColor: engine.Color.fromCssColorString("#1a1814"),
-              outlineWidth: 3,
+              font: "bold 17px 'Malgun Gothic', sans-serif",
+              fillColor: engine.Color.fromCssColorString("#ffffff"),
+              outlineColor: engine.Color.fromCssColorString("#14110c"),
+              outlineWidth: 3.5,
               style: engine.LabelStyle.FILL_AND_OUTLINE,
               verticalOrigin: engine.VerticalOrigin.TOP, // 핀 아래에 이름표
-              pixelOffset: new engine.Cartesian2(0, 4),
+              pixelOffset: new engine.Cartesian2(0, 7),
               showBackground: true,
-              backgroundColor: engine.Color.fromCssColorString("rgba(26,24,20,0.78)"),
-              backgroundPadding: new engine.Cartesian2(8, 5),
+              backgroundColor: engine.Color.fromCssColorString("rgba(26,24,20,0.92)"),
+              backgroundPadding: new engine.Cartesian2(9, 6),
               heightReference: engine.HeightReference.RELATIVE_TO_GROUND,
               disableDepthTestDistance: Number.POSITIVE_INFINITY,
-              scaleByDistance: new engine.NearFarScalar(300, 1.1, 9000, 0.5),
+              scaleByDistance: new engine.NearFarScalar(400, 1.15, 9000, 0.72),
+              translucencyByDistance: new engine.NearFarScalar(2000, 1.0, 11000, 0.5),
             },
           });
           { const r = roomFor(i, m.name); if (r) entityRoom.set(ent, r); }   // &lm 테마 포함 링크로 입장
@@ -2001,12 +2006,13 @@
         const handler = new engine.ScreenSpaceEventHandler(viewer.scene.canvas);
         handler.setInputAction((click) => {
           const picked = viewer.scene.pick(click.position);
-          if (engine.defined(picked) && picked.id && entityRoom.has(picked.id)) {
-            location.href = entityRoom.get(picked.id);
+          if (engine.defined(picked) && picked.id && picked.id.name) {
+            const idx = LANDMARKS.findIndex((m) => m.name === picked.id.name);
+            if (idx >= 0) { stopTour(false); flyToAnchor(idx); return; } // 핀 클릭 = 그 명소 선택(우측 패널 갱신 + 카메라 이동). 입장은 '건물 입장' 버튼.
           }
         }, engine.ScreenSpaceEventType.LEFT_CLICK);
 
-        setStatus((CITY.name || "이 지역") + " 명소 " + LANDMARKS.length + "곳 — 핀을 누르면 연결된 방(memory-walk)으로 입장합니다.");
+        setStatus((CITY.name || "이 지역") + " 명소 " + LANDMARKS.length + "곳 — 핀을 누르면 그 명소가 선택돼요. 우측 정보를 보고 '건물 입장'으로 들어갑니다.");
       }
 
       // 건물에서 history.back()으로 돌아오면 bfcache(뒤로가기 캐시)로 복원되며
@@ -2020,6 +2026,7 @@
       attachEvents();
       boot();
     </script>
+  <script src="nav.js" defer></script>
   <script src="assistant.js" defer></script>
 </body>
 </html>
