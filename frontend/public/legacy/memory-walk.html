@@ -18,39 +18,41 @@
       palace 미지정 시 아래 내장 샘플(세종대의 과학 문물)을 쓴다.
   -->
   <style>
-    :root{color-scheme:dark;
-      --bg:#080a09; --panel:rgba(16,20,18,.72); --panel2:rgba(20,26,23,.92);
-      --line:rgba(220,230,222,.14); --text:#f4f1ea; --muted:rgba(244,241,234,.6);
-      --accent:#a9d8c8; --accent2:#8fc9b5; --gold:#dcc079;}
+    :root{color-scheme:light;
+      --bg:#f3f5f2; --panel:rgba(255,255,255,.86); --panel2:#ffffff;
+      --panel-strong:#ffffff;
+      --line:rgba(26,44,36,.13); --text:#1b2622; --ink:#1b2622; --muted:rgba(30,42,36,.62);
+      --accent:#2f8f76; --accent2:#3a9e84; --gold:#9a781f;
+      --shadow:0 18px 50px rgba(30,50,42,.14);}
     *{box-sizing:border-box;}
     body{margin:0;font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
          background:var(--bg);color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased;}
     #scene{position:fixed;inset:0;} canvas{display:block;width:100%;height:100%;}
-    #scene::after{content:"";position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 220px rgba(0,0,0,.5);}
+    #scene::after{content:"";position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 220px rgba(30,50,42,.10);}
     .panel{position:fixed;border:1px solid var(--line);background:var(--panel);
            backdrop-filter:blur(18px) saturate(1.1);border-radius:18px;
-           box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);}
+           box-shadow:0 18px 50px rgba(30,50,42,.14), inset 0 1px 0 rgba(255,255,255,.6);}
     .kicker{color:var(--gold);font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;}
-    .lmicon{width:46px;height:46px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.05);color:var(--gold);margin:10px 0 4px;}
+    .lmicon{width:46px;height:46px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:rgba(26,44,36,.05);color:var(--gold);margin:10px 0 4px;}
     .lmicon svg{width:28px;height:28px;}
     .lmicon[hidden]{display:none;}
     .cimg{width:100%;max-height:172px;object-fit:cover;border-radius:10px;margin:8px 0 4px;display:block;border:1px solid var(--line);}
     .cimg[hidden]{display:none;}
     .roommenu{position:fixed;top:58px;left:14px;z-index:60;width:236px;max-height:72vh;overflow:auto;
-      background:rgba(16,20,18,.97);border:1px solid var(--line);border-radius:13px;padding:6px;
-      backdrop-filter:blur(10px);box-shadow:0 16px 40px rgba(0,0,0,.55);}
+      background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:13px;padding:6px;
+      backdrop-filter:blur(10px);box-shadow:0 16px 40px rgba(30,50,42,.16);}
     .roommenu .rmhd{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);padding:6px 10px 4px;}
     .roomrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--text);}
-    .roomrow:hover{background:rgba(169,216,200,.13);}
+    .roomrow:hover{background:rgba(47,143,118,.12);}
     .roomrow.cur{opacity:.5;cursor:default;}
     .roomrow .ic{flex:0 0 26px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:var(--gold);border:1px solid var(--line);border-radius:8px;}
     .roomrow .ic svg{width:18px;height:18px;}
     /* 상단 타이틀 */
     .top{top:16px;left:16px;width:min(320px,calc(100vw - 32px));padding:13px 16px;}
     .top .backbtn{display:inline-flex;align-items:center;gap:5px;margin-bottom:9px;border:1px solid var(--line);
-      border-radius:10px;background:rgba(255,255,255,.05);color:var(--text);font:inherit;font-weight:800;
+      border-radius:10px;background:rgba(26,44,36,.05);color:var(--text);font:inherit;font-weight:800;
       font-size:12px;padding:7px 12px;cursor:pointer;transition:.15s;}
-    .top .backbtn:hover{border-color:var(--accent);background:rgba(169,216,200,.16);}
+    .top .backbtn:hover{border-color:var(--accent);background:rgba(47,143,118,.12);}
     .top h1{margin:6px 0 5px;font-size:clamp(15px,2vw,19px);font-weight:800;letter-spacing:-.01em;}
     .top p{margin:0;color:var(--muted);font-size:12px;line-height:1.55;}
     /* 엔티티 카드(우측) */
@@ -59,37 +61,37 @@
     .card .body{padding:15px 18px 18px;}
     .card .head{display:flex;align-items:center;gap:10px;}
     .card .num{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-               background:radial-gradient(circle at 30% 25%,rgba(169,216,200,.4),rgba(169,216,200,.08));
-               border:1.5px solid var(--accent);color:#fff;font-weight:800;font-size:14px;}
+               background:radial-gradient(circle at 30% 25%,rgba(47,143,118,.22),rgba(47,143,118,.06));
+               border:1.5px solid var(--accent);color:#1b2622;font-weight:800;font-size:14px;}
     .card .type{font-size:10.5px;font-weight:800;letter-spacing:.05em;color:var(--gold);
-                border:1px solid rgba(220,192,121,.4);border-radius:999px;padding:3px 10px;}
+                border:1px solid rgba(154,120,31,.4);border-radius:999px;padding:3px 10px;}
     .card h2{margin:13px 0 0;font-size:22px;font-weight:800;letter-spacing:-.01em;}
     .card .furn{margin:8px 0 0;font-size:12px;font-weight:700;color:var(--gold);
-                display:inline-block;border:1px solid rgba(220,192,121,.35);border-radius:8px;padding:4px 9px;}
+                display:inline-block;border:1px solid rgba(154,120,31,.35);border-radius:8px;padding:4px 9px;}
     .card .cap{color:var(--accent);font-size:13px;font-weight:700;margin:9px 0 0;}
     .card .desc{color:var(--muted);font-size:13px;line-height:1.66;margin:10px 0 0;}
     .card .rel{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
     .card .rel .lab{font-size:11px;color:var(--muted);margin-right:2px;}
-    .chip{border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.05);
+    .chip{border:1px solid var(--line);border-radius:999px;background:rgba(26,44,36,.05);
           color:var(--text);font:inherit;font-size:11.5px;font-weight:600;padding:5px 11px;cursor:pointer;transition:.15s;}
-    .chip:hover{border-color:var(--accent);background:rgba(169,216,200,.16);transform:translateY(-1px);}
+    .chip:hover{border-color:var(--accent);background:rgba(47,143,118,.12);transform:translateY(-1px);}
     /* 하단 내비게이션 */
     .nav{left:50%;transform:translateX(-50%);bottom:18px;padding:9px 11px;display:flex;gap:11px;align-items:center;}
-    .nav .btn{border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.05);
+    .nav .btn{border:1px solid var(--line);border-radius:12px;background:rgba(26,44,36,.05);
               color:var(--text);font:inherit;font-weight:800;font-size:13px;padding:9px 15px;cursor:pointer;transition:.15s;}
-    .nav .btn:hover{border-color:var(--accent);background:rgba(169,216,200,.14);}
+    .nav .btn:hover{border-color:var(--accent);background:rgba(47,143,118,.12);}
     .nav .btn.primary{background:linear-gradient(180deg,var(--accent),var(--accent2));color:#091210;border-color:transparent;}
     .nav .btn.primary:hover{filter:brightness(1.08);}
     .nav .btn.ghost{color:var(--muted);padding:9px 12px;}
     .dots{display:flex;gap:6px;align-items:center;padding:0 4px;}
-    .dots i{width:7px;height:7px;border-radius:50%;background:rgba(244,241,234,.22);transition:.2s;cursor:pointer;}
-    .dots i.done{background:rgba(169,216,200,.5);}
+    .dots i{width:7px;height:7px;border-radius:50%;background:rgba(30,42,36,.22);transition:.2s;cursor:pointer;}
+    .dots i.done{background:rgba(47,143,118,.5);}
     .dots i.on{background:var(--accent);width:22px;border-radius:4px;}
-    .dots i.study{box-shadow:0 0 0 2px rgba(220,192,121,.55);}   /* 학습 배치 지점 = 금색 테 */
+    .dots i.study{box-shadow:0 0 0 2px rgba(154,120,31,.55);}   /* 학습 배치 지점 = 금색 테 */
     /* 토스트/힌트 */
     .status{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:var(--panel2);
             border:1px solid var(--line);border-radius:999px;padding:7px 16px;color:var(--muted);font-size:12px;
-            box-shadow:0 10px 30px rgba(0,0,0,.4);transition:opacity .5s;}
+            box-shadow:0 10px 30px rgba(30,50,42,.14);transition:opacity .5s;}
     .status b{color:var(--accent);}
     .hint{position:fixed;left:16px;bottom:16px;color:var(--muted);font-size:10.5px;line-height:1.5;
           background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 11px;max-width:min(330px,calc(100vw - 32px));}
@@ -104,18 +106,18 @@
     .lmintro .ln{margin-top:7px;font-size:13.5px;color:rgba(244,241,234,.72);}
     /* 우하단 2D 평면도 미니맵(나 중심) — 클릭하면 편집 대시보드 */
     .mini{position:fixed;right:16px;bottom:16px;width:176px;height:176px;border-radius:12px;
-          border:1px solid var(--line);background:rgba(8,12,11,.7);box-shadow:0 14px 38px rgba(0,0,0,.5);
+          border:1px solid var(--line);background:rgba(255,255,255,.82);box-shadow:0 14px 38px rgba(30,50,42,.16);
           cursor:pointer;z-index:10;display:none;}
     .mini:hover{border-color:var(--accent);}
     /* 편집 대시보드 */
     .esheet{width:min(640px,calc(100vw - 28px));max-height:92vh;padding:0;overflow:hidden;display:flex;flex-direction:column;}
     .ehead{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;}
     .ebody{padding:6px 16px 14px;display:flex;flex-direction:column;gap:10px;overflow:auto;}
-    #editCv{width:100%;border-radius:12px;border:1px solid var(--line);background:#0b0f0d;cursor:crosshair;touch-action:none;}
+    #editCv{width:100%;border-radius:12px;border:1px solid var(--line);background:#eef2ee;cursor:crosshair;touch-action:none;}
     .erow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
     .erow input{flex:1;min-width:140px;height:36px;border-radius:9px;border:1px solid var(--line);
-                background:rgba(255,255,255,.05);color:var(--text);font:inherit;font-size:13px;padding:0 11px;}
-    .erow .btn{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.05);color:var(--text);
+                background:rgba(26,44,36,.05);color:var(--text);font:inherit;font-size:13px;padding:0 11px;}
+    .erow .btn{border:1px solid var(--line);border-radius:10px;background:rgba(26,44,36,.05);color:var(--text);
                font:inherit;font-weight:800;font-size:12.5px;padding:9px 13px;cursor:pointer;}
     .erow .btn:hover{border-color:var(--accent);}
     .erow .btn.save{background:linear-gradient(180deg,var(--accent),var(--accent2));color:#091210;border-color:transparent;}
@@ -127,7 +129,7 @@
          font:inherit;font-weight:800;font-size:12.5px;cursor:pointer;display:none;align-items:center;gap:6px;}
     .fab:hover{border-color:var(--accent);}
     .fab #listCount{color:var(--accent);}
-    .modal{position:fixed;inset:0;background:rgba(4,6,5,.55);backdrop-filter:blur(3px);
+    .modal{position:fixed;inset:0;background:rgba(30,50,42,.28);backdrop-filter:blur(3px);
            display:none;align-items:center;justify-content:center;z-index:20;}
     .modal.open{display:flex;}
     .msheet{width:min(420px,calc(100vw - 32px));max-height:min(72vh,640px);padding:0;overflow:hidden;display:flex;flex-direction:column;}
@@ -137,7 +139,7 @@
     #mlist{overflow:auto;padding:4px 14px 16px;}
     .mrow{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;
           padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer;transition:.12s;}
-    .mrow:hover{border-color:var(--accent);background:rgba(169,216,200,.1);}
+    .mrow:hover{border-color:var(--accent);background:rgba(47,143,118,.12);}
     .mrow .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);}
     .mrow .fn{font-weight:700;font-size:13.5px;}
     .mrow .ent{font-size:11.5px;color:var(--gold);font-weight:700;}
@@ -875,16 +877,16 @@
       route.forEach((h, i) => {
         const row = document.createElement("div"); row.className = "mrow";
         const study = !!h.entity;
-        const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = study ? "#dcc079" : "#a9d8c8";
+        const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = study ? "#9a781f" : "#2f8f76";
         const fn = document.createElement("span"); fn.className = "fn";
         fn.textContent = `${h.number}. ` + dispName(h);
         const ent = document.createElement("span"); ent.className = "ent" + (study ? "" : " none");
         ent.textContent = study ? h.entity.title : "—";
         const del = document.createElement("button");
         del.textContent = "✕"; del.title = "이 핫스팟 삭제 (↶로 되돌리기 가능)";
-        del.style.cssText = "background:none;border:none;color:rgba(244,241,234,.38);cursor:pointer;font:inherit;font-size:13px;padding:2px 5px;";
+        del.style.cssText = "background:none;border:none;color:rgba(30,42,36,.38);cursor:pointer;font:inherit;font-size:13px;padding:2px 5px;";
         del.onmouseenter = () => del.style.color = "#e08c8c";
-        del.onmouseleave = () => del.style.color = "rgba(244,241,234,.38)";
+        del.onmouseleave = () => del.style.color = "rgba(30,42,36,.38)";
         del.onclick = (e) => { e.stopPropagation(); deleteHotspot(i); };
         row.append(dot, fn, ent, del);
         row.title = "클릭=이동 · 드래그=순서 변경 · ✕=삭제";
@@ -1047,15 +1049,15 @@
       g.clearRect(0, 0, W, H);
       const px = (wx, wz) => [W/2 + (wx - camera.position.x) * S, H/2 + (wz - camera.position.z) * S];
       // 방 외곽
-      g.strokeStyle = "rgba(244,241,234,.4)"; g.lineWidth = 1.5;
+      g.strokeStyle = "rgba(26,44,36,.4)"; g.lineWidth = 1.5;
       const [ox, oz] = px(bounds.min.x, bounds.min.z);
       g.strokeRect(ox, oz, (bounds.max.x - bounds.min.x) * S, (bounds.max.z - bounds.min.z) * S);
       // 가구 발자국
-      g.fillStyle = "rgba(169,216,200,.14)"; g.strokeStyle = "rgba(169,216,200,.32)"; g.lineWidth = 1;
+      g.fillStyle = "rgba(47,143,118,.14)"; g.strokeStyle = "rgba(47,143,118,.32)"; g.lineWidth = 1;
       furnRects.forEach(r => { const [x, z] = px(r.x1, r.z1);
         g.fillRect(x, z, (r.x2 - r.x1) * S, (r.z2 - r.z1) * S); g.strokeRect(x, z, (r.x2 - r.x1) * S, (r.z2 - r.z1) * S); });
       // 동선
-      g.strokeStyle = "rgba(169,216,200,.4)"; g.lineWidth = 1.4; g.beginPath();
+      g.strokeStyle = "rgba(47,143,118,.5)"; g.lineWidth = 1.4; g.beginPath();
       route.forEach((h, i) => { const [x, z] = px(h.pos.x, h.pos.z); i ? g.lineTo(x, z) : g.moveTo(x, z); });
       g.stroke();
       // 핫스팟(학습=금색, 현재=크게)
@@ -1063,9 +1065,9 @@
         const [x, z] = px(h.pos.x, h.pos.z);
         const cur = i === activeIdx;
         g.beginPath(); g.arc(x, z, cur ? 6.5 : (h.entity ? 5.5 : 3.5), 0, 7);   // 지식 점은 크게
-        g.fillStyle = h.entity ? "#dcc079" : "#a9d8c8"; g.fill();
-        if (cur) { g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke(); }
-        g.fillStyle = "#0b0f0d"; g.font = "700 7px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillStyle = h.entity ? "#9a781f" : "#2f8f76"; g.fill();
+        if (cur) { g.strokeStyle = "#1b2622"; g.lineWidth = 1.6; g.stroke(); }
+        g.fillStyle = "#fff"; g.font = "700 7px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
         g.fillText(String(h.number), x, z + 0.5);
       });
       // 나(빨간 삼각형, 중앙 고정 — 시선 방향)
@@ -1076,7 +1078,7 @@
       g.beginPath(); g.moveTo(0, -9); g.lineTo(6, 6); g.lineTo(0, 2.5); g.lineTo(-6, 6); g.closePath(); g.fill();
       g.restore();
       // 캡션
-      g.fillStyle = "rgba(244,241,234,.55)"; g.font = "700 9px 'Malgun Gothic',Arial"; g.textAlign = "left";
+      g.fillStyle = "rgba(30,42,36,.62)"; g.font = "700 9px 'Malgun Gothic',Arial"; g.textAlign = "left";
       g.fillText("개념 지도 · 클릭=크게", 8, H - 8);
     }
     miniCv.addEventListener("click", openEditor);
@@ -1123,10 +1125,10 @@
       const W = editCv.width, H = editCv.height;
       g.clearRect(0, 0, W, H);
       // ① 배경: 방 외곽 + 가구 발자국(사물 위치 파악용)
-      g.strokeStyle = "rgba(244,241,234,.45)"; g.lineWidth = 2;
+      g.strokeStyle = "rgba(26,44,36,.45)"; g.lineWidth = 2;
       const [bx, bz] = e2c(bounds.min.x, bounds.min.z);
       g.strokeRect(bx, bz, (bounds.max.x - bounds.min.x) * eScale, (bounds.max.z - bounds.min.z) * eScale);
-      g.fillStyle = "rgba(169,216,200,.10)"; g.strokeStyle = "rgba(169,216,200,.26)"; g.lineWidth = 1;
+      g.fillStyle = "rgba(47,143,118,.10)"; g.strokeStyle = "rgba(47,143,118,.26)"; g.lineWidth = 1;
       furnRects.forEach(r => { const [x, z] = e2c(r.x1, r.z1);
         g.fillRect(x, z, (r.x2 - r.x1) * eScale, (r.z2 - r.z1) * eScale); g.strokeRect(x, z, (r.x2 - r.x1) * eScale, (r.z2 - r.z1) * eScale); });
       // ② 노드 표시 위치 계산 — 서로 밀어내 겹침 해소(드래그 중인 노드는 고정)
@@ -1155,40 +1157,40 @@
       eNodes.forEach(n => {
         const off = Math.hypot(n.dx - n.cx, n.dz - n.cz);
         if (off > 13) {
-          g.strokeStyle = "rgba(244,241,234,.3)"; g.lineWidth = 1;
+          g.strokeStyle = "rgba(30,42,36,.3)"; g.lineWidth = 1;
           g.beginPath(); g.moveTo(n.cx, n.cz); g.lineTo(n.dx, n.dz); g.stroke();
         }
-        g.fillStyle = n.h.ent ? "rgba(220,192,121,.8)" : "rgba(169,216,200,.6)";
+        g.fillStyle = n.h.ent ? "rgba(154,120,31,.8)" : "rgba(47,143,118,.6)";
         g.beginPath(); g.arc(n.cx, n.cz, 2.6, 0, 7); g.fill();   // 실제 위치 점(항상)
       });
       // ④ 개념 연결(related) — 금색 점선(표시 위치 기준)
       const byId = {}; eNodes.forEach(n => { if (n.h.entId) byId[n.h.entId] = n; });
-      g.strokeStyle = "rgba(220,192,121,.55)"; g.setLineDash([6, 5]); g.lineWidth = 1.5;
+      g.strokeStyle = "rgba(154,120,31,.55)"; g.setLineDash([6, 5]); g.lineWidth = 1.5;
       eNodes.forEach(n => { (n.h.rel || []).forEach(rid => { const t = byId[rid]; if (!t) return;
         g.beginPath(); g.moveTo(n.dx, n.dz); g.lineTo(t.dx, t.dz); g.stroke(); }); });
       g.setLineDash([]);
       // ⑤ 사물 노드(작게·차분) → ⑥ 개념 노드(크게·금색) 순서로, 지식이 항상 위에
       eNodes.filter(n => !n.h.ent).forEach(n => {
         g.beginPath(); g.arc(n.dx, n.dz, 8, 0, 7);
-        g.fillStyle = n.i === dragIdx ? "#fff" : "rgba(169,216,200,.8)"; g.fill();
-        g.strokeStyle = "#0b0f0d"; g.lineWidth = 1.6; g.stroke();
-        g.fillStyle = "#0b0f0d"; g.font = "800 8.5px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillStyle = n.i === dragIdx ? "#3a9e84" : "rgba(47,143,118,.8)"; g.fill();
+        g.strokeStyle = "#1b2622"; g.lineWidth = 1.6; g.stroke();
+        g.fillStyle = "#fff"; g.font = "800 8.5px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
         g.fillText(String(n.i + 1), n.dx, n.dz + 0.5);
-        g.fillStyle = "rgba(244,241,234,.62)"; g.font = "600 9.5px 'Malgun Gothic',Arial";
+        g.fillStyle = "rgba(30,42,36,.7)"; g.font = "600 9.5px 'Malgun Gothic',Arial";
         g.fillText(dispName(n.h), n.dx, n.dz + 17);
       });
       const capRects = [];   // 이미 그린 캡션 박스 — 겹치면 그 캡션은 생략(텍스트 충돌 방지)
       eNodes.filter(n => n.h.ent).forEach(n => {
-        g.shadowColor = "rgba(220,192,121,.55)"; g.shadowBlur = 10;
+        g.shadowColor = "rgba(154,120,31,.45)"; g.shadowBlur = 10;
         g.beginPath(); g.arc(n.dx, n.dz, 14, 0, 7);
-        g.fillStyle = n.i === dragIdx ? "#fff" : "#dcc079"; g.fill();
+        g.fillStyle = n.i === dragIdx ? "#b9942b" : "#9a781f"; g.fill();
         g.shadowBlur = 0;
-        g.strokeStyle = "#0b0f0d"; g.lineWidth = 2; g.stroke();
-        g.fillStyle = "#1d1607"; g.font = "800 12px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
+        g.strokeStyle = "#1b2622"; g.lineWidth = 2; g.stroke();
+        g.fillStyle = "#fff"; g.font = "800 12px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
         g.fillText(String(n.i + 1), n.dx, n.dz + 0.5);
-        g.fillStyle = "#ecd9a0"; g.font = "800 13.5px 'Malgun Gothic',Arial";
+        g.fillStyle = "#7a5e14"; g.font = "800 13.5px 'Malgun Gothic',Arial";
         g.fillText(n.h.ent, n.dx, n.dz - 23);                            // 지식(개념) — 주인공
-        g.fillStyle = "rgba(244,241,234,.5)"; g.font = "600 9px 'Malgun Gothic',Arial";
+        g.fillStyle = "rgba(30,42,36,.55)"; g.font = "600 9px 'Malgun Gothic',Arial";
         g.fillText(dispName(n.h), n.dx, n.dz + 23);                  // 어느 사물에 걸렸나
         // 휠로 확대하면 캡션(설명)이 펼쳐진다 — 이미 그린 캡션과 겹치면 생략(텍스트 충돌 방지)
         if (capOn && n.h.capt) {
@@ -1204,10 +1206,10 @@
             rect.x < r.x + r.w && rect.x + rect.w > r.x && rect.y < r.y + r.h && rect.y + rect.h > r.y);
           if (!clash) {
             capRects.push(rect);
-            g.fillStyle = "rgba(8,12,11,.82)";
+            g.fillStyle = "rgba(255,255,255,.92)";
             g.beginPath(); g.roundRect(rect.x, rect.y, bw, bh, 7); g.fill();
-            g.strokeStyle = "rgba(220,192,121,.35)"; g.lineWidth = 1; g.stroke();
-            g.fillStyle = "rgba(244,241,234,.86)";
+            g.strokeStyle = "rgba(154,120,31,.35)"; g.lineWidth = 1; g.stroke();
+            g.fillStyle = "rgba(27,38,34,.86)";
             lines.forEach((l, li) => g.fillText(l, n.dx, n.dz + 44 + li * 14));
           }
         }
@@ -1382,7 +1384,7 @@
       const inp = document.createElement("input");
       inp.value = "기억 지점";
       inp.style.cssText = "width:200px;height:34px;border-radius:9px;border:1px solid var(--line);" +
-        "background:rgba(255,255,255,.06);color:var(--text);font:inherit;font-size:13px;padding:0 10px;";
+        "background:rgba(26,44,36,.05);color:var(--text);font:inherit;font-size:13px;padding:0 10px;";
       const ok = document.createElement("button");
       ok.textContent = "추가"; ok.className = "btn";
       ok.style.cssText = "border:none;border-radius:9px;background:linear-gradient(180deg,var(--accent),var(--accent2));" +
