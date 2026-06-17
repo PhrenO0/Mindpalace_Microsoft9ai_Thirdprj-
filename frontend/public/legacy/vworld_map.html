@@ -365,7 +365,7 @@
       .status {
         opacity: 0.82;
       }
-      /* ── 마커/이름표 DOM 레이어: WebGL 밖에서 렌더 → 항상 선명 ── */
+      /* 마커/이름표 DOM 레이어: WebGL 밖에서 렌더해 항상 선명하게 유지 */
       .mk-layer { position:absolute; inset:0; pointer-events:none; z-index:3; overflow:hidden; }
       .mk { position:absolute; transform:translate(-50%,-100%); pointer-events:auto; cursor:pointer; transition:opacity .15s ease; }
       .mk-label { font:700 13px 'Pretendard','Malgun Gothic',sans-serif; color:#fff; background:rgba(26,24,20,.92);
@@ -1955,19 +1955,57 @@
       // ── 종로구 일대 주요 명소 10곳 마커 ──
 
       // ── 대시보드/네비게이션용 10개 정거장(마커와 동일) ──
+      const clampNumber = (value, min, max) => Math.max(min, Math.min(max, value));
+      const finiteNumber = (value, fallback = 0) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : fallback;
+      };
+      const landmarkBaseHeight = (m) => Math.max(0, finiteNumber(m && m.h, 0));
+      function autoCameraHeight(m, o) {
+        const h = landmarkBaseHeight(m);
+        if (Number.isFinite(Number(o.height))) return Number(o.height);
+        const offset = Number.isFinite(Number(o.heightOffset))
+          ? Number(o.heightOffset)
+          : clampNumber(170 + h * 1.35, 180, 700);
+        return Math.round(h + offset);
+      }
+      function autoCameraDistanceM(m, o) {
+        if (Number.isFinite(Number(o.distanceM))) return Number(o.distanceM);
+        const h = landmarkBaseHeight(m);
+        return clampNumber(230 + h * 1.2, 220, 720);
+      }
+      function autoCameraPitch(m, o) {
+        if (Number.isFinite(Number(o.pitch))) return Number(o.pitch);
+        const h = landmarkBaseHeight(m);
+        const t = clampNumber((h - 15) / 220, 0, 1);
+        return Math.round(-35 + t * 19);
+      }
+      function autoCameraOffset(m, heading, distanceM) {
+        const lat = finiteNumber(m && m.lat, 0);
+        const rad = (heading * Math.PI) / 180;
+        const metersPerLat = 111320;
+        const metersPerLon = Math.max(1, 111320 * Math.cos((lat * Math.PI) / 180));
+        return {
+          lonOff: -(Math.sin(rad) * distanceM) / metersPerLon,
+          latOff: -(Math.cos(rad) * distanceM) / metersPerLat,
+        };
+      }
       const STOPS = LANDMARKS.map((m, i) => {
         const o = m.cam || {};
+        const heading = Number.isFinite(Number(o.heading)) ? Number(o.heading) : 0;
+        const distanceM = autoCameraDistanceM(m, o);
+        const autoOffset = autoCameraOffset(m, heading, distanceM);
         return {
           num: i + 1,
           title: m.name,
           desc: m.desc || "",
           color: "#86bcb4", // 도트 색상 통일
           camera: {
-            lon: m.lon + (o.lonOff || 0),
-            lat: m.lat + (o.latOff != null ? o.latOff : -0.0022),
-            height: o.height != null ? o.height : (m.h || 15) + 180,
-            heading: o.heading != null ? o.heading : 0,
-            pitch: o.pitch != null ? o.pitch : -35,
+            lon: m.lon + (Number.isFinite(Number(o.lonOff)) ? Number(o.lonOff) : autoOffset.lonOff),
+            lat: m.lat + (Number.isFinite(Number(o.latOff)) ? Number(o.latOff) : autoOffset.latOff),
+            height: autoCameraHeight(m, o),
+            heading,
+            pitch: autoCameraPitch(m, o),
           },
           page: roomFor(i, m.name), // 방 있는 곳만 입장(나머지는 null) + &lm 테마 부착
         };
@@ -1978,43 +2016,63 @@
         const engine = window.Cesium;
         if (!viewer || !engine) return;
         const scene = viewer.scene;
-        // ── 마커/이름표는 WebGL 밖 DOM 레이어로 렌더 → 해상도 영향 없이 항상 선명 ──
         const host = scene.canvas.parentNode;
         if (host && getComputedStyle(host).position === "static") host.style.position = "relative";
         let layer = document.getElementById("mkLayer");
         if (layer) layer.remove();
-        layer = document.createElement("div"); layer.id = "mkLayer"; layer.className = "mk-layer";
+        layer = document.createElement("div");
+        layer.id = "mkLayer";
+        layer.className = "mk-layer";
         (host || document.body).appendChild(layer);
-        const mk = [];
+
+        const markers = [];
         LANDMARKS.forEach((m, i) => {
           const cart = engine.Cartesian3.fromDegrees(m.lon, m.lat, markerHeight(m));
           const el = document.createElement("div");
-          el.className = "mk"; el.dataset.idx = i;
+          el.className = "mk";
+          el.dataset.idx = i;
           el.innerHTML = `<div class="mk-label">${escapeHtml(m.name || "")}</div>` +
             `<div class="mk-pin"><span>${i + 1}</span></div>`;
-          el.addEventListener("click", (e) => { e.stopPropagation(); stopTour(false); flyToAnchor(i); });
+          el.addEventListener("click", (event) => {
+            event.stopPropagation();
+            stopTour(false);
+            flyToAnchor(i);
+          });
           layer.appendChild(el);
-          mk.push({ cart, el });
+          markers.push({ cart, el });
         });
-        // 매 렌더마다 3D 좌표 → 화면 좌표로 투영 + 지구 뒤편(가려짐) 숨김 + 선택 강조
-        const ST = engine.SceneTransforms;
-        function sync() {
-          let occ = null;
-          try { occ = new engine.EllipsoidalOccluder(scene.globe.ellipsoid, scene.camera.positionWC); } catch (e) {}
-          for (const p of mk) {
+
+        const transforms = engine.SceneTransforms;
+        function syncMarkers() {
+          let occluder = null;
+          try {
+            occluder = new engine.EllipsoidalOccluder(scene.globe.ellipsoid, scene.camera.positionWC);
+          } catch (e) {}
+          for (const marker of markers) {
             let win = null;
-            try { win = ST && ST.wgs84ToWindowCoordinates ? ST.wgs84ToWindowCoordinates(scene, p.cart) : scene.cartesianToCanvasCoordinates(p.cart); } catch (e) {}
-            const visible = win && (!occ || occ.isPointVisible(p.cart));
-            if (!visible) { p.el.style.opacity = "0"; p.el.style.pointerEvents = "none"; continue; }
-            p.el.style.opacity = "1"; p.el.style.pointerEvents = "auto";
-            p.el.style.left = win.x + "px"; p.el.style.top = win.y + "px";
-            const isAct = (+p.el.dataset.idx === activeIndex);
-            p.el.classList.toggle("on", isAct);
-            p.el.style.zIndex = isAct ? 12 : 6;
+            try {
+              win = transforms && transforms.wgs84ToWindowCoordinates
+                ? transforms.wgs84ToWindowCoordinates(scene, marker.cart)
+                : scene.cartesianToCanvasCoordinates(marker.cart);
+            } catch (e) {}
+            const visible = win && (!occluder || occluder.isPointVisible(marker.cart));
+            if (!visible) {
+              marker.el.style.opacity = "0";
+              marker.el.style.pointerEvents = "none";
+              continue;
+            }
+            marker.el.style.opacity = "1";
+            marker.el.style.pointerEvents = "auto";
+            marker.el.style.left = win.x + "px";
+            marker.el.style.top = win.y + "px";
+            const isActive = Number(marker.el.dataset.idx) === activeIndex;
+            marker.el.classList.toggle("on", isActive);
+            marker.el.style.zIndex = isActive ? 12 : 6;
           }
         }
-        scene.postRender.addEventListener(sync);
-        sync();
+        scene.postRender.addEventListener(syncMarkers);
+        syncMarkers();
+
         setStatus((CITY.name || "이 지역") + " 명소 " + LANDMARKS.length + "곳 — 핀을 누르면 그 명소가 선택돼요. 우측 정보를 보고 '건물 입장'으로 들어갑니다.");
       }
 
