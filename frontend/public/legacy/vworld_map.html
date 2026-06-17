@@ -1305,7 +1305,7 @@
         );
         window.setTimeout(() => {
           applyPerformanceMode(true, false);
-          applyClippingPlanes();
+          applyVWorldRenderSettings();
           activeIndex = 0; renderUi(); setInitialView();   // 교보 앞에서 세종대로 북향 몰입(직접 setView)
           initLock = 200;   // 초기 ~3초 매 프레임 강제 적용(VWorld 정착에 안 밀리게), 사용자 입력 시 해제
           const viewer = getVWorldViewer();
@@ -1324,55 +1324,31 @@
         }, 1800);
       }
 
-      function applyClippingPlanes() {
+      function applyVWorldRenderSettings() {
         const viewer = window.ws3d && window.ws3d.viewer;
         const engine = window.Cesium;
         if (!viewer || !engine) {
-          setStatus("클리핑 플레인: Cesium viewer를 찾지 못했습니다.");
+          setStatus("VWorld 렌더 설정: Cesium viewer를 찾지 못했습니다.");
           return;
         }
 
-        // ── 현재 도시 영역(중심 ±반경)만 건물 타일셋 렌더 → 도시 밖 건물은 클리핑으로 컷 ──
-        //   (성능↑ + 비네팅과 일치. 도시 중심은 데이터(CITY.center) 또는 랜드마크 평균으로 결정.)
-        const CLIP_LON = CITY_BOUNDS.lon;
-        const CLIP_LAT = CITY_BOUNDS.lat;
-        // 명소 분포 반경 + 여유(4km). 최소 9km는 확보해 도심 건물이 충분히 보이게.
-        const CLIP_RADIUS = (CITY.clipRadiusM && CITY.clipRadiusM > 0)
-          ? CITY.clipRadiusM
-          : Math.max(CITY_BOUNDS.radiusM + 4000, 9000); // m
-        const cityMatrix = engine.Transforms.eastNorthUpToFixedFrame(
-          engine.Cartesian3.fromDegrees(CLIP_LON, CLIP_LAT),
-        );
-        const makeSeoulPlanes = () =>
-          new engine.ClippingPlaneCollection({
-            planes: [
-              new engine.ClippingPlane(new engine.Cartesian3(1, 0, 0), CLIP_RADIUS),
-              new engine.ClippingPlane(new engine.Cartesian3(-1, 0, 0), CLIP_RADIUS),
-              new engine.ClippingPlane(new engine.Cartesian3(0, 1, 0), CLIP_RADIUS),
-              new engine.ClippingPlane(new engine.Cartesian3(0, -1, 0), CLIP_RADIUS),
-            ],
-            modelMatrix: cityMatrix,
-            unionClippingRegions: true,
-          });
-
-        // 빌딩 3D 타일셋: 서울 영역 클리핑 + LOD 임계.
+        // 빌딩 3D 타일셋: 클리핑 없이 LOD/캐시만 조정.
         //  maximumScreenSpaceError 가 작을수록 더 높은 고도/먼 거리에서도 건물이 렌더됨(대신 부하↑).
         //  (건물을 더 높은 곳에서도 보이게 64→24로 낮춤. 더 멀리서 보려면 더 낮추고, 더 빠르게는 키움)
         const LOW_QUALITY_SSE = 16;
-        const lowerTilesetQuality = (p) => {
+        const tuneTileset = (p) => {
           try {
+            p.show = true;
             p.maximumScreenSpaceError = LOW_QUALITY_SSE;
             p.dynamicScreenSpaceError = false; // 거리별 화질 완화 끔 → 먼/높은 곳 건물도 렌더
             p.clippingPlanes = undefined; // [클리핑 제거] 도시 밖 건물 컷 비활성화 — 전 영역 건물 렌더
-            // ── 접근 시 디테일이 빨리 뜨도록 타일 스트리밍 최적화 ──
-            p.cullRequestsWhileMoving = true; // 이동 중 타일 요청을 줄여 이동을 매끄럽게(멈추면 디테일 채움)
-            p.preferLeaves = true;          // 상세(잎) 타일 우선 로드 → 디테일 빨리 표시
-            p.skipLevelOfDetail = true;     // 중간 LOD 건너뛰고 목표 디테일로 바로 점프
-            p.baseScreenSpaceError = 1024;
-            p.skipScreenSpaceErrorFactor = 16;
-            p.skipLevels = 1;
-            p.loadSiblings = false;         // 화면 밖 형제 타일 안 불러옴(대역폭 near쪽 집중)
-            p.cullWithChildrenBounds = true;
+            // VWorld 도시 타일은 지역별 bounding volume/LOD 구성이 균일하지 않다.
+            // 공격적인 LOD 스킵·자식 bounds culling은 일부 도시에서 건물이 통째로 비는 원인이 된다.
+            p.cullRequestsWhileMoving = false;
+            p.preferLeaves = false;
+            p.skipLevelOfDetail = false;
+            p.loadSiblings = true;
+            p.cullWithChildrenBounds = false;
             // 캐시 크게 → 한번 본 건물은 재접근 시 즉시 표시(버전별 속성 대응)
             if ("cacheBytes" in p) p.cacheBytes = 768 * 1024 * 1024;
             else p.maximumMemoryUsage = 768; // 구버전 Cesium(MB 단위)
@@ -1384,7 +1360,7 @@
         for (let i = 0; i < viewer.scene.primitives.length; i++) {
           const p = viewer.scene.primitives.get(i);
           if (p instanceof engine.Cesium3DTileset) {
-            lowerTilesetQuality(p);
+            tuneTileset(p);
             tilesetCount++;
           }
         }
@@ -1392,7 +1368,7 @@
         // 타일셋(빌딩)은 이후 비동기로 추가될 수 있으므로, 추가분도 저화질 적용
         try {
           viewer.scene.primitives.primitiveAdded.addEventListener((p) => {
-            if (p instanceof engine.Cesium3DTileset) lowerTilesetQuality(p);
+            if (p instanceof engine.Cesium3DTileset) tuneTileset(p);
             // 건물 끄기 모드면 새로 추가되는 건물 Primitive도 숨김
             if (landmarkOnly && isBuildingPrimitive(p)) { try { p.show = false; } catch {} }
           });
