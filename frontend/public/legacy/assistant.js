@@ -157,12 +157,12 @@
 
     // 인사(페이지 맥락)
     var pg = page();
-    // 위젯 위치(페이지별 충돌 회피): 방·지도는 좌측(우하단에 미니맵/패널 있음), 구성은 하단바 위로 띄움
+    // 위젯 위치: 모든 페이지를 브이월드 맵과 동일하게 좌하단으로 통일.
     (function place(){
       var L = document.getElementById("mpLaunch");
       function set(el, css){ for (var k in css) el.style[k] = css[k]; }
-      if (pg === "walk" || pg === "map"){ set(L,{left:"16px",right:"auto",bottom:"150px"}); set(panel,{left:"16px",right:"auto",bottom:"206px"}); }
-      else if (pg === "compose" || pg === "shop"){ set(L,{right:"18px",left:"auto",bottom:"80px"}); set(panel,{right:"18px",left:"auto",bottom:"138px"}); }
+      set(L, { left: "16px", right: "auto", bottom: "150px" });
+      set(panel, { left: "16px", right: "auto", bottom: "206px" });
     })();
     var hi = { home:"기억의 궁전에 오신 걸 환영해요. PDF를 올리면 학습을 궁전으로 구성해 드려요.",
       compose:"여기는 '구성' 화면이에요. 장소와 방을 골라 입장할 수 있어요.",
