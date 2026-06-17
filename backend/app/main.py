@@ -78,6 +78,7 @@ def health() -> dict:
         "vworldKeyConfigured": bool(os.getenv("VWORLD_API_KEY")),
         "azureVisionConfigured": bool(azure_endpoint and azure_key),
         "sketchfabConfigured": bool(sk.token()),
+        "blobStorageConfigured": bool(os.getenv("AZURE_STORAGE_CONNECTION_STRING")),
     }
 
 
@@ -123,6 +124,10 @@ def sketchfab_import(payload: SketchfabImportRequest) -> dict:
     except requests.HTTPError as exc:
         detail = exc.response.text[:400] if exc.response is not None else str(exc)
         raise HTTPException(status_code=502, detail=f"Sketchfab 다운로드 실패: {detail}") from exc
+    # Blob 업로드 성공 시 blobUrl을 glbUrl로 사용. 폴백(로컬)이면 상대 경로.
+    blob_url = info.pop("blobUrl", None)
+    if blob_url:
+        return {"glbUrl": blob_url, "absUrl": blob_url, **info}
     rel = f"public/imported/{payload.uid}.glb"
     return {"glbUrl": rel, "absUrl": f"/legacy/{rel}", **info}
 
