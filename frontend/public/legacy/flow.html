@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>기억의 궁전 — 전체 UI·파이프라인 흐름</title>
+<style>
+  :root{
+    --bg:#f5f1ea; --panel:#ffffff; --line:rgba(51,46,40,.14); --text:#2a241d;
+    --muted:rgba(42,36,29,.62); --accent:#2c7a63; --accent2:#348a72; --gold:#8a8170;
+    --shadow:0 14px 40px rgba(40,34,26,.12);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:
+      radial-gradient(60% 50% at 50% -5%, rgba(44,122,99,.06), transparent 60%), var(--bg);
+    color:var(--text); font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:34px 20px 70px;}
+  .wrap{max-width:1120px; margin:0 auto;}
+  .kicker{color:var(--gold); font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase;}
+  h1{margin:6px 0 4px; font-size:clamp(24px,3.6vw,34px); font-weight:900; letter-spacing:-.02em;}
+  h1 .g{background:linear-gradient(120deg,var(--accent),var(--gold)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+  .lede{color:var(--muted); font-size:14px; margin:0 0 22px;}
+
+  .stage{position:relative; border:1px solid var(--line); border-radius:16px; background:var(--panel);
+    box-shadow:var(--shadow); padding:16px 18px; margin:0 0 14px;}
+  .stage > .st-h{display:flex; align-items:center; gap:9px; margin-bottom:12px;}
+  .st-n{width:24px; height:24px; border-radius:50%; background:var(--accent); color:#fff; font-weight:800;
+    font-size:12px; display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  .st-t{font-size:15px; font-weight:900;}
+  .st-d{font-size:12px; color:var(--muted); margin-left:4px;}
+
+  .row{display:flex; align-items:stretch; gap:12px; flex-wrap:wrap;}
+  .node{flex:1 1 200px; min-width:190px; border:1px solid var(--line); border-radius:12px; padding:11px 13px;
+    background:rgba(51,46,40,.025);}
+  .node.key{border-color:color-mix(in srgb,var(--accent) 45%,var(--line)); background:color-mix(in srgb,var(--accent) 7%,#fff);}
+  .node .nm{font-weight:800; font-size:13.5px; display:flex; align-items:center; gap:6px;}
+  .node .file{font-size:10.5px; color:var(--accent); font-weight:700; margin-top:1px;}
+  .node .ds{font-size:12px; color:var(--muted); margin-top:5px; line-height:1.5;}
+  .node .out{margin-top:8px; display:flex; flex-direction:column; gap:3px;}
+  .node .out span{font-size:11px; color:var(--text);}
+  .node .out span b{color:var(--accent);}
+
+  .arrow{align-self:center; color:var(--gold); font-weight:900; font-size:18px; flex:0 0 auto;}
+  .branch{display:flex; gap:7px; align-items:center; flex-wrap:wrap; margin-top:8px;}
+  .pill{font-size:11px; font-weight:700; border:1px solid var(--line); border-radius:999px; padding:3px 10px;
+    background:#fff; color:var(--text);}
+  .pill.a{border-color:color-mix(in srgb,var(--accent) 40%,var(--line)); color:var(--accent);}
+
+  .down{display:flex; justify-content:center; color:var(--gold); font-size:20px; margin:-4px 0 8px;}
+
+  .data{border-style:dashed;}
+  .data .st-n{background:var(--gold);}
+  .chip{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:var(--text);
+    border:1px solid var(--line); border-radius:8px; padding:5px 9px; background:#fff;}
+  .chip b{color:var(--accent);}
+  .flowline{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin:6px 0;}
+  .flowline .ar{color:var(--gold); font-weight:900;}
+
+  .legend{display:flex; gap:16px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin-top:8px;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .dot{width:11px; height:11px; border-radius:50%; display:inline-block;}
+  .note{font-size:12px; color:var(--muted); line-height:1.6; margin-top:6px;}
+  a.back{display:inline-block; margin-top:24px; color:var(--accent); font-weight:700; font-size:13px; text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Memory Palace · 시스템 도식</div>
+  <h1>기억의 궁전 — <span class="g">전체 UI·파이프라인 흐름</span></h1>
+  <p class="lede">진입부터 방 입장까지의 화면 흐름과, 그 아래에서 도는 데이터(학습자료·GLB·핫스팟) 파이프라인.</p>
+
+  <!-- ① 진입 -->
+  <div class="stage">
+    <div class="st-h"><span class="st-n">1</span><span class="st-t">진입</span><span class="st-d">사이트에 들어오면</span></div>
+    <div class="row">
+      <div class="node"><div class="nm">🚪 index</div><div class="file">index.html</div>
+        <div class="ds">배포 루트. 자동으로 메인으로 보냄.</div></div>
+      <div class="arrow">→</div>
+      <div class="node key"><div class="nm">🏠 메인 랜딩</div><div class="file">home.html</div>
+        <div class="ds">소개 · PDF/JSON 업로드 · 3D 둘러보기 맛보기 · 상시 챗봇.</div>
+        <div class="branch"><span class="pill a">① 업로드→구성</span><span class="pill a">② 둘러보기</span></div></div>
+    </div>
+  </div>
+
+  <div class="down">▼</div>
+
+  <!-- ② 분기 -->
+  <div class="stage">
+    <div class="st-h"><span class="st-n">2</span><span class="st-t">두 갈래</span><span class="st-d">메인에서 갈라짐</span></div>
+    <div class="row">
+      <div class="node"><div class="nm">① 학습자료 올리기</div>
+        <div class="ds">PDF/JSON 업로드 → palace를 <b>localStorage(mp_palace)</b>에 저장하고 구성으로.</div>
+        <div class="out"><span><b>→</b> compose.html</span></div></div>
+      <div class="node"><div class="nm">② 어디에 지을지 둘러보기</div><div class="file">region-select.html</div>
+        <div class="ds">전국 84개 도시 지도. 핀을 눌러 그 도시로.</div>
+        <div class="out"><span><b>→</b> 도시 핀 = vworld_map?city=X</span><span><b>→</b> 🛍 추천 = compose</span><span><b>→</b> 🧩 커스터마이즈 = glb-customizer</span></div></div>
+    </div>
+  </div>
+
+  <div class="down">▼</div>
+
+  <!-- ③ 구성 허브 -->
+  <div class="stage">
+    <div class="st-h"><span class="st-n">3</span><span class="st-t">구성 (허브)</span><span class="st-d">챕터를 장소·방에 배치</span></div>
+    <div class="row">
+      <div class="node key"><div class="nm">🛍 구성</div><div class="file">compose.html</div>
+        <div class="ds">활성 학습자료의 챕터마다 어울리는 <b>장소(랜드마크)</b>와 <b>방 디자인</b>을 자동 추천 + 수동 조정.
+          도시 바꿔도 자료 유지(localStorage).</div>
+        <div class="branch"><span class="pill">🧩 스튜디오</span><span class="pill">🗺 3D 지도</span><span class="pill a">▶ 입장</span></div></div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <div class="node"><div class="nm">🧩 스튜디오 <span style="font-size:10px;color:var(--muted)">(선택 분기)</span></div><div class="file">glb-customizer.html</div>
+        <div class="ds">방 디자인 23종 고르기 + 방의 <b>2D 개념지도 대시보드</b> 임베드(마커·순서·캡션 편집, 입장에 반영). 같은 자료 유지.</div></div>
+      <div class="node"><div class="nm">🗺 3D 지도</div><div class="file">vworld_map.html</div>
+        <div class="ds">도시 3D 지도에 명소 마커. 우측 패널 = <b>도시+학습자료+그 명소의 챕터</b>. '건물 입장'으로 <b>구성한 방</b>에 들어감.</div></div>
+      <div class="node"><div class="nm">▶ 입장</div><div class="file">memory-walk.html</div>
+        <div class="ds">1인칭으로 방을 걸으며 외움.</div></div>
+    </div>
+  </div>
+
+  <div class="down">▼</div>
+
+  <!-- ④ 체험 -->
+  <div class="stage">
+    <div class="st-h"><span class="st-n">4</span><span class="st-t">체험 (방 안)</span><span class="st-d">장소법으로 기억</span></div>
+    <div class="row">
+      <div class="node key"><div class="nm">🚶 1인칭 워크스루</div><div class="file">memory-walk.html</div>
+        <div class="ds">방 GLB를 WASD로 걷고, 가구·지점(핫스팟)에 학습 개념이 얹힘. 🧠 개념지도(2D 대시보드)로 배치 편집. 좌상단 처음/지도/뒤로.</div>
+        <div class="branch"><span class="pill">🏠 처음=home</span><span class="pill">🗺 지도=vworld_map</span><span class="pill">🧠 개념지도</span></div></div>
+    </div>
+  </div>
+
+  <!-- 데이터/파이프라인 -->
+  <div class="stage data" style="margin-top:22px;">
+    <div class="st-h"><span class="st-n">D</span><span class="st-t">데이터 · 파이프라인</span><span class="st-d">화면 아래에서 자동으로 도는 것</span></div>
+
+    <div class="flowline"><span class="chip">📄 PDF</span><span class="ar">→</span><span class="chip">외부 GraphRAG</span><span class="ar">→</span><span class="chip"><b>palace.json</b></span><span class="ar">→</span><span class="chip">localStorage <b>mp_palace</b></span><span class="ar">→</span> compose·studio·map·walk 모두 같은 자료 사용</div>
+
+    <div class="flowline"><span class="chip">🏠 새 방 GLB</span><span class="ar">→</span><span class="chip">memory-walk 런타임</span><span class="ar">→</span> 가구 메쉬 좌표 자동추출 → 부족하면 지오메트리 폴백 → <b>노드 수만큼</b> 핫스팟 합성 → localStorage 편집 저장</div>
+
+    <div class="flowline"><span class="chip">🖼 무명/단일메쉬 GLB</span><span class="ar">→</span><span class="chip">스캐너 personal-room-scanner-3d</span><span class="ar">→</span><span class="chip">hotspots.json</span><span class="ar">→</span> 정밀 좌표(자동 실행 예정)</div>
+
+    <div class="flowline"><span class="chip">📍 랜드마크</span><span class="ar">→</span> 미리 준비한 <b>84개 도시</b> 데이터(cities/*.json)에서 도시별 배정</div>
+
+    <div class="flowline"><span class="chip">🎨 방 배정</span><span class="ar">→</span> 스튜디오 선택은 localStorage <b>studio_designs</b> → 지도·입장이 그 방을 사용</div>
+
+    <div class="note"><b>전제</b> — 다른 PDF가 들어올 수 있고, 새 방 GLB도 받을 수 있다는 가정 위에서: 활성 자료(mp_palace)는 어느 화면으로 가도 유지되고, 어떤 GLB든 입장 시 좌표가 런타임에 계산돼 핫스팟이 붙는다. Claude CLI 개입 없이 동작.</div>
+  </div>
+
+  <!-- 글로벌 레이어 -->
+  <div class="stage" style="margin-top:14px;">
+    <div class="st-h"><span class="st-n">G</span><span class="st-t">전 페이지 공통</span></div>
+    <div class="row">
+      <div class="node"><div class="nm">🧭 통일 상단바</div><div class="file">nav.js</div>
+        <div class="ds">처음 · 둘러보기 · 구성 · 3D지도 어디서나 이동. 문서형은 풀바, 3D 몰입형은 가운데 컴팩트 바.</div></div>
+      <div class="node"><div class="nm">💬 상시 챗봇</div><div class="file">assistant.js</div>
+        <div class="ds">테마/배율 즉시 적용, 페이지 안내. OpenAI 연결 훅 준비.</div></div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--accent)"></i> 핵심 화면</span>
+      <span><i class="dot" style="background:rgba(51,46,40,.18)"></i> 보조/분기</span>
+      <span><i class="dot" style="background:var(--gold)"></i> 데이터 흐름</span>
+    </div>
+  </div>
+
+  <a class="back" href="home.html">← 메인으로</a>
+</div>
+</body>
+</html>

@@ -1000,6 +1000,28 @@
       const CITY =
         loadCitySync(CITY_SLUG) || loadCitySync("jongno") || { name: "기억궁전", landmarks: [] };
 
+      // ── 활성 학습자료(업로드 PDF→palace) + 스튜디오 방 배정 로드 → 도시·자료 인지 + 구성한 방으로 입장 ──
+      function loadJsonSync(url){ try { const r=new XMLHttpRequest(); r.open("GET",url,false); r.send(null); if(r.status>=200&&r.status<300) return JSON.parse(r.responseText); } catch(e){} return null; }
+      let PAL = null;
+      try { const s = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); if (s) PAL = JSON.parse(s); } catch(e){}
+      if (!PAL) PAL = loadJsonSync("data/korean_history.palace.json") || loadJsonSync("public/data/korean_history.palace.json");
+      const ROOMDES = loadJsonSync("data/room-designs.json") || loadJsonSync("public/data/room-designs.json") || { designs: [], blobBase: "" };
+      const DESIGNS = ROOMDES.designs || [], DESIGN_BLOB = ROOMDES.blobBase || "";
+      const resolveGlb = g => (g && g.indexOf("BLOB:") === 0) ? (DESIGN_BLOB + g.slice(5)) : g;
+      const designById = id => DESIGNS.find(d => d.id === id) || null;
+      let STUDIO = {}; try { STUDIO = JSON.parse(localStorage.getItem("studio_designs") || "{}"); } catch(e){}
+      const PAL_ROOMS = (PAL && PAL.rooms) || [];
+      const PAL_TITLE = (PAL && PAL.palace && PAL.palace.title) || "";
+      const chapterFor = (i) => PAL_ROOMS[i] || null;   // 랜드마크 i → 챕터(인덱스 매핑)
+      function designForLm(i, name){                     // 배정 디자인: 스튜디오 설정 > 랜드마크 room의 glb 추론 > 기본
+        const a = STUDIO[CITY_SLUG] || {};
+        if (a[name] && designById(a[name])) return designById(a[name]);
+        const m = (CITY.landmarks||[])[i];
+        if (m && m.room){ try { const u = new URLSearchParams(m.room.split("?")[1]||""); const file=(u.get("glb")||"").split("/").pop();
+          const d = DESIGNS.find(d => resolveGlb(d.glb).split("/").pop()===file || (d.glb||"").split("/").pop()===file); if (d) return d; } catch(e){} }
+        return DESIGNS[0] || null;
+      }
+
       // 마커 데이터(엔진이 쓰는 형태로 정규화). 좌표 없는 항목은 마커에서 제외.
       const LANDMARKS = (CITY.landmarks || [])
         .filter((m) => isFinite(m.lon) && isFinite(m.lat))
@@ -1012,11 +1034,21 @@
 
       // 마커(0-based) → 연결된 방(memory-walk). 데이터에 room 이 있는 마커만 입장 가능(없으면 null).
       const roomFor = (i, name) => {
-        const m = (CITY.landmarks || [])[i];
-        if (!m || !m.room) return null;
+        const m = (CITY.landmarks || [])[i]; if (!m) return null;
+        // 구성한 방(디자인) + 활성 자료 챕터로 입장 URL 생성. memory-walk은 자료를 localStorage에서 우선 로드.
+        const d = designForLm(i, name), ch = chapterFor(i);
+        if (d && d.glb){
+          const p = new URLSearchParams();
+          p.set("glb", resolveGlb(d.glb)); if (d.hotspots) p.set("hotspots", d.hotspots);
+          if (ch && ch.id) p.set("room", ch.id);
+          p.set("city", CITY_SLUG);
+          if (m.lmId) p.set("lm", m.lmId); else { p.set("lmName", m.name); if (m.desc) p.set("lmDesc", m.desc); }
+          return "memory-walk.html?" + p.toString();
+        }
+        // 폴백: 데이터의 정적 room
+        if (!m.room) return null;
         const u = m.room, lm = m.lmId || "";
-        if (!lm || u.includes("lm=")) return u;
-        return u + (u.includes("?") ? "&" : "?") + "lm=" + lm;
+        return (!lm || u.includes("lm=")) ? u : u + (u.includes("?") ? "&" : "?") + "lm=" + lm;
       };
 
       // 시작/중심 좌표가 데이터에 없으면 랜드마크 평균 위치로 자동 계산.
@@ -1641,10 +1673,13 @@
       function renderUi() {
         const stop = STOPS[activeIndex] || STOPS[0];
         qs("routeCount").textContent = `${stop.num} / ${STOPS.length}`;
-        qs("routeSummary").textContent = `${stop.title} · ${CITY.name || ""} 주요 명소`;
-        qs("eraPill").textContent = `${stop.num}번 명소`;
+        const ch = chapterFor(activeIndex);
+        qs("routeSummary").textContent = `${CITY.name || ""}${PAL_TITLE ? " · " + PAL_TITLE : ""}`;
+        const kick = document.querySelector(".study-panel .kicker");
+        if (kick) kick.textContent = `${CITY.name || "기억궁전"}${PAL_TITLE ? " · " + PAL_TITLE : ""}`;
+        qs("eraPill").textContent = ch ? `${stop.num}번 · ${ch.name}` : `${stop.num}번 명소`;
         qs("anchorTitle").textContent = stop.title;
-        qs("anchorQuestion").textContent = stop.desc;
+        qs("anchorQuestion").textContent = ch ? `이 명소엔 '${ch.name}' 챕터가 배치돼요. ${stop.desc || ""}` : (stop.desc || "");
         qs("entryQuestion").textContent = `${stop.num}. ${stop.title}`;
         qs("spatialCue").textContent = stop.page
           ? `${stop.desc} 건물을 클릭하면 방으로 입장합니다.`
@@ -1669,9 +1704,9 @@
 
         const list = qs("conceptList");
         list.innerHTML = "";
-        const cards = stop.page
-          ? [["방 입장", "건물을 클릭하면 해당 방(memory-walk)으로 들어갑니다."]]
-          : [["명소 안내", stop.desc]];
+        const cards = (ch && (ch.kept || []).length)
+          ? (ch.kept || []).slice(0, 5).map(k => [k.title || k.id || "", k.summary || k.description || k.type || ""])
+          : (stop.page ? [["방 입장", "건물을 클릭하면 해당 방(memory-walk)으로 들어갑니다."]] : [["명소 안내", stop.desc || ""]]);
         cards.forEach(([term, description]) => {
           const card = document.createElement("article");
           card.className = "concept-card";
@@ -1940,29 +1975,41 @@
         const engine = window.Cesium;
         if (!viewer || !engine) return;
         // 빨간 번호 핀 아이콘 생성(원형 머리 + 아래 꼭지 + 흰 숫자) — 사진 모양.
-        const makeNumberPin = (num) => {
-          const S = 4; // 슈퍼샘플 배율 → 고해상도 텍스처로 선명하게
-          const W = 44 * S, H = 58 * S, cx = 22 * S, cyc = 21 * S, rad = 18 * S;
-          const cv = document.createElement("canvas");
-          cv.width = W; cv.height = H;
-          const g = cv.getContext("2d");
-          g.shadowColor = "rgba(0,0,0,0.32)"; g.shadowBlur = 5 * S; g.shadowOffsetY = 2.5 * S;
-          g.beginPath();                       // 아래 꼬리(삼각형)
-          g.moveTo(cx, H - 2 * S);
-          g.lineTo(cx - 10 * S, cyc + 9 * S);
-          g.lineTo(cx + 10 * S, cyc + 9 * S);
-          g.closePath();
-          g.fillStyle = "#c92a2a"; g.fill();
-          g.shadowBlur = 4 * S;                 // 머리(원) — 입체 그라디언트
-          const grad = g.createRadialGradient(cx - rad * 0.35, cyc - rad * 0.4, rad * 0.2, cx, cyc, rad);
-          grad.addColorStop(0, "#ff7066"); grad.addColorStop(0.55, "#e8443d"); grad.addColorStop(1, "#c92a2a");
-          g.beginPath(); g.arc(cx, cyc, rad, 0, Math.PI * 2); g.fillStyle = grad; g.fill();
-          g.shadowColor = "transparent"; g.shadowBlur = 0; g.shadowOffsetY = 0;
-          g.lineWidth = 3 * S; g.strokeStyle = "#ffffff"; g.stroke();
-          g.fillStyle = "#ffffff";             // 흰 숫자
-          g.font = `bold ${27 * S}px 'Malgun Gothic', Arial`;
-          g.textAlign = "center"; g.textBaseline = "middle";
-          g.fillText(String(num), cx, cyc + 1 * S);
+        // 마커 = 라벨 pill(위) + 입체 핀(아래, 꼭지가 위치에 닿음)을 하나의 고해상도 캔버스로 → 항상 선명·정렬.
+        const makeNumberPin = (num, name) => {
+          const S = 4; // 슈퍼샘플(고해상도)
+          const lf = `700 ${13 * S}px 'Pretendard','Malgun Gothic',sans-serif`;
+          const meas = (makeNumberPin._m || (makeNumberPin._m = document.createElement("canvas").getContext("2d")));
+          meas.font = lf;
+          const tw = Math.ceil(meas.measureText(name || "").width);
+          const px = 12 * S, py = 6.5 * S;
+          const pillW = tw + px * 2, pillH = 13 * S + py * 2;
+          const rad = 14 * S, tail = 12 * S, gap = 6 * S;
+          const W = Math.ceil(Math.max(pillW, rad * 2 + 8 * S)), H = Math.ceil(pillH + gap + rad * 2 + tail);
+          const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+          const g = cv.getContext("2d"), cx = W / 2;
+          const rr = (x, y, w, h, r) => { g.beginPath();
+            if (g.roundRect) { g.roundRect(x, y, w, h, r); }
+            else { g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); } };
+          // 라벨 pill(위)
+          const pillX = cx - pillW / 2;
+          g.save(); g.shadowColor = "rgba(0,0,0,.30)"; g.shadowBlur = 6 * S; g.shadowOffsetY = 2 * S;
+          rr(pillX, 0, pillW, pillH, 9 * S); g.fillStyle = "rgba(26,24,20,.95)"; g.fill(); g.restore();
+          rr(pillX, 0, pillW, pillH, 9 * S); g.lineWidth = 1.4 * S; g.strokeStyle = "rgba(255,255,255,.20)"; g.stroke();
+          g.fillStyle = "#ffffff"; g.font = lf; g.textAlign = "center"; g.textBaseline = "middle";
+          g.fillText(name || "", cx, pillH / 2 + 0.5 * S);
+          // 입체 핀(아래)
+          const headY = pillH + gap + rad, tipY = headY + rad + tail;
+          g.save(); g.shadowColor = "rgba(0,0,0,.32)"; g.shadowBlur = 5 * S; g.shadowOffsetY = 2.5 * S;
+          g.beginPath(); g.moveTo(cx, tipY); g.lineTo(cx - rad * 0.62, headY + rad * 0.5); g.lineTo(cx + rad * 0.62, headY + rad * 0.5); g.closePath();
+          g.fillStyle = "#c5282a"; g.fill(); g.restore();
+          const grad = g.createRadialGradient(cx - rad * 0.35, headY - rad * 0.42, rad * 0.2, cx, headY, rad);
+          grad.addColorStop(0, "#ff8076"); grad.addColorStop(0.5, "#ec4a41"); grad.addColorStop(1, "#c5282a");
+          g.beginPath(); g.arc(cx, headY, rad, 0, 7); g.fillStyle = grad; g.fill();
+          g.lineWidth = 2.6 * S; g.strokeStyle = "#ffffff"; g.stroke();
+          g.beginPath(); g.arc(cx - rad * 0.28, headY - rad * 0.3, rad * 0.32, 0, 7); g.fillStyle = "rgba(255,255,255,.30)"; g.fill();
+          g.fillStyle = "#ffffff"; g.font = `800 ${15 * S}px 'Pretendard','Malgun Gothic',Arial`;
+          g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(num), cx, headY + 0.5 * S);
           return cv;
         };
 
@@ -1973,30 +2020,14 @@
             // 해당 건물 높이(m.h) + MARKER_LIFT_M 위에 띄움(지면 기준)
             position: engine.Cartesian3.fromDegrees(m.lon, m.lat, markerHeight(m)),
             billboard: {
-              image: makeNumberPin(i + 1),
-              verticalOrigin: engine.VerticalOrigin.BOTTOM, // 핀 꼭지가 위치에 닿게
-              scale: 0.52,
+              image: makeNumberPin(i + 1, m.name), // 핀+이름표 합성(선명)
+              verticalOrigin: engine.VerticalOrigin.BOTTOM,   // 핀 꼭지가 위치에 닿게
+              horizontalOrigin: engine.HorizontalOrigin.CENTER,
+              scale: 0.32,
               heightReference: engine.HeightReference.RELATIVE_TO_GROUND,
               disableDepthTestDistance: Number.POSITIVE_INFINITY, // 항상 보이게
-              scaleByDistance: new engine.NearFarScalar(500, 1.0, 8000, 0.55),
-              translucencyByDistance: new engine.NearFarScalar(2000, 1.0, 11000, 0.4), // 원거리 페이드(혼잡↓)
-            },
-            label: {
-              text: m.name, // 이름(번호는 핀 안에)
-              font: "bold 17px 'Malgun Gothic', sans-serif",
-              fillColor: engine.Color.fromCssColorString("#ffffff"),
-              outlineColor: engine.Color.fromCssColorString("#14110c"),
-              outlineWidth: 3.5,
-              style: engine.LabelStyle.FILL_AND_OUTLINE,
-              verticalOrigin: engine.VerticalOrigin.TOP, // 핀 아래에 이름표
-              pixelOffset: new engine.Cartesian2(0, 7),
-              showBackground: true,
-              backgroundColor: engine.Color.fromCssColorString("rgba(26,24,20,0.92)"),
-              backgroundPadding: new engine.Cartesian2(9, 6),
-              heightReference: engine.HeightReference.RELATIVE_TO_GROUND,
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
-              scaleByDistance: new engine.NearFarScalar(400, 1.15, 9000, 0.72),
-              translucencyByDistance: new engine.NearFarScalar(2000, 1.0, 11000, 0.5),
+              scaleByDistance: new engine.NearFarScalar(600, 1.0, 9000, 0.6),
+              translucencyByDistance: new engine.NearFarScalar(2500, 1.0, 12000, 0.45), // 원거리 페이드(혼잡↓)
             },
           });
           { const r = roomFor(i, m.name); if (r) entityRoom.set(ent, r); }   // &lm 테마 포함 링크로 입장
