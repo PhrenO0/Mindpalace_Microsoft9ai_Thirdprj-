@@ -3,3 +3,7 @@ uvicorn[standard]==0.34.0
 pydantic==2.10.4
 python-dotenv==1.2.2
 requests==2.32.5
+# Sketchfab 가져오기: glTF(zip) → 단일 GLB 변환 + 텍스처 1k 다운스케일/압축
+trimesh==4.5.3
+Pillow==11.0.0
+numpy==2.1.3

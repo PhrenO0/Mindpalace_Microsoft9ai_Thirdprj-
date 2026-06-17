@@ -47,6 +47,8 @@
     transition:transform .14s, border-color .14s, box-shadow .14s; display:flex; flex-direction:column;}
   .gcard:hover{transform:translateY(-3px); border-color:rgba(44,122,99,.5); box-shadow:0 14px 30px rgba(40,34,26,.16);}
   .gcard.sel{border-color:var(--accent); box-shadow:0 0 0 2px rgba(44,122,99,.45) inset;}
+  .gcard.imported{border-color:#d9463e; box-shadow:0 0 0 3px rgba(217,70,62,.55) inset, 0 10px 24px rgba(217,70,62,.22);}
+  .gcard .ph .newbadge{position:absolute; top:7px; left:7px; background:#d9463e; color:#fff; font-size:9.5px; font-weight:900; padding:2px 7px; border-radius:999px;}
   .gcard .ph{position:relative; aspect-ratio:4/3; background:linear-gradient(135deg,#efeae0,#f6f3ec); display:flex; align-items:center; justify-content:center;}
   .gcard .ph img{width:100%; height:100%; object-fit:cover; display:block;}
   .gcard .ph .emoji{font-size:42px; opacity:.9;}
@@ -117,13 +119,46 @@
   /* 고급(접이) */
   details.adv{border:1px solid var(--line); border-radius:12px; background:var(--panel); padding:6px 14px;}
   details.adv summary{cursor:pointer; font-size:12.5px; color:var(--muted); padding:6px 0;}
-  .loaders{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:8px 0 12px;}
+  .loaders{display:grid; grid-template-columns:1fr; gap:12px; margin:8px 0 12px;}
   @media(max-width:760px){ .main{grid-template-columns:1fr;} .side{max-height:26vh;} .loaders{grid-template-columns:1fr;} }
   .card{border:1px solid var(--line); border-radius:12px; padding:12px 13px; background:rgba(51,46,40,.05);}
   .card h4{font-size:12px; margin:0 0 8px; color:var(--accent);}
   .card .d{font-size:11px; color:var(--muted); margin:0 0 8px; line-height:1.5;}
   .card .d a{color:var(--accent);}
   input[type=text]{width:100%; padding:8px 10px; border-radius:8px; background:var(--panel2); color:var(--text); border:1px solid var(--line); font-size:12.5px;}
+  /* Sketchfab 검색 */
+  .skbar{display:flex; gap:6px; margin-top:4px;}
+  .skbar input{flex:1;}
+  .skwrap{position:relative; margin-top:10px; min-height:120px;}
+  .skgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; max-height:420px; overflow:auto;}
+  .skload{position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+    background:rgba(44,122,99,.55); backdrop-filter:blur(8px); border:1px solid rgba(44,122,99,.6); border-radius:12px; z-index:6; text-align:center; padding:18px;}
+  .skload.on{display:flex;}
+  .skload .spin{width:38px; height:38px; border-radius:50%; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; animation:skspin .9s linear infinite;}
+  @keyframes skspin{to{transform:rotate(360deg);}}
+  /* 진해진 초록 배경 위라 글자는 밝게(초록 제목이 배경에 묻히는 것 방지). */
+  .skload .lt{font-size:13.5px; font-weight:800; color:#fff;}
+  .skload .ls{font-size:11.5px; color:rgba(255,255,255,.92); max-width:92%; line-height:1.5; min-height:16px;}
+  .skload .lstep{font-size:10.5px; color:rgba(255,255,255,.75); letter-spacing:.04em;}
+  .skload .lx{margin-top:4px; padding:7px 16px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; font-size:12px; display:none;}
+  .skload.err{background:rgba(180,69,47,.14); border-color:rgba(180,69,47,.5);}
+  .skload.err .lt{color:#b4452f;}
+  .skload.err .spin{display:none;}
+  .skload.err .lx{display:inline-block;}
+  #skScanFrame{position:fixed; left:-10000px; top:0; width:760px; height:520px; border:0;}
+  .imgbox{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(10,8,6,.82); z-index:9999; cursor:zoom-out; padding:24px;}
+  .imgbox.on{display:flex;}
+  .imgbox figure{margin:0; display:flex; flex-direction:column; align-items:center; gap:10px; max-width:92vw; max-height:92vh;}
+  .imgbox img{max-width:92vw; max-height:84vh; border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,.6);}
+  .imgbox figcaption{color:#f5f1ea; font-size:13px; font-weight:700;}
+  .skres{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel2); display:flex; flex-direction:column; cursor:pointer; transition:border-color .12s, transform .12s;}
+  .skres:hover{border-color:rgba(44,122,99,.5); transform:translateY(-2px);}
+  .skres .th{aspect-ratio:4/3; background:linear-gradient(135deg,#efeae0,#f6f3ec); overflow:hidden;}
+  .skres .th img{width:100%; height:100%; object-fit:cover; display:block;}
+  .skres .ti{padding:6px 8px; font-size:11px; font-weight:700; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .skres .imp{margin:0 8px 8px; padding:5px 0; font-size:11px; font-weight:800; text-align:center; border-radius:7px; border:1px solid var(--accent); color:var(--accent); background:rgba(44,122,99,.1);}
+  .skres .imp:hover{background:var(--accent); color:#fff;}
+  .skstate{font-size:11.5px; color:var(--muted); margin-top:8px; min-height:15px; line-height:1.5;}
 </style>
 </head>
 <body>
@@ -202,7 +237,7 @@
       </div>
 
       <details class="adv">
-        <summary>고급 — 직접 GLB 불러오기 · Sketchfab 임베드</summary>
+        <summary>고급 — 직접 GLB 불러오기 · Sketchfab 검색·가져오기</summary>
         <div class="loaders">
           <div class="card">
             <h4>직접 GLB(.glb) 불러오기</h4>
@@ -212,16 +247,30 @@
             <label class="btn" style="margin-left:6px;">📂 파일<input id="glbFile" type="file" accept=".glb,model/gltf-binary" hidden /></label></div>
           </div>
           <div class="card">
-            <h4>Sketchfab 모델 임베드</h4>
-            <p class="d">모델 주소/ID로 임베드해 둘러봄. 전체 사이트는 임베드 불가(X-Frame-Options) — <a href="https://sketchfab.com/search?type=models" target="_blank" rel="noopener">새 탭에서 검색</a>. 실제 방 적용은 .glb로.</p>
-            <input type="text" id="skUrl" placeholder="sketchfab.com/3d-models/…-xxxxx 또는 모델ID" />
-            <div style="margin-top:8px;"><button class="btn" id="skBtn">모델 임베드</button>
-            <button class="btn" id="skClose">임베드 닫기</button></div>
+            <h4>Sketchfab에서 방 찾기 → 가져오기</h4>
+            <p class="d">다운로드 가능한 모델을 검색합니다. 고른 방은 서버가 받아 <b>단일 GLB·텍스처 1k</b>로 정리하고(20MB 초과면 자동 압축) <b>객체인식·노드 배치</b>가 자동 진행됩니다. 끝나면 왼쪽 랜드마크 인덱스에 자동 연결됩니다.</p>
+            <div class="skbar">
+              <input type="text" id="skSearch" placeholder="예: living room, bedroom, office" />
+              <button class="btn" id="skSearchBtn">🔍 검색</button>
+            </div>
+            <div class="skwrap">
+              <div class="skgrid" id="skResults"></div>
+              <div class="skload" id="skLoad">
+                <div class="spin"></div>
+                <div class="lstep" id="skLoadStep"></div>
+                <div class="lt" id="skLoadTitle">가져오는 중…</div>
+                <div class="ls" id="skLoadSub"></div>
+                <button class="lx" id="skLoadClose">닫기</button>
+              </div>
+            </div>
+            <div class="skstate" id="skState">먼저 왼쪽에서 랜드마크를 고른 뒤, 키워드로 방을 검색하세요.</div>
           </div>
         </div>
       </details>
     </section>
   </div>
+
+  <div class="imgbox" id="imgbox"><figure><img id="imgboxImg" src="" alt="" /><figcaption id="imgboxCap"></figcaption></figure></div>
 
 <script>
   const ICON_PATHS = {
@@ -241,8 +290,10 @@
   const CITY = P.get("city") || "jongno";
   let CITYDATA = null, DESIGNS = [], DESIGN_BLOB = "", PAL = null, THEMES = null, LIB = null;
   let CONCEPT_PHOTOS = {};   // 개념 대표 사진(concept-photos.json) — title → {thumb,full,wiki}
-  let regionLms = [], sel = null, previewGlb = null, pendingSrc = null;
+  let regionLms = [], sel = null, previewGlb = null, pendingSrc = null, justImportedId = null;
   let ASSIGN = {};   // lmKey -> {chapter, idx}
+  const CUSTOM_KEY = "studio_custom_rooms";
+  const loadCustomRooms = () => { try { return (JSON.parse(localStorage.getItem(CUSTOM_KEY)||"{}")[CITY])||{}; } catch { return {}; } };
   const ASSIGN_KEY = "studio_designs";   // { [city]: { [lmKey]: designId } }
   const lmKey = lm => lm.name;
   const loadAssign = () => { try { return JSON.parse(localStorage.getItem(ASSIGN_KEY)||"{}"); } catch { return {}; } };
@@ -311,10 +362,12 @@
     const cur = sel ? designFor(sel) : null;
     DESIGNS.forEach(d => {
       const card = document.createElement("div");
-      card.className = "gcard" + (cur===d.id ? " sel":"");
+      const isNew = (d.id === justImportedId);
+      card.className = "gcard" + (cur===d.id ? " sel":"") + (isNew ? " imported":"");
       const hasThumb = !!(d.thumb && d.thumb.length);
       card.innerHTML =
         `<div class="ph"><span class="pick">선택됨</span>`+
+        (isNew ? `<span class="newbadge">새로 가져옴</span>` : "")+
         (hasThumb ? `<img src="${esc(d.thumb)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">` : "")+
         `<span class="emoji" style="display:${hasThumb?'none':'block'}">${esc(d.emoji)}</span></div>`+
         `<div class="cap"><div class="l">${esc(d.label)}</div><div class="s">${esc(d.style)} · ${esc(d.blurb)}</div></div>`;
@@ -503,15 +556,131 @@
   // 고급 로더
   $("glbUrlBtn").onclick = () => { const u=$("glbUrl").value.trim(); if(u){ showModelDirect(u); msg("직접 GLB 미리보기 — 이 방을 쓰려면 갤러리 대신 입장 링크에 반영하려면 알려주세요."); } };
   $("glbFile").addEventListener("change", e => { const f=e.target.files[0]; if(f) showModelDirect(URL.createObjectURL(f)); });
-  $("skBtn").onclick = () => {
-    const raw = $("skUrl").value.trim(); if(!raw) return;
-    const m = raw.match(/([0-9a-f]{32})/i) || raw.match(/-([0-9a-zA-Z]{32})/);
-    const id = m ? m[1] : raw.split("/").pop();
-    $("mv").style.display="none"; $("loadover").classList.add("hide"); $("viewtools").style.display="none";
-    const sk=$("sk"); sk.style.display="block"; sk.src = `https://sketchfab.com/models/${id}/embed?autostart=1&ui_theme=dark`;
-    $("vlabel").textContent = "Sketchfab 임베드 · 미리보기용";
-  };
-  $("skClose").onclick = () => { $("sk").style.display="none"; $("sk").src=""; if (sel){ const d=designById(designFor(sel)); if(d) showLoadPrompt(resolveGlb(d.glb), d.label); } };
+
+  // ── Sketchfab 검색 → 가져오기 → 스캐너(노드 배치) ──
+  let SKETCHFAB_OK = null;
+  fetch("/api/health").then(r=>r.json()).then(h=>{ SKETCHFAB_OK = !!h.sketchfabConfigured; }).catch(()=>{ SKETCHFAB_OK = false; });
+  const skState = t => { $("skState").innerHTML = t; };
+
+  function showImage(url, name){
+    if (!url) return;
+    $("imgboxImg").src = url; $("imgboxCap").textContent = name || "";
+    $("imgbox").classList.add("on");
+  }
+  $("imgbox").onclick = () => { $("imgbox").classList.remove("on"); $("imgboxImg").src=""; };
+  addEventListener("keydown", e => { if (e.key==="Escape") { $("imgbox").classList.remove("on"); $("imgboxImg").src=""; } });
+
+  async function searchSketchfab(){
+    const q = $("skSearch").value.trim();
+    if (!q){ skState("검색어를 입력하세요."); return; }
+    $("skResults").innerHTML = ""; skState("검색 중…");
+    try {
+      const r = await fetch(`/api/sketchfab/search?q=${encodeURIComponent(q)}`);
+      if (!r.ok){ const e=await r.json().catch(()=>({})); skState(`검색 실패: ${esc(e.detail||r.status)}`); return; }
+      const j = await r.json();
+      const list = j.results || [];
+      if (!list.length){ skState("결과가 없습니다. 다른 키워드로 시도하세요."); return; }
+      renderSkResults(list);
+      skState(`${list.length}개 결과 · 사진을 누르면 크게보기, "이 방 가져오기"를 누르면 변환·노드 배치가 자동 진행됩니다.`
+        + (SKETCHFAB_OK===false ? ` <b style="color:#b4452f">⚠ 서버에 SKETCHFAB_API_TOKEN 미설정 — 가져오기 불가</b>` : ""));
+    } catch(e){ skState("검색 오류: " + esc(e.message) + " (서버 실행 여부 확인)"); }
+  }
+
+  function renderSkResults(list){
+    const el = $("skResults"); el.innerHTML = "";
+    list.forEach(m => {
+      const card = document.createElement("div");
+      card.className = "skres";
+      card.innerHTML =
+        `<div class="th">${m.thumb?`<img src="${esc(m.thumb)}" alt="" loading="lazy">`:""}</div>`+
+        `<div class="ti" title="${esc(m.name)}">${esc(m.name)}</div>`+
+        `<div class="imp">이 방 가져오기</div>`;
+      card.querySelector(".th").onclick = () => showImage(m.thumbLarge || m.thumb, m.name);
+      card.querySelector(".ti").onclick = () => showImage(m.thumbLarge || m.thumb, m.name);
+      card.querySelector(".imp").onclick = (ev) => { ev.stopPropagation(); importSk(m); };
+      el.appendChild(card);
+    });
+  }
+
+  let scanFrame = null, scanMsgHandler = null;
+  function loadShow(step, title, sub){
+    $("skLoad").classList.add("on"); $("skLoad").classList.remove("err");
+    $("skLoadStep").textContent = step || ""; $("skLoadTitle").textContent = title || "가져오는 중…";
+    $("skLoadSub").innerHTML = sub || "";
+  }
+  function loadSub(html){ $("skLoadSub").innerHTML = html || ""; }
+  function loadErr(m){ $("skLoad").classList.add("err"); $("skLoadStep").textContent="오류"; $("skLoadTitle").textContent="가져오기 실패"; $("skLoadSub").innerHTML = esc(m||""); }
+  function loadHide(){ $("skLoad").classList.remove("on","err"); }
+  function cleanupScan(){
+    if (scanMsgHandler){ removeEventListener("message", scanMsgHandler); scanMsgHandler=null; }
+    if (scanFrame){ scanFrame.remove(); scanFrame=null; }
+  }
+  $("skLoadClose").onclick = () => { cleanupScan(); loadHide(); };
+
+  async function importSk(m){
+    if (!sel){ skState("왼쪽에서 랜드마크를 먼저 고르세요 — 가져온 방이 그 랜드마크에 연결됩니다."); return; }
+    if (SKETCHFAB_OK === false){ skState("서버에 SKETCHFAB_API_TOKEN이 없어 다운로드할 수 없습니다(.env 설정 필요)."); return; }
+    cleanupScan();
+    const lmAtStart = sel;
+    const design = "sk-" + m.uid;
+    loadShow("1 / 2", "모델 다운로드·GLB 변환 중…", "텍스처 1k 정리, 20MB 초과 시 자동 압축 — 잠시 걸릴 수 있어요.");
+    try {
+      const r = await fetch("/api/sketchfab/import", {
+        method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ uid: m.uid })
+      });
+      const j = await r.json();
+      if (!r.ok){ loadErr(j.detail||("HTTP "+r.status)); return; }
+      const note = j.compressed ? `압축됨 ${j.originalMB}→${j.finalMB}MB (텍스처 ${j.textureCap}px)` : `${j.finalMB}MB`;
+      loadShow("2 / 2", "AI가 방을 스캔하며 노드를 배치하는 중…", `변환 완료(${note}). 처음엔 AI 모델을 받느라 시간이 더 걸릴 수 있어요…`);
+      const params = new URLSearchParams({ glb: j.glbUrl, auto: "1", uid: m.uid, name: m.name || "" });
+      scanFrame = document.createElement("iframe");
+      scanFrame.id = "skScanFrame";
+      scanFrame.src = "personal-room-scanner-3d.html?" + params.toString();
+      document.body.appendChild(scanFrame);
+      scanMsgHandler = async (ev) => {
+        if (!scanFrame || ev.source !== scanFrame.contentWindow) return;
+        const d = ev.data || {};
+        if (d.type === "scan-progress"){ loadSub(d.html || ""); }
+        else if (d.type === "scan-error"){ loadErr("스캔 실패: " + (d.msg||"")); cleanupScan(); }
+        else if (d.type === "scan-done"){
+          try {
+            const hr = await fetch("/api/rooms/hotspots", {
+              method:"POST", headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({ uid: m.uid, name: m.name, hotspots: d.hotspots || [] })
+            });
+            const hj = await hr.json();
+            if (!hr.ok) throw new Error(hj.detail || ("HTTP "+hr.status));
+            finalizeImport(m, design, j.glbUrl, hj.hotspotsUrl, lmAtStart, (d.hotspots||[]).length);
+          } catch(e){ loadErr("노드 저장 실패: " + (e.message||e)); }
+          cleanupScan();
+        }
+      };
+      addEventListener("message", scanMsgHandler);
+    } catch(e){ loadErr("가져오기 오류: " + (e.message||e)); cleanupScan(); }
+  }
+
+  function finalizeImport(m, design, glbUrl, hotspotsUrl, lm, nodeCount){
+    const all = (() => { try { return JSON.parse(localStorage.getItem(CUSTOM_KEY)||"{}"); } catch { return {}; } })();
+    (all[CITY] = all[CITY] || {})[design] = {
+      id: design, label: m.name || "내 Sketchfab 방", emoji:"🌐", style:"Sketchfab",
+      blurb:"Sketchfab에서 가져와 스캔한 방", glb: glbUrl, hotspots: hotspotsUrl, thumb: m.thumb || "", _custom:true
+    };
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(all));
+    const room = all[CITY][design];
+    if (!DESIGNS.find(x => x.id === design)) DESIGNS.push(room); else DESIGNS = DESIGNS.map(x => x.id===design?room:x);
+    setDesignFor(lm, design);
+    justImportedId = design;
+    loadHide();
+    renderList(); renderGallery();
+    if (sel && lmKey(sel)===lmKey(lm)){ showLoadPrompt(resolveGlb(room.glb), room.label); }
+    updateLinks();
+    skState(`✓ "${esc(room.label)}" 가져오기 완료 · 노드 ${nodeCount}개 배치됨. 아래 ① 목록 끝에 추가되어 <b>${esc(lm.name)}</b>에 연결되었습니다.`);
+    const cards = $("gallery").querySelectorAll(".gcard");
+    if (cards.length) cards[cards.length-1].scrollIntoView({ behavior:"smooth", block:"center" });
+  }
+
+  $("skSearchBtn").onclick = searchSketchfab;
+  $("skSearch").addEventListener("keydown", e => { if (e.key==="Enter") searchSketchfab(); });
 
   // 내보내기 — 이 지역의 랜드마크별 방 배정
   $("exportBtn").onclick = () => {
@@ -538,7 +707,8 @@
     fetch("public/data/concept-photos.json").then(r=>r.ok?r.json():null).catch(()=>null)
   ]).then(([city, rd, themes, lib, cphotos]) => {
     if (!city){ $("lmlist").innerHTML = `<p style="color:#8a8170;padding:10px">지역 데이터(${esc(CITY)})를 찾을 수 없습니다.</p>`; return; }
-    CITYDATA = city; DESIGNS = rd.designs||[]; DESIGN_BLOB = rd.blobBase||""; THEMES = themes; LIB = lib;
+    CITYDATA = city; DESIGN_BLOB = rd.blobBase||""; THEMES = themes; LIB = lib;
+    DESIGNS = (rd.designs||[]).concat(Object.values(loadCustomRooms()));
     CONCEPT_PHOTOS = (cphotos && cphotos.concepts) || {};
     // 지역 랜드마크 정규화 + jongno의 lmId/아이콘/태그 보강
     regionLms = (city.landmarks||[]).map(lm => {

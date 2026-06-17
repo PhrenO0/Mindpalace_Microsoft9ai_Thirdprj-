@@ -1349,7 +1349,7 @@
           try {
             p.maximumScreenSpaceError = LOW_QUALITY_SSE;
             p.dynamicScreenSpaceError = false; // 거리별 화질 완화 끔 → 먼/높은 곳 건물도 렌더
-            p.clippingPlanes = makeSeoulPlanes(); // 서울 밖 건물 컷(타일셋마다 별도 생성)
+            p.clippingPlanes = undefined; // [클리핑 제거] 도시 밖 건물 컷 비활성화 — 전 영역 건물 렌더
             // ── 접근 시 디테일이 빨리 뜨도록 타일 스트리밍 최적화 ──
             p.cullRequestsWhileMoving = true; // 이동 중 타일 요청을 줄여 이동을 매끄럽게(멈추면 디테일 채움)
             p.preferLeaves = true;          // 상세(잎) 타일 우선 로드 → 디테일 빨리 표시

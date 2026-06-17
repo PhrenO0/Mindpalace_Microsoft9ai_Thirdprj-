@@ -191,8 +191,16 @@
 
     const HTTP_GLB = "public/assets/rooms/bilocale_viale_lucania_milano.glb";
     // ?glb=경로 로 임의의 GLB를 테스트할 수 있다. 없으면 기본 방.
-    const urlGlb = new URLSearchParams(location.search).get("glb");
+    const _params = new URLSearchParams(location.search);
+    const urlGlb = _params.get("glb");
     const ROOM_GLB = urlGlb || window.__ROOM03_GLB_DATAURI__ || HTTP_GLB;
+    // glb-customizer가 iframe으로 띄울 때 auto=1 → 로드 후 자동 스캔하고, 진행/완료/오류를
+    // postMessage로 부모(가져오기 로딩 박스)에 알린다. 이게 없으면 부모의 "2/2" 단계가 멈춘다.
+    const AUTO_SCAN = _params.get("auto") === "1";
+    function postParent(msg) {
+      try { if (window.parent && window.parent !== window) window.parent.postMessage(msg, "*"); }
+      catch (e) { /* cross-origin 등 무시 */ }
+    }
 
     // ---- Three.js 기본 세팅 ----
     const sceneEl = document.getElementById("scene");
@@ -247,7 +255,7 @@
     let scanning = false;           // 스캔 중엔 렌더루프가 카메라를 못 건드리게(광선 정확도)
 
     const $ = (id)=>document.getElementById(id);
-    const setStatus = (h)=>{ $("status").innerHTML = h; };
+    const setStatus = (h)=>{ $("status").innerHTML = h; if (AUTO_SCAN) postParent({ type:"scan-progress", html:h }); };
 
     // 서버에 Azure 비전이 설정돼 있는지 물어본다(없거나 file://면 폴백).
     fetch("/api/vision-config").then(r=>r.json()).then(c=>{ USE_AZURE = !!c.azure; }).catch(()=>{});
@@ -314,9 +322,12 @@
         controls.update();
         $("scanBtn").disabled = false;
         setStatus("방 로드 완료 · <b>AI로 방 스캔</b>을 누르면 여러 각도에서 가구를 인식합니다.\n(모델 첫 로드 시 수십 MB 다운로드)");
+        // 자동 모드(가져오기 흐름): 로드되자마자 스캔 시작.
+        if (AUTO_SCAN) scanRoom();
       }, undefined, (err) => {
         console.error(err);
         setStatus("GLB 로드 실패: " + (err?.message||err));
+        if (AUTO_SCAN) postParent({ type:"scan-error", msg:"GLB 로드 실패: " + (err?.message||err) });
       });
     }
 
@@ -762,9 +773,20 @@
         const real = hotspots.filter(h=>h.detectedClass).length;
         const srcLabel = lastSource === "azure" ? "Azure AI Vision" : "브라우저 OWL-ViT";
         setStatus(`완료 · 검출기 <b>${srcLabel}</b> · ${total}개 샷 스캔 → 사물 <b>${merged.length}</b>개 인식, 기억 지점 <b>${hotspots.length}</b>개 생성(실제 사물 ${real}개).`);
+        // 자동 모드: 결과 핫스팟을 부모(가져오기 흐름)에 넘긴다. exportBtn과 동일한 포맷.
+        if (AUTO_SCAN) postParent({
+          type: "scan-done",
+          hotspots: hotspots.map(h => ({
+            slot:h.number, conceptId:h.conceptId, title:h.title, object:h.object,
+            detectedClass:h.detectedClass, confidence:h.score,
+            markerPosition: [ +h.pos.x.toFixed(3), +h.pos.y.toFixed(3), +h.pos.z.toFixed(3) ],
+            summary:h.summary, memoryCue:h.cue
+          }))
+        });
       } catch (err) {
         console.error(err);
         setStatus("오류: " + (err?.message||err));
+        if (AUTO_SCAN) postParent({ type:"scan-error", msg: (err?.message||String(err)) });
       } finally {
         scanning = false;           // 렌더루프 재개
         controls.enabled = true;
