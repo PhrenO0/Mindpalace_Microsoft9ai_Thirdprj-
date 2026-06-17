@@ -1,4 +1,4 @@
-"""Sketchfab 검색·가져오기(다운로드→GLB 변환→1k 텍스처→20MB 압축).
+"""Sketchfab 검색·가져오기(다운로드→GLB 변환→1k 텍스처→20MB 압축→Azure Blob 업로드).
 
 왜 백엔드인가:
   - 다운로드는 SKETCHFAB_API_TOKEN 인증이 필요(브라우저에 토큰 노출 방지).
@@ -25,6 +25,39 @@ import requests
 SEARCH_URL = "https://api.sketchfab.com/v3/search"
 DOWNLOAD_URL = "https://api.sketchfab.com/v3/models/{uid}/download"
 MAX_BYTES_DEFAULT = 20 * 1024 * 1024  # 20MB — 이 이상이면 압축 발동
+
+BLOB_CONTAINER = "models"
+BLOB_IMPORTED_PREFIX = "imported"  # models/imported/<uid>.glb
+
+
+def _blob_service_client():
+    """AZURE_STORAGE_CONNECTION_STRING 환경변수로 BlobServiceClient 반환. 없으면 None."""
+    conn = (os.getenv("AZURE_STORAGE_CONNECTION_STRING") or "").strip()
+    if not conn:
+        return None
+    try:
+        from azure.storage.blob import BlobServiceClient
+        return BlobServiceClient.from_connection_string(conn)
+    except Exception:
+        return None
+
+
+def upload_to_blob(data: bytes, blob_name: str, content_type: str = "application/octet-stream") -> str | None:
+    """bytes를 Azure Blob에 올리고 공개 URL을 반환. 실패하거나 미설정이면 None."""
+    client = _blob_service_client()
+    if client is None:
+        return None
+    try:
+        blob_client = client.get_blob_client(container=BLOB_CONTAINER, blob=blob_name)
+        from azure.storage.blob import ContentSettings
+        blob_client.upload_blob(
+            data,
+            overwrite=True,
+            content_settings=ContentSettings(content_type=content_type),
+        )
+        return blob_client.url
+    except Exception:
+        return None
 
 
 def token() -> str:
@@ -136,9 +169,11 @@ def _downscale_textures(scene, cap: int) -> None:
 
 
 def import_model(uid: str, out_dir: Path, max_bytes: int = MAX_BYTES_DEFAULT) -> dict[str, Any]:
-    """모델을 받아 단일 GLB(텍스처 ≤1k, 필요시 추가 압축)로 변환해 out_dir/<uid>.glb 에 저장.
+    """모델을 받아 단일 GLB(텍스처 ≤1k, 필요시 추가 압축)로 변환.
+    Azure Blob Storage가 설정돼 있으면 models/imported/<uid>.glb 에 업로드하고 blob URL 반환.
+    미설정이면 out_dir/<uid>.glb 에 로컬 저장.
 
-    반환: {originalMB, finalMB, compressed, vertices}
+    반환: {originalMB, finalMB, compressed, textureCap, blobUrl(blob 업로드 시)}
     """
     import trimesh  # 지연 로드(검색 경로엔 불필요)
 
@@ -169,30 +204,47 @@ def import_model(uid: str, out_dir: Path, max_bytes: int = MAX_BYTES_DEFAULT) ->
             _downscale_textures(scene, cap)
             glb = scene.export(file_type="glb")
 
-        out_dir.mkdir(parents=True, exist_ok=True)
-        out_path = out_dir / f"{uid}.glb"
-        out_path.write_bytes(glb)
-
-        return {
+        result: dict[str, Any] = {
             "originalMB": original_mb,
             "finalMB": round(len(glb) / 1_000_000, 2),
             "compressed": compressed,
             "textureCap": cap,
         }
+
+        # Blob Storage 업로드 시도. 성공하면 blobUrl 포함, 실패하면 로컬 저장으로 폴백.
+        blob_name = f"{BLOB_IMPORTED_PREFIX}/{uid}.glb"
+        blob_url = upload_to_blob(glb, blob_name, content_type="model/gltf-binary")
+        if blob_url:
+            result["blobUrl"] = blob_url
+        else:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / f"{uid}.glb").write_bytes(glb)
+
+        return result
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
 def save_hotspots(uid: str, name: str | None, hotspots: list[dict], out_dir: Path) -> str:
     """스캐너가 만든 핫스팟(노드)을 memory-walk가 fetch할 수 있는 JSON으로 저장.
-    반환: /legacy 기준 상대 경로(예: public/imported/<uid>-hotspots.json)."""
-    out_dir.mkdir(parents=True, exist_ok=True)
+    Blob Storage 설정 시 models/imported/<uid>-hotspots.json 에 업로드하고 blob URL 반환.
+    미설정 시 로컬 저장 후 상대 경로 반환."""
     data = {
         "roomId": uid,
         "title": name or uid,
         "generatedBy": "personal-room-scanner-3d (Sketchfab import flow)",
         "hotspots": hotspots,
     }
-    path = out_dir / f"{uid}-hotspots.json"
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    json_bytes = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+
+    blob_name = f"{BLOB_IMPORTED_PREFIX}/{uid}-hotspots.json"
+    blob_url = upload_to_blob(json_bytes, blob_name, content_type="application/json")
+    if blob_url:
+        return blob_url
+
+    # Blob 미설정 폴백: 로컬 저장
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / f"{uid}-hotspots.json").write_text(
+        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return f"public/imported/{uid}-hotspots.json"
