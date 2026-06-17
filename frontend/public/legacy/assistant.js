@@ -161,7 +161,7 @@
     (function place(){
       var L = document.getElementById("mpLaunch");
       function set(el, css){ for (var k in css) el.style[k] = css[k]; }
-      if (pg === "walk" || pg === "map"){ set(L,{left:"16px",right:"auto",bottom:"96px"}); set(panel,{left:"16px",right:"auto",bottom:"152px"}); }
+      if (pg === "walk" || pg === "map"){ set(L,{left:"16px",right:"auto",bottom:"150px"}); set(panel,{left:"16px",right:"auto",bottom:"206px"}); }
       else if (pg === "compose" || pg === "shop"){ set(L,{right:"18px",left:"auto",bottom:"80px"}); set(panel,{right:"18px",left:"auto",bottom:"138px"}); }
     })();
     var hi = { home:"기억의 궁전에 오신 걸 환영해요. PDF를 올리면 학습을 궁전으로 구성해 드려요.",
