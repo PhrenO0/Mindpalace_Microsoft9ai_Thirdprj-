@@ -4,8 +4,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>VWorld 3D 광화문 기억궁전</title>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css" />
     <style>
       :root {
         --ink: #2a241d;
@@ -32,7 +30,7 @@
         overflow: hidden;
         background: #f5f1ea;
         color: var(--ink);
-        font-family: "Pretendard", "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif;
+        font-family: "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif;
         letter-spacing: 0;
       }
 
@@ -299,18 +297,24 @@
         background: #eee9df;
         font: inherit;
       }
-      .minimap::after {
-        content: "N";
+      /* 미니맵은 북=위(고정). 4방위 표시 */
+      .mini-compass {
         position: absolute;
-        top: 4px;
-        left: 7px;
+        inset: 0;
         z-index: 500;
-        color: rgba(27, 38, 34, 0.85);
-        font-size: 10px;
-        font-weight: 900;
-        text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8);
         pointer-events: none;
       }
+      .mini-compass b {
+        position: absolute;
+        color: rgba(27, 38, 34, 0.9);
+        font-size: 10px;
+        font-weight: 900;
+        text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
+      }
+      .mini-compass .n { top: 3px; left: 50%; transform: translateX(-50%); color: #c5282a; }
+      .mini-compass .s { bottom: 3px; left: 50%; transform: translateX(-50%); }
+      .mini-compass .e { right: 5px; top: 50%; transform: translateY(-50%); }
+      .mini-compass .w { left: 5px; top: 50%; transform: translateY(-50%); }
       /* 5개 루트 포인트 — 반짝(펄스) */
       .mini-pin-dot {
         position: absolute;
@@ -445,7 +449,6 @@
         color: var(--muted);
         font-size: 12px;
         line-height: 1.58;
-        white-space: pre-line;   /* 문장 단위 줄바꿈(가독성) */
       }
 
       .control-grid {
@@ -555,7 +558,7 @@
       .study-panel {
         position: absolute;
         right: 20px;
-        top: 126px;
+        top: 96px;
         width: min(360px, calc(100vw - 40px));
         padding: 16px;
         z-index: 4;
@@ -1028,12 +1031,7 @@
       const designById = id => DESIGNS.find(d => d.id === id) || null;
       let STUDIO = {}; try { STUDIO = JSON.parse(localStorage.getItem("studio_designs") || "{}"); } catch(e){}
       const PAL_ROOMS = (PAL && PAL.rooms) || [];
-      // 업로드 자료의 제목에 박힌 슬러그/ID(AI_SCHOOL_REALISTIC 등)를 보기 좋게 — 밑줄→공백, 단어 첫 글자만 대문자(약어는 유지)
-      const humanTitle = (t) => String(t || "").replace(/[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+/g, m =>
-        m.split("_").map(w => /^[A-Z0-9]{1,3}$/.test(w) ? w : (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w)).join(" "));
-      // 문장 단위 줄바꿈(마침표 뒤 줄나눔) — 표시 요소엔 white-space:pre-line 적용됨
-      const paraBreak = (t) => String(t || "").replace(/\s+/g, " ").trim().replace(/([.!?…。])\s+/g, "$1\n");
-      const PAL_TITLE = humanTitle((PAL && PAL.palace && PAL.palace.title) || "");
+      const PAL_TITLE = (PAL && PAL.palace && PAL.palace.title) || "";
       const chapterFor = (i) => PAL_ROOMS[i] || null;   // 랜드마크 i → 챕터(인덱스 매핑)
       function designForLm(i, name){                     // 배정 디자인: 스튜디오 설정 > 랜드마크 room의 glb 추론 > 기본
         const a = STUDIO[CITY_SLUG] || {};
@@ -1684,11 +1682,11 @@
         if (kick) kick.textContent = `${CITY.name || "기억궁전"}${PAL_TITLE ? " · " + PAL_TITLE : ""}`;
         qs("eraPill").textContent = ch ? `${stop.num}번 · ${ch.name}` : `${stop.num}번 명소`;
         qs("anchorTitle").textContent = stop.title;
-        qs("anchorQuestion").textContent = ch ? `${ch.name}\n아래 목차의 ${activeIndex + 1}번 챕터입니다.` : paraBreak(stop.desc || "");
+        qs("anchorQuestion").textContent = ch ? `${ch.name} — 아래 목차의 ${activeIndex + 1}번 챕터` : (stop.desc || "");
         qs("entryQuestion").textContent = `${stop.num}. ${stop.title}`;
         qs("spatialCue").textContent = stop.page
-          ? paraBreak(`${stop.desc} 건물을 클릭하면 방으로 입장합니다.`)
-          : paraBreak(stop.desc);
+          ? `${stop.desc} 건물을 클릭하면 방으로 입장합니다.`
+          : stop.desc;
 
         const tabs = qs("anchorTabs");
         tabs.innerHTML = "";
@@ -1774,6 +1772,11 @@
         arrow.className = "mini-arrow-fixed";
         arrow.id = "miniArrow";
         qs("minimap").appendChild(arrow);
+        // 4방위 나침반(북=위 고정)
+        const compass = document.createElement("div");
+        compass.className = "mini-compass";
+        compass.innerHTML = '<b class="n">N</b><b class="s">S</b><b class="e">E</b><b class="w">W</b>';
+        qs("minimap").appendChild(compass);
         setTimeout(() => miniMap && miniMap.invalidateSize(), 100);
       }
       // GPS형: 화살표는 항상 중앙 고정, 지도가 내 위치를 따라 움직인다(setView).
