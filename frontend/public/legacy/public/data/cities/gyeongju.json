@@ -19,80 +19,81 @@
  "landmarks": [
   {
    "name": "불국사",
-   "lon": 129.301595,
-   "lat": 35.774006,
+   "lon": 129.298907,
+   "lat": 35.77535,
    "h": 12,
    "desc": "유네스코 세계문화유산. 다보탑·석가탑 등 신라 불교예술의 정수.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/dining_kitchen_baked.glb&hotspots=public/data/dining-hotspots.json"
   },
   {
    "name": "석굴암",
-   "lon": 129.350224,
-   "lat": 35.794981,
+   "lon": 129.349238,
+   "lat": 35.79492,
    "h": 8,
    "desc": "토함산 인공 석굴 사찰. 본존불상은 세계적 조각 걸작.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/loft.glb&hotspots=public/data/loft-hotspots.json"
   },
   {
    "name": "첨성대",
-   "lon": 129.221265,
-   "lat": 35.835709,
+   "lon": 129.219897,
+   "lat": 35.835844,
    "h": 9,
    "desc": "동양에서 가장 오래된 천문 관측대. 밤이면 경주 최고의 야경 명소.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/living_room.glb&hotspots=public/data/living_room-hotspots.json"
   },
   {
    "name": "동궁과 월지",
-   "lon": 129.255766,
-   "lat": 35.816257,
+   "lon": 129.228568,
+   "lat": 35.833017,
    "h": 10,
    "desc": "신라 왕궁의 별궁 터(구 안압지). 연못에 비친 정자 야경이 환상적.",
-   "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/room_paris.glb&hotspots=public/data/room_paris-hotspots.json"
+   "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/room_paris.glb&hotspots=public/data/room_paris-hotspots.json",
+   "approx": true
   },
   {
    "name": "대릉원(천마총)",
-   "lon": 129.212,
-   "lat": 35.8302,
+   "lon": 129.21515,
+   "lat": 35.833954,
    "h": 15,
    "desc": "신라 왕·귀족의 고분군 23기. 천마총 내부 관람·포토존.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/office_room.glb&hotspots=public/data/office_room-hotspots.json"
   },
   {
    "name": "경주 월정교",
-   "lon": 129.231482,
-   "lat": 35.82411,
+   "lon": 129.218121,
+   "lat": 35.8293,
    "h": 10,
    "desc": "월성과 남쪽을 잇던 복원 목조 교량. 남천 위 반영이 아름다움.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/school_class_room.glb&hotspots=public/data/school_class_room-hotspots.json"
   },
   {
    "name": "국립경주박물관",
-   "lon": 129.229333,
-   "lat": 35.828575,
+   "lon": 129.229676,
+   "lat": 35.83054,
    "h": 12,
    "desc": "성덕대왕신종·금관 등 신라 천년의 황금 유물 전시.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/neusa_frois.glb&hotspots=public/data/neusa_frois-hotspots.json"
   },
   {
    "name": "황리단길",
-   "lon": 129.21537,
-   "lat": 35.834439,
+   "lon": 129.218391,
+   "lat": 35.837173,
    "h": 8,
    "desc": "한옥 카페·맛집·소품숍이 모인 경주 대표 뉴트로 거리.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/modern_bedroom.glb&hotspots=public/data/modern_bedroom-hotspots.json"
   },
   {
    "name": "보문관광단지",
-   "lon": 129.286968,
-   "lat": 35.843698,
+   "lon": 129.286482,
+   "lat": 35.840894,
    "h": 15,
    "desc": "보문호수 중심의 종합 관광단지. 봄 벚꽃·호반 산책로.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/ps1_phasmophobia.glb&hotspots=public/data/ps1_phasmophobia-hotspots.json"
   },
   {
    "name": "경주타워",
-   "lon": 129.28929,
-   "lat": 35.831448,
+   "lon": 129.289293,
+   "lat": 35.831489,
    "h": 82,
    "desc": "황룡사 9층 목탑을 음각한 82m 타워. 전망대 뷰 명소.",
    "room": "memory-walk.html?glb=https://9aiteam1.blob.core.windows.net/models/front_room_first_pass.glb&hotspots=public/data/front_room_first_pass-hotspots.json"
