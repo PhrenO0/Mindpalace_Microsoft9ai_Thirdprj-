@@ -483,6 +483,24 @@
             label: (c.name.match(FURN_RE) || ["object"])[0].toLowerCase() });
         }
       });
+      // 폴백: 가구 이름(FURN_RE) 앵커가 거의 없으면, 메쉬 지오메트리(바운딩박스 중심)에서 좌표를 자동 추출.
+      //  → 이름표 없는/명명규칙 다른 GLB(머지된 신규 방 등)도 Claude 개입 없이 런타임에 핫스팟 부착.
+      if (anchors.length < 3) {
+        const STRUCT_RE = /floor|wall|ceiling|house|structure|\broom\b|backdrop|background|skybox|stair|door\b/i;
+        const roomMax = 7.2; // 모델은 가로 7.2로 정규화됨(스캐너 좌표 호환)
+        const cand = [];
+        model.traverse(c => {
+          if (!c.isMesh || backs.has(c) || c.visible === false) return;
+          if (STRUCT_RE.test(c.name || "")) return;
+          const b = new THREE.Box3().setFromObject(c); if (b.isEmpty()) return;
+          const s = b.getSize(new THREE.Vector3()), maxd = Math.max(s.x, s.y, s.z);
+          if (maxd < roomMax * 0.04 || maxd > roomMax * 0.9) return; // 소품·구조물 제외
+          cand.push({ pos: b.getCenter(new THREE.Vector3()), name: c.name || "object", label: "object", vol: s.x * s.y * s.z });
+        });
+        cand.sort((a, b) => b.vol - a.vol); // 큰 가구 우선
+        const MINSEP = roomMax * 0.10;
+        cand.forEach(c => { if (anchors.every(a => a.pos.distanceTo(c.pos) > MINSEP)) anchors.push({ pos: c.pos, name: c.name, label: c.label }); });
+      }
       scene.add(model);
       bounds = new THREE.Box3(); model.traverse(c => { if (c.isMesh && c.visible) bounds.expandByObject(c); });
       // (파노라마 철회: 천장 제거/클리핑 없음 — 방은 천장 덮인 닫힌 공간으로 유지)
@@ -565,9 +583,11 @@
 
     async function loadPalaceThenBuild() {
       let palace = SAMPLE_PALACE;
-      // 우선순위: ?palace= 명시 > 랜드마크 테마의 전용 콘텐츠(맥락 부호화) > 내장 샘플
+      // 우선순위: 업로드한 학습자료(sessionStorage) > ?palace= 명시 > 랜드마크 테마 콘텐츠 > 내장 샘플
+      let fromUpload = false;
+      try { const sp = sessionStorage.getItem("mp_palace"); if (sp) { palace = JSON.parse(sp); fromUpload = true; } } catch(_) {}
       const url = P.get("palace") || (THEME && THEME.palace) || null;
-      if (url) { try { palace = await (await fetch(url)).json(); } catch(e){ console.warn("palace 로드 실패, 샘플 사용", e); } }
+      if (!fromUpload && url) { try { palace = await (await fetch(url)).json(); } catch(e){ console.warn("palace 로드 실패, 샘플 사용", e); } }
       $("palaceTitle").textContent = palace.palace?.title || "기억 궁전";
       const rid = P.get("room");
       const room = (palace.rooms||[]).find(r => r.id === rid) || (palace.rooms||[])[0];
@@ -704,6 +724,25 @@
     // ── 동선 설계 + 엔티티 매핑 ──
     function buildRoute(entities) {
       if (!anchors.length) { setStatus("이 방에서 가구 앵커를 못 찾았습니다(이름 없는 GLB?)."); return; }
+      // 노드 수 보장: 가구 앵커가 학습 항목보다 적으면 바닥에 분산 좌표를 합성해 보강(과밀 방지 상한 24)
+      {
+        const need = Math.min(entities.length, 24);
+        if (anchors.length < need) {
+          const s0 = bounds.getSize(new THREE.Vector3());
+          const minSep = Math.max(0.5, Math.min(s0.x, s0.z) * 0.12);
+          const pad = Math.min(0.6, s0.x * 0.12), yy = bounds.min.y + Math.min(1.0, s0.y * 0.4);
+          const cells = Math.ceil(need * 1.8); // 디클러스터로 일부 탈락하므로 넉넉히 후보 생성
+          const cols = Math.max(2, Math.round(Math.sqrt(cells * (s0.x / Math.max(s0.z, 0.001)))));
+          const rows = Math.max(2, Math.ceil(cells / cols));
+          for (let r = 0; r < rows && anchors.length < need; r++)
+            for (let c = 0; c < cols && anchors.length < need; c++) {
+              const x = bounds.min.x + pad + (s0.x - 2 * pad) * (cols > 1 ? c / (cols - 1) : 0.5);
+              const z = bounds.min.z + pad + (s0.z - 2 * pad) * (rows > 1 ? r / (rows - 1) : 0.5);
+              if (anchors.every(a => Math.hypot(a.pos.x - x, a.pos.z - z) > minSep))
+                anchors.push({ pos: new THREE.Vector3(x, yy, z), name: "기억 지점", label: "spot" });
+            }
+        }
+      }
       const sz = bounds.getSize(new THREE.Vector3());
       const spawn = new THREE.Vector3(bounds.min.x + sz.x*0.12, bounds.min.y + 1.5, bounds.max.z - sz.z*0.12);
       spawnPos = spawn.clone();

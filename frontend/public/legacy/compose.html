@@ -173,7 +173,7 @@
     const corpus=(PAL.palace?.source?.corpus)||PAL.palace?.title||"";
     const chapters=PAL.rooms||[]; const used=new Set();
     chapState = chapters.map((ch)=>{
-      const text=`${ch.name} ${ch.summary||""} ${corpus}`;
+      const text=`${ch.name} ${ch.summary||""} ${(ch.kept||[]).map(k=>k.title||k.id||"").join(" ")} ${corpus}`;
       const ranked=(LIB.landmarks||[]).map(lm=>({lm,...scoreFor(text,lm)})).sort((a,b)=>b.s-a.s);
       const pick=ranked.find(r=>!used.has(r.lm.id))||ranked[0];
       const lm=pick?pick.lm:(LIB.landmarks[0]);
@@ -286,10 +286,10 @@
     populateCity(cities);
     if(CITY==="jongno") LIB=await fetch("public/data/landmarks.json").then(r=>r.json());
     else { const cd=await fetch(`public/data/cities/${encodeURIComponent(CITY)}.json`).then(r=>r.ok?r.json():null).catch(()=>null); LIB=buildLibFromCity(cd); }
-    if (palaceFile) PAL = JSON.parse(await palaceFile.text());
+    if (palaceFile) { PAL = JSON.parse(await palaceFile.text()); try { sessionStorage.setItem("mp_palace", JSON.stringify(PAL)); } catch(_){} }
     else {
       let sp = null; try { sp = sessionStorage.getItem("mp_palace"); } catch(_) {}
-      if (sp) { try { PAL = JSON.parse(sp); sessionStorage.removeItem("mp_palace"); $("msg").textContent = "업로드한 학습자료로 구성했습니다."; } catch(_) { PAL = null; } }
+      if (sp) { try { PAL = JSON.parse(sp); $("msg").textContent = "업로드한 학습자료로 구성했습니다."; } catch(_) { PAL = null; } }   // 유지: 입장 시 memory-walk이 같은 자료를 읽게
       if (!PAL) PAL = await fetch(PALACE_URL).then(r=>r.json());
     }
     computeAssign(); render();
