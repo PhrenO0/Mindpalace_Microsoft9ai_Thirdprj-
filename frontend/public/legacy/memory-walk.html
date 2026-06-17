@@ -585,7 +585,7 @@
       let palace = SAMPLE_PALACE;
       // 우선순위: 업로드한 학습자료(sessionStorage) > ?palace= 명시 > 랜드마크 테마 콘텐츠 > 내장 샘플
       let fromUpload = false;
-      try { const sp = sessionStorage.getItem("mp_palace"); if (sp) { palace = JSON.parse(sp); fromUpload = true; } } catch(_) {}
+      try { const sp = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); if (sp) { palace = JSON.parse(sp); fromUpload = true; } } catch(_) {}
       const url = P.get("palace") || (THEME && THEME.palace) || null;
       if (!fromUpload && url) { try { palace = await (await fetch(url)).json(); } catch(e){ console.warn("palace 로드 실패, 샘플 사용", e); } }
       $("palaceTitle").textContent = palace.palace?.title || "기억 궁전";

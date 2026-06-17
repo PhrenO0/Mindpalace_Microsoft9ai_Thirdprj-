@@ -552,8 +552,10 @@
     });
     $("title").textContent = `${city.name} · 방 디자인`;
     $("regionName").textContent = `${city.name} · 랜드마크 ${regionLms.length}곳`;
+    // 업로드한 학습자료(localStorage/세션)가 있으면 우선 사용 — 스튜디오(새 탭)에서도 같은 자료 유지
+    let uploaded = null; try { const s = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); if (s) uploaded = JSON.parse(s); } catch(_){}
     const themeUrl = (themes && (themes[CITY]||themes._default)) || "public/data/korean_history.palace.json";
-    return fetch(themeUrl).then(r=>r.ok?r.json():null).catch(()=>null).then(pal => {
+    return (uploaded ? Promise.resolve(uploaded) : fetch(themeUrl).then(r=>r.ok?r.json():null).catch(()=>null)).then(pal => {
       PAL = pal; computeAssign();
       renderList(); renderGallery(); updateLinks();
       // 구성(compose) 드릴다운에서 넘어온 ?lm/?lmName 이 있으면 그 랜드마크를 미리 선택

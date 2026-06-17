@@ -286,10 +286,13 @@
     populateCity(cities);
     if(CITY==="jongno") LIB=await fetch("public/data/landmarks.json").then(r=>r.json());
     else { const cd=await fetch(`public/data/cities/${encodeURIComponent(CITY)}.json`).then(r=>r.ok?r.json():null).catch(()=>null); LIB=buildLibFromCity(cd); }
-    if (palaceFile) { PAL = JSON.parse(await palaceFile.text()); try { sessionStorage.setItem("mp_palace", JSON.stringify(PAL)); } catch(_){} }
-    else {
-      let sp = null; try { sp = sessionStorage.getItem("mp_palace"); } catch(_) {}
-      if (sp) { try { PAL = JSON.parse(sp); $("msg").textContent = "업로드한 학습자료로 구성했습니다."; } catch(_) { PAL = null; } }   // 유지: 입장 시 memory-walk이 같은 자료를 읽게
+    // 활성 학습자료(업로드 PDF→palace)는 localStorage(탭 공유·지속)를 단일 출처로 — 지역 변경·스튜디오 진입에도 유지
+    if (palaceFile) {
+      PAL = JSON.parse(await palaceFile.text());
+      try { const s = JSON.stringify(PAL); localStorage.setItem("mp_palace", s); sessionStorage.setItem("mp_palace", s); } catch(_){}
+    } else {
+      let s = null; try { s = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); } catch(_) {}
+      if (s) { try { PAL = JSON.parse(s); try { localStorage.setItem("mp_palace", s); } catch(_){} $("msg").textContent = "업로드한 학습자료로 구성했습니다."; } catch(_) { PAL = null; } }
       if (!PAL) PAL = await fetch(PALACE_URL).then(r=>r.json());
     }
     computeAssign(); render();

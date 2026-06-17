@@ -4597,11 +4597,11 @@ end of keeper CSS */
     var go=function(){ location.href=COMPOSE; };
     if (f && /\.json$/i.test(f.name)){
       var rd=new FileReader();
-      rd.onload=function(){ try{ sessionStorage.setItem("mp_palace", rd.result); }catch(_){} setTimeout(go,650); };
+      rd.onload=function(){ try{ sessionStorage.setItem("mp_palace", rd.result); localStorage.setItem("mp_palace", rd.result); }catch(_){} setTimeout(go,650); };
       rd.onerror=function(){ setTimeout(go,650); };
       rd.readAsText(f);
     } else {
-      try{ sessionStorage.removeItem("mp_palace"); }catch(_){}
+      try{ sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace"); }catch(_){}
       setTimeout(go,1000);
     }
   }, true);
