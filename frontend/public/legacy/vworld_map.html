@@ -1430,16 +1430,20 @@
           if (/Layer=hyb|hybrid/i.test(u)) L.show = false; } catch {} };
         const hidePoi = (pr) => { try { if (engine && pr instanceof engine.Cesium3DTileset) {
           const u = (pr._url || (pr.resource && pr.resource.url) || "").toString();
-          if (/\/poi\/POI_/i.test(u)) pr.show = false; } } catch {} };
+          if (/\/poi\/POI_/i.test(u) && pr.show) pr.show = false; } } catch {} };
         try {
           const il = viewer.imageryLayers, P = viewer.scene.primitives;
           const sweep = () => { for (let i = 0; i < il.length; i++) hideHyb(il.get(i));
             for (let i = 0; i < (P.length || 0); i++) { let pr; try { pr = P.get(i); } catch (e) { continue; } hidePoi(pr); } };
           sweep();
           if (il.layerAdded && !il.__poiHook) { il.__poiHook = 1; il.layerAdded.addEventListener(hideHyb); }
-          if (P.primitiveAdded && !P.__poiHook) { P.__poiHook = 1; P.primitiveAdded.addEventListener(hidePoi); }   // POI 타일셋이 늦게 추가돼도 숨김
-          let n = 0; const t = setInterval(() => { sweep();
-            if (viewer.scene.requestRender) viewer.scene.requestRender(); if (++n > 8) clearInterval(t); }, 800);
+          // POI 라벨 타일셋(POI_BASE/BOUND)은 줌인할 때 늦게 로드됨 → postRender에서 ~1초마다 sweep(켜져 있으면 끈다).
+          //   한 번 끄면 유지되므로 대부분 no-op(비용 미미). 어느 줌·도시에서나 라벨이 다시 안 뜨게 보장.
+          if (viewer.scene.postRender && !viewer.scene.__poiSweepHook) {
+            viewer.scene.__poiSweepHook = 1; let last = 0;
+            viewer.scene.postRender.addEventListener(() => { const now = performance.now(); if (now - last < 1000) return; last = now;
+              const PP = viewer.scene.primitives; for (let i = 0; i < (PP.length || 0); i++) { let pr; try { pr = PP.get(i); } catch (e) { continue; } hidePoi(pr); } });
+          }
         } catch {}
       }
 
