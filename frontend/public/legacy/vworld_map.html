@@ -997,6 +997,7 @@
         <div class="dock-right">
           <div class="anchor-tabs" id="anchorTabs"></div>
           <div class="dock-actions">
+            <button id="dockOverviewBtn" type="button" title="모든 명소가 한눈에 보이는 상공 조망으로">🔭 전체 보기</button>
             <button id="dockPrevBtn" type="button">이전</button>
             <button id="dockNextBtn" type="button">다음</button>
             <button id="dockFocusBtn" type="button">중심 이동</button>
@@ -1334,11 +1335,18 @@
             postRenderHooked = true;
           }
           addLandmarkMarkers(); // 종로구 일대 명소 10곳 마커 표시
-          // 구성(compose) '입장'으로 넘어오면 ?focus=<랜드마크>로 그 명소에 날아가 선택(거기서 '건물 입장')
-          (function(){ const f = (new URLSearchParams(location.search).get("focus") || "").trim(); if (!f) return;
+          // 구성(compose) '입장'으로 넘어오면 ?focus=<랜드마크>로 그 명소에 날아가 선택.
+          //   ?enter=1 이면(=구성 '바로 입장') 전체 조망 → 그 명소 → 다이브 → 방까지 자동 시네마틱으로 이어간다.
+          (function(){ const Q = new URLSearchParams(location.search);
+            const f = (Q.get("focus") || "").trim(); if (!f) return;
+            const autoEnter = Q.get("enter") === "1";
             let idx = LANDMARKS.findIndex(m => m.name === f);
             if (idx < 0) idx = LANDMARKS.findIndex(m => m.name && (m.name.includes(f) || f.includes(m.name)));
-            if (idx >= 0) window.setTimeout(() => { initLock = 0; stopTour(false); flyToAnchor(idx); }, 900);
+            if (idx < 0) return;
+            window.setTimeout(() => { initLock = 0; stopTour(false); flyToAnchor(idx);
+              if (autoEnter) { const stop = STOPS[idx];
+                if (stop && stop.page) window.setTimeout(() => diveAndEnter(stop), 1500); }
+            }, 900);
           })();
           window.setTimeout(hideMapLoader, 500);
         }, 1800);
@@ -1495,7 +1503,7 @@
         viewer.camera.changed.addEventListener(requestRender);
       }
 
-      function flyTo(pos) {
+      function flyTo(pos, onDone, durationMs) {
         const viewer = (window.ws3d && window.ws3d.viewer) || getVWorldViewer();
         const engine = window.Cesium;
         if (viewer && engine && viewer.scene && viewer.scene.camera) {
@@ -1509,7 +1517,7 @@
           let hdelta = endHeading - startHeading;
           while (hdelta > Math.PI) hdelta -= 2 * Math.PI;
           while (hdelta < -Math.PI) hdelta += 2 * Math.PI;
-          const DURATION = 1200;
+          const DURATION = durationMs || 1200;
           const t0 = performance.now();
           const scratch = new engine.Cartesian3();
           const ease = (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
@@ -1526,6 +1534,7 @@
             });
             syncBuildingPositions();
             if (t < 1) requestAnimationFrame(step);
+            else if (typeof onDone === "function") onDone();
           };
           requestAnimationFrame(step);
           return;
@@ -1537,6 +1546,7 @@
           );
           map.setInitPosition(cam);
         }
+        if (typeof onDone === "function") setTimeout(onDone, 300);
       }
 
       function flyToAnchor(index) {
@@ -1556,14 +1566,24 @@
         );
       }
 
-      // 현재 정거장 입장(2·3번만 방이 있음)
+      // 시네마틱 입장: 현재 시점에서 건물 가까이 낮게 내려꽂은 뒤(다이브) 방으로 이동.
+      //   → "랜드마크를 내려다보다가 쭉 그 방으로 들어가는" 카메라 무브. 방에선 entryFrame이 정면을 잘 잡아줌.
+      function diveAndEnter(stop) {
+        if (!stop || !stop.page) { setStatus(`${stop ? stop.title : "이 명소"}: 입장 가능한 방이 없습니다.`); return; }
+        const c = stop.camera || {}; let gone = false;
+        const go = () => { if (gone) return; gone = true; location.href = stop.page; };
+        const dive = { lon: c.lon, lat: c.lat,
+          height: Math.max((c.height || 600) * 0.42, 180),   // 건물 근처까지 낮게
+          heading: c.heading || 0, pitch: -42 };             // 가파른 내려보기(다이브)
+        setStatus(`${stop.title}(으)로 진입합니다…`);
+        flyTo(dive, go, 1300);
+        setTimeout(go, 1700);   // 안전망(콜백 누락 대비)
+      }
+      // 현재 정거장 입장(방이 있는 정거장만)
       function enterCurrentStop() {
         const stop = STOPS[activeIndex];
-        if (stop && stop.page) {
-          location.href = stop.page;
-        } else {
-          setStatus(`${stop ? stop.title : "이 명소"}: 입장 가능한 방이 없습니다.`);
-        }
+        if (stop && stop.page) diveAndEnter(stop);
+        else setStatus(`${stop ? stop.title : "이 명소"}: 입장 가능한 방이 없습니다.`);
       }
 
       // ── "랜드마크만" 토글: 무거운 3D 건물(VWorld batch Primitive)을 통째로 끔 ──
@@ -1943,6 +1963,8 @@
         qs("dockFocusBtn").addEventListener("click", () =>
           flyToAnchor(activeIndex),
         );
+        // 🔭 전체 보기 — 모든 명소가 한눈에 보이는 상공 조망으로 부드럽게 복귀(언제 어디서든)
+        qs("dockOverviewBtn").addEventListener("click", () => { stopTour(false); flyTo(GWANGHWAMUN); setStatus("전체 조망 — 모든 명소를 한눈에 봅니다."); });
         qs("dockEnterBtn").addEventListener("click", () => enterCurrentStop());
         qs("performanceToggle").addEventListener("click", () =>
           applyPerformanceMode(!performanceMode),

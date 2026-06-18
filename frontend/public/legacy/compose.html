@@ -273,7 +273,7 @@
 
   function updateStart(){
     const has = PAL.rooms && PAL.rooms.length;
-    $("startBtn").href = has ? mapUrl(0) : `vworld_map.html?city=${encodeURIComponent(CITY)}`;   // 바로 3D 지도로(디자인 커스텀 스킵)
+    $("startBtn").href = has ? (mapUrl(0) + "&enter=1") : `vworld_map.html?city=${encodeURIComponent(CITY)}`;   // 바로 3D 지도로(디자인 커스텀 스킵) + 자동 다이브 입장
     $("studioLink").href = has ? studioUrl(0) : "glb-customizer.html";                            // 선택: 방 디자인 스튜디오에서 다듬기
     $("mapLink").href = `vworld_map.html?city=${encodeURIComponent(CITY)}`;
   }
