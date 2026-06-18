@@ -31,8 +31,8 @@
     .mpnav a{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid rgba(51,46,40,.12);
       border-radius:9px;background:rgba(51,46,40,.045);color:#2a241d;text-decoration:none;font-size:12.5px;
       font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;}
-    .mpnav a:hover{border-color:rgba(44,122,99,.45);background:rgba(44,122,99,.10);transform:translateY(-1px);}
-    .mpnav a.on{background:#2c7a63;border-color:#2c7a63;color:#fff;cursor:default;}
+    .mpnav a:hover{border-color:rgba(181, 85, 47,.45);background:rgba(181, 85, 47,.10);transform:translateY(-1px);}
+    .mpnav a.on{background:#b5552f;border-color:#b5552f;color:#fff;cursor:default;}
     .mpnav a.on:hover{transform:none;}
     body.mpnav-pad{padding-top:46px !important;}
     .mpnav.mpnav-float{left:50%;right:auto;transform:translateX(-50%);top:8px;height:auto;width:auto;

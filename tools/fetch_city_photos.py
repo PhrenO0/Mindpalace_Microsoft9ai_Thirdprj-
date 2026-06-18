@@ -42,13 +42,55 @@ def cities():
 
 
 def is_locator(url):
-    """위치도(행정구역 SVG 지도)는 갤러리에 부적합 — 거르기."""
+    """위치도(행정구역 지도)·시청 청사 사진은 갤러리에 부적합 — 거르기."""
     u = (url or "").lower()
     if ".svg/" in u or u.endswith(".svg"):
         return True
     bad = ["locator", "location_map", "map_of", "blank_map", "districts_of",
-           "위치", "행정구역", "south_korea", "southkorea", "/map_", "-map_", "px-map"]
+           "위치", "행정구역", "south_korea", "southkorea", "/map_", "-map_", "px-map",
+           "city_hall", "cityhall", "city_council", "시청", "청사", "government_complex"]
     return any(b in u for b in bad)
+
+
+# 유명 도시는 시청·montage 대신 대표 랜드마크 실사진으로(예쁜 갤러리). slug → 위키 문서 제목 후보들.
+CURATED = {
+    "gwangju":   ["무등산", "국립아시아문화전당"],
+    "ulsan":     ["대왕암공원", "간절곶", "태화강"],
+    "jeonju":    ["전주한옥마을", "경기전"],
+    "andong":    ["안동 하회마을", "하회마을", "병산서원"],
+    "gangneung": ["경포대", "정동진", "오죽헌"],
+    "yeosu":     ["오동도", "향일암", "여수 밤바다"],
+    "suwon":     ["수원화성", "화성행궁"],
+    "gyeongju":  ["불국사", "석굴암", "첨성대"],
+    "jeju":      ["성산일출봉", "주상절리"],
+    "chuncheon": ["남이섬", "소양강댐"],
+    "busan":     ["해운대", "광안대교"],
+    "daegu":     ["팔공산", "동성로"],
+    "daejeon":   ["대전엑스포", "장태산"],
+}
+
+
+def curate():
+    """CURATED 도시는 지정 랜드마크 후보를 차례로 시도해 대표 실사진으로 덮어쓴다."""
+    data = json.load(open(OUT, encoding="utf-8"))
+    fixed = 0
+    for slug, titles in CURATED.items():
+        if slug not in data:
+            continue
+        chosen = None
+        for tt in titles:
+            d = summary(tt)
+            t = (d.get("thumbnail") or {}).get("source", "")
+            if t and not is_locator(t):
+                data[slug].update(thumb=t, full=(d.get("originalimage") or {}).get("source", "") or t, title=tt)
+                chosen = tt
+                fixed += 1
+                break
+            time.sleep(0.3)
+        print(("OK  " if chosen else "--  ") + "%-11s %s" % (slug, chosen or ("실패: " + ", ".join(titles))))
+        time.sleep(0.4)
+    json.dump(data, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print("\n큐레이션 %d개 적용" % fixed)
 
 
 def fetch_one(name, lms):
@@ -118,6 +160,9 @@ def clean_locators():
 
 
 def main():
+    if "--curate" in sys.argv:
+        curate()
+        return
     if "--clean" in sys.argv:
         clean_locators()
         return

@@ -10,9 +10,9 @@
   integrity="sha384-Ftcjj/GNLxPvzNDftO/oryXB9aGxsGZY9JGqsXG0uUKgQDl9RfDgsx9NJ/4IVNPe" crossorigin="anonymous"></script>
 <style>
   :root{ color-scheme:light; --bg:#f5f1ea; --panel:rgba(255,255,255,.86); --panel2:#ffffff; --panel-strong:#ffffff; --ink:#2a241d;
-    --line:rgba(51,46,40,.12); --text:#2a241d; --muted:rgba(42,36,29,.62); --accent:#2c7a63; --accent2:#348a72; --gold:#8a8170; --shadow:0 18px 50px rgba(40,34,26,.14); }
+    --line:rgba(51,46,40,.12); --text:#2a241d; --muted:rgba(42,36,29,.62); --accent:#b5552f; --accent2:#c4623a; --gold:#98917f; --shadow:0 18px 50px rgba(40,34,26,.14); }
   *{box-sizing:border-box;}
-  body{margin:0; height:100vh; display:flex; flex-direction:column; overflow:hidden;
+  body{margin:0;word-break:keep-all;overflow-wrap:anywhere; height:100vh; display:flex; flex-direction:column; overflow:hidden;
     font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif; color:var(--text); background:var(--bg);}
   .top{display:flex; align-items:center; gap:10px; padding:12px 18px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.92); flex-wrap:wrap;}
   .top a.home{padding:7px 11px; border:1px solid var(--line); border-radius:8px; color:var(--text); text-decoration:none; font-size:12.5px;}
@@ -29,7 +29,7 @@
   .side .regionName{font-size:12px; color:var(--muted); padding:0 8px 8px;}
   .lmrow{display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; cursor:pointer; border:1px solid transparent;}
   .lmrow:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
-  .lmrow.sel{background:color-mix(in srgb, var(--accent) 18%, transparent); border-color:rgba(44,122,99,.4);}
+  .lmrow.sel{background:color-mix(in srgb, var(--accent) 18%, transparent); border-color:rgba(181, 85, 47,.4);}
   .lmrow .ic{flex:0 0 30px; width:30px; height:30px; display:flex; align-items:center; justify-content:center;
     color:var(--gold); border:1px solid var(--line); border-radius:8px; font-size:16px;}
   .lmrow .ic svg{width:20px;height:20px;}
@@ -47,8 +47,8 @@
   .gallery{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;}
   .gcard{border:1px solid var(--line); border-radius:13px; overflow:hidden; background:var(--panel); cursor:pointer;
     transition:transform .14s, border-color .14s, box-shadow .14s; display:flex; flex-direction:column;}
-  .gcard:hover{transform:translateY(-3px); border-color:rgba(44,122,99,.5); box-shadow:0 14px 30px rgba(40,34,26,.16);}
-  .gcard.sel{border-color:var(--accent); box-shadow:0 0 0 2px rgba(44,122,99,.45) inset;}
+  .gcard:hover{transform:translateY(-3px); border-color:rgba(181, 85, 47,.5); box-shadow:0 14px 30px rgba(40,34,26,.16);}
+  .gcard.sel{border-color:var(--accent); box-shadow:0 0 0 2px rgba(181, 85, 47,.45) inset;}
   .gcard.imported{border-color:#d9463e; box-shadow:0 0 0 3px rgba(217,70,62,.55) inset, 0 10px 24px rgba(217,70,62,.22);}
   .gcard .ph .newbadge{position:absolute; top:7px; left:7px; background:#d9463e; color:#fff; font-size:9.5px; font-weight:900; padding:2px 7px; border-radius:999px;}
   .gcard .ph{position:relative; aspect-ratio:4/3; background:linear-gradient(135deg,#efeae0,#f6f3ec); display:flex; align-items:center; justify-content:center;}
@@ -67,7 +67,7 @@
   .viewtools{position:absolute; top:10px; right:12px; display:flex; gap:6px; z-index:3;}
   .viewtools button{padding:6px 10px; font-size:11.5px; border:1px solid var(--line); border-radius:8px; cursor:pointer; background:rgba(255,255,255,.92); color:var(--text);}
   .viewtools button:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
-  .viewtools button.on{background:color-mix(in srgb, var(--accent) 18%, transparent); border-color:rgba(44,122,99,.5);}
+  .viewtools button.on{background:color-mix(in srgb, var(--accent) 18%, transparent); border-color:rgba(181, 85, 47,.5);}
   .loadover{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
     background:radial-gradient(60% 60% at 50% 40%, color-mix(in srgb, var(--accent) 8%, transparent), #eee9df); z-index:2;}
   .loadover.hide{display:none;}
@@ -80,7 +80,7 @@
     color:var(--text); border-radius:9px; padding:9px 13px; font-size:12.5px; text-decoration:none;}
   .btn:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
   .btn.primary{background:var(--accent); border-color:var(--accent); color:#ffffff; font-weight:800;}
-  .btn.go{background:color-mix(in srgb, var(--accent) 18%, transparent); border-color:rgba(44,122,99,.4); font-weight:800;}
+  .btn.go{background:color-mix(in srgb, var(--accent) 18%, transparent); border-color:rgba(181, 85, 47,.4); font-weight:800;}
   .msg{font-size:12px; color:var(--gold); min-height:16px;}
   /* 학습 패널 */
   .learn{border:1px solid var(--line); border-radius:12px; padding:13px 15px; background:var(--panel);}
@@ -134,7 +134,7 @@
   .skwrap{position:relative; margin-top:10px; min-height:120px;}
   .skgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; max-height:420px; overflow:auto;}
   .skload{position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px;
-    background:rgba(44,122,99,.55); backdrop-filter:blur(8px); border:1px solid rgba(44,122,99,.6); border-radius:12px; z-index:6; text-align:center; padding:18px;}
+    background:rgba(181, 85, 47,.55); backdrop-filter:blur(8px); border:1px solid rgba(181, 85, 47,.6); border-radius:12px; z-index:6; text-align:center; padding:18px;}
   .skload.on{display:flex;}
   .skload .spin{width:38px; height:38px; border-radius:50%; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; animation:skspin .9s linear infinite;}
   @keyframes skspin{to{transform:rotate(360deg);}}
@@ -154,13 +154,32 @@
   .imgbox img{max-width:92vw; max-height:84vh; border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,.6);}
   .imgbox figcaption{color:#f5f1ea; font-size:13px; font-weight:700;}
   .skres{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel2); display:flex; flex-direction:column; cursor:pointer; transition:border-color .12s, transform .12s;}
-  .skres:hover{border-color:rgba(44,122,99,.5); transform:translateY(-2px);}
+  .skres:hover{border-color:rgba(181, 85, 47,.5); transform:translateY(-2px);}
   .skres .th{aspect-ratio:4/3; background:linear-gradient(135deg,#efeae0,#f6f3ec); overflow:hidden;}
   .skres .th img{width:100%; height:100%; object-fit:cover; display:block;}
   .skres .ti{padding:6px 8px; font-size:11px; font-weight:700; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .skres .imp{margin:0 8px 8px; padding:5px 0; font-size:11px; font-weight:800; text-align:center; border-radius:7px; border:1px solid var(--accent); color:var(--accent); background:rgba(44,122,99,.1);}
+  .skres .imp{margin:0 8px 8px; padding:5px 0; font-size:11px; font-weight:800; text-align:center; border-radius:7px; border:1px solid var(--accent); color:var(--accent); background:rgba(181, 85, 47,.1);}
   .skres .imp:hover{background:var(--accent); color:#fff;}
   .skstate{font-size:11.5px; color:var(--muted); margin-top:8px; min-height:15px; line-height:1.5;}
+  /* 흐름 스텝퍼 — 일방통행 단계(구성 → 방 디자인 → 3D 지도 → 입장) */
+  .flowsteps{display:flex; align-items:center; gap:7px; flex-wrap:wrap; padding:8px 18px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.72); font-size:12px;}
+  .flowsteps .fs{display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-weight:700;}
+  .flowsteps .fs .dot{width:18px; height:18px; border-radius:50%; display:grid; place-items:center; font-size:10px; font-weight:800; background:rgba(51,46,40,.08); color:var(--muted);}
+  .flowsteps .fs.done{color:var(--text);} .flowsteps .fs.done .dot{background:color-mix(in srgb,var(--accent) 22%,transparent); color:var(--accent);}
+  .flowsteps .fs.cur{color:var(--accent);} .flowsteps .fs.cur .dot{background:var(--accent); color:#fff;}
+  .flowsteps .sep{color:var(--muted); opacity:.5;}
+  /* 다음 단계 CTA 카드(방 디자인 후 정식으로 3D 지도로) */
+  .nextstep{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    margin-top:2px; padding:16px 18px; border:1px solid rgba(181,85,47,.3); border-radius:14px;
+    background:linear-gradient(120deg, color-mix(in srgb,var(--accent) 10%,transparent), color-mix(in srgb,var(--gold) 7%,transparent));}
+  .nextstep .t{font-size:13.5px; color:var(--text); line-height:1.5;}
+  .nextstep .t b{color:var(--accent);}
+  .nextstep .t .s{display:block; color:var(--muted); font-size:12px; margin-top:2px;}
+  .nextstep .nbtn{display:inline-flex; align-items:center; gap:7px; border:none; border-radius:12px;
+    background:linear-gradient(180deg,var(--accent),var(--accent2)); color:#fff; font-weight:800; font-size:15px;
+    padding:13px 22px; text-decoration:none; white-space:nowrap; box-shadow:0 10px 24px rgba(181,85,47,.3); transition:filter .15s, transform .15s;}
+  .nextstep .nbtn:hover{filter:brightness(1.07); transform:translateY(-1px);}
+  .nextstep .nbtn.disabled{filter:grayscale(.4); pointer-events:none; opacity:.65;}
 </style>
 </head>
 <body>
@@ -170,6 +189,15 @@
     <a class="home" id="shopLink" href="compose.html">🛍 구성</a>
     <div><div class="kicker">Memory Palace · 방 디자인 스튜디오</div><h1 id="title">방 디자인 스튜디오</h1></div>
     <label class="palacebtn">📂 학습 JSON 바꾸기<input id="palaceFile" type="file" accept=".json,application/json" hidden /></label>
+  </div>
+  <div class="flowsteps" aria-label="진행 단계">
+    <span class="fs done"><span class="dot">✓</span>구성</span>
+    <span class="sep">›</span>
+    <span class="fs cur"><span class="dot">2</span>방 디자인</span>
+    <span class="sep">›</span>
+    <span class="fs"><span class="dot">3</span>3D 지도</span>
+    <span class="sep">›</span>
+    <span class="fs"><span class="dot">4</span>방 입장</span>
   </div>
   <div class="main">
     <aside class="side">
@@ -223,6 +251,13 @@
         <h3>📖 이 방에 배정된 학습 내용 (자동 매칭)</h3>
         <div class="chline" id="learnChap">학습 콘텐츠를 불러오면 각 방에 어울리는 챕터가 자동 배정됩니다.</div>
         <div class="items" id="learnItems"></div>
+      </div>
+
+      <div class="sect-h">③ 다음 단계</div>
+      <div class="nextstep" id="nextStep">
+        <div class="t"><b>방 디자인을 마쳤다면, 다음으로!</b>
+          <span class="s">고른 방과 배정된 학습이 저장됩니다. 이제 3D 지도에서 이 랜드마크 건물로 입장하세요.</span></div>
+        <a class="nbtn disabled" id="nextEnterBtn" href="#">3D 지도로 입장하기 →</a>
       </div>
 
       <div class="itmodal" id="itModal" aria-hidden="true">
@@ -416,7 +451,11 @@
     $("mapLink").href = `vworld_map.html?city=${encodeURIComponent(CITY)}`;
     $("shopLink").href = `compose.html?city=${encodeURIComponent(CITY)}`;
     const url = sel ? entryUrl(sel) : null;
-    $("enterBtn").href = sel ? `vworld_map.html?city=${encodeURIComponent(CITY)}&focus=${encodeURIComponent(sel.name||"")}` : "#"; // 일방통행: 스튜디오 → 3D 지도
+    const enterHref = sel ? `vworld_map.html?city=${encodeURIComponent(CITY)}&focus=${encodeURIComponent(sel.name||"")}` : "#"; // 일방통행: 스튜디오 → 3D 지도
+    $("enterBtn").href = enterHref;
+    const nb = $("nextEnterBtn");
+    if (nb){ nb.href = enterHref; nb.classList.toggle("disabled", !sel);
+      nb.textContent = sel ? `3D 지도로 입장하기 → (${sel.name})` : "방을 먼저 고르세요"; }
     $("markerEditBtn").href = url ? (url + "&edit=1") : "#";
     updateDash();
   }
@@ -431,7 +470,7 @@
     l.crossOrigin = "anonymous"; l.href = url; document.head.appendChild(l);
   }
   function selGlbUrl(){ if (!sel) return null; const d = designById(designFor(sel)); return d ? resolveGlb(d.glb) : null; }
-  ["enterBtn","markerEditBtn"].forEach(id => { const el = $(id); if (!el) return;
+  ["enterBtn","markerEditBtn","nextEnterBtn"].forEach(id => { const el = $(id); if (!el) return;
     const fire = () => prefetchGlb(selGlbUrl());
     el.addEventListener("mouseenter", fire); el.addEventListener("focus", fire);
     el.addEventListener("touchstart", fire, { passive: true }); });
@@ -723,7 +762,7 @@
     fetch("public/data/landmarks.json").then(r=>r.ok?r.json():null).catch(()=>null),
     fetch("public/data/concept-photos.json").then(r=>r.ok?r.json():null).catch(()=>null)
   ]).then(([city, rd, themes, lib, cphotos]) => {
-    if (!city){ $("lmlist").innerHTML = `<p style="color:#8a8170;padding:10px">지역 데이터(${esc(CITY)})를 찾을 수 없습니다.</p>`; return; }
+    if (!city){ $("lmlist").innerHTML = `<p style="color:#98917f;padding:10px">지역 데이터(${esc(CITY)})를 찾을 수 없습니다.</p>`; return; }
     CITYDATA = city; DESIGN_BLOB = rd.blobBase||""; THEMES = themes; LIB = lib;
     DESIGNS = (rd.designs||[]).concat(Object.values(loadCustomRooms()));
     CONCEPT_PHOTOS = (cphotos && cphotos.concepts) || {};
@@ -755,7 +794,7 @@
         selectLm(pre);
       }
     });
-  }).catch(e => { $("lmlist").innerHTML = `<p style="color:#8a8170;padding:10px">로드 실패: ${esc(e.message)}</p>`; });
+  }).catch(e => { $("lmlist").innerHTML = `<p style="color:#98917f;padding:10px">로드 실패: ${esc(e.message)}</p>`; });
 </script>
 <script src="nav.js" defer></script>
 <script src="assistant.js" defer></script>
