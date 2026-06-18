@@ -3095,8 +3095,9 @@ end of keeper CSS */
         </p>
         <ul class="upload-steps" id="uploadSteps">
           <li><span class="step-dot"></span>PDF 선택</li>
-          <li><span class="step-dot"></span>자료 보내기</li>
-          <li><span class="step-dot"></span>기억 페이지 만들기</li>
+          <li><span class="step-dot"></span>텍스트·이미지 추출</li>
+          <li><span class="step-dot"></span>개념 그래프 인덱싱</li>
+          <li><span class="step-dot"></span>방 구성 완료</li>
         </ul>
         <pre class="api-response" id="apiResponse" hidden>API 응답 대기 중</pre>
       </aside>
@@ -4570,42 +4571,136 @@ end of keeper CSS */
 
 
 <script>
-/* 일방통행 파이프라인: PDF 업로드 -> (외부 GraphRAG = palace.json) -> 도시 선택 허브 -> 구성(compose) */
+/* 일방통행 파이프라인: PDF 업로드 -> 외부 GraphRAG(추출·인덱싱·방빌드) -> palace.json
+   -> mp_palace 저장 -> 도시 선택 허브 -> 구성(compose).
+   PDF 는 graphrag 로 실제 전송하고, status 를 폴링해 추출/인덱싱 진행을 스테퍼로 보여준다.
+   JSON 업로드는 (이미 만든 palace) 그대로 mp_palace 에 넣고 통과한다. */
 (function(){
-  var NEXT = "region-select.html";   // 업로드 후 도시 선택 허브로(갤러리·지도·AI 추천) → 거기서 구성으로
-  var inp = document.getElementById("pdfFileInput");
+  var NEXT = "region-select.html";   // 업로드·처리 후 도시 선택 허브로 이동
+
+  // ── graphrag Azure 주소 설정 ────────────────────────────────────────────
+  // 우선순위: window.GRAPHRAG_BASE > localStorage('mp_graphrag_base') > ?graphrag= > 아래 기본값.
+  // ▼▼▼ 여기에 배포한 graphrag App Service 주소를 넣으세요(끝에 / 없이) ▼▼▼
+  var DEFAULT_GRAPHRAG = "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net";
+  var GRAPHRAG_BASE = (
+    window.GRAPHRAG_BASE ||
+    (function(){ try { return localStorage.getItem("mp_graphrag_base"); } catch(_) { return null; } })() ||
+    new URLSearchParams(location.search).get("graphrag") ||
+    DEFAULT_GRAPHRAG
+  ).replace(/\/+$/, "");
+
+  // graphrag state -> { 스테퍼 단계(0~3), 진행바%, 안내문구 }
+  var STAGE = {
+    QUEUED:        { step:1, pct:30,  msg:"대기 중… 처리 순서를 기다립니다." },
+    PREPROCESSING: { step:1, pct:45,  msg:"PDF에서 텍스트·이미지를 추출하는 중…" },
+    INDEXING:      { step:2, pct:70,  msg:"개념 그래프를 만드는 중… (자료가 크면 수 분 걸릴 수 있어요)" },
+    PALACE_READY:  { step:3, pct:95,  msg:"방 구성 완료! 학습 자료를 불러오는 중…" },
+    RAG_READY:     { step:3, pct:98,  msg:"마무리 중…" },
+    DONE:          { step:3, pct:100, msg:"완료되었습니다." }
+  };
+
+  var inp  = document.getElementById("pdfFileInput");
+  var form = document.getElementById("pdfUploadForm");
+  var elStatus  = document.getElementById("uploadStatus");
+  var elVisible = document.getElementById("uploadVisibleStatus");
+  var elBackend = document.getElementById("backendState");
+  var elProgress= document.getElementById("uploadProgress");
+  var elSteps   = document.getElementById("uploadSteps");
+  var elCard    = document.querySelector(".upload-status-card");
+
   if (inp) inp.setAttribute("accept", ".pdf,.json,application/pdf,application/json");
+
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  function showCard(){ if (elCard) elCard.classList.remove("upload-status-hidden"); }
+  function setProgress(p){ if (elProgress) elProgress.style.width = Math.max(0, Math.min(100, p)) + "%"; }
+  function setStep(i){ if (elSteps) [].forEach.call(elSteps.children, function(li, idx){ li.classList.toggle("complete", idx <= i); }); }
+  function setStatus(html, type){
+    if (elStatus){ elStatus.className = ("upload-status-text " + (type||"")).trim(); elStatus.innerHTML = html; }
+    if (elVisible){ elVisible.className = ("upload-visible-status " + (type||"")).trim(); elVisible.textContent = html.replace(/<[^>]*>/g, ""); }
+  }
+  function applyStage(state){
+    var s = STAGE[state]; if (!s) return;
+    setStep(s.step); setProgress(s.pct); setStatus(s.msg, "");
+    if (elBackend) elBackend.textContent = state;
+  }
+
+  // 파일 선택 시 버튼 활성화(JSON 도 허용). PDF UI 디테일은 기존 selectPdf 가 처리.
   if (inp) inp.addEventListener("change", function(){
     var f = inp.files && inp.files[0];
     var btn = document.getElementById("uploadPdfBtn");
-    if (f && btn){ btn.disabled = false;
-      var st=document.getElementById("uploadStatus"); if(st){ st.className="upload-status-text success"; st.innerHTML="<strong>"+f.name+"</strong> 준비됨 — '업로드 시작'을 누르면 도시 선택으로 이동합니다."; }
-      var bs=document.getElementById("backendState"); if(bs) bs.textContent="파일 선택됨";
-      var vs=document.getElementById("uploadVisibleStatus"); if(vs){ vs.className="upload-visible-status success"; vs.textContent=f.name+" 준비됨"; }
+    if (f && btn){
+      btn.disabled = false;
+      setStatus("<strong>" + f.name + "</strong> 준비됨 — '업로드 시작'을 누르세요.", "success");
+      if (elBackend) elBackend.textContent = "파일 선택됨";
     }
   });
-  var form = document.getElementById("pdfUploadForm");
+
+  // graphrag 실제 연동: 업로드 -> 폴링(추출/인덱싱 진행 표시) -> palace 수신 -> mp_palace 저장.
+  async function runGraphrag(file){
+    showCard(); setStep(0); setProgress(15);
+    if (elBackend) elBackend.textContent = "전송 중";
+    setStatus("학습 자료를 서버로 보내는 중…", "");
+
+    // 1) 업로드 — orchestrator 는 raw 본문을 읽는다(multipart 아님).
+    var upUrl = GRAPHRAG_BASE + "/orchestrator/upload?filename=" +
+                encodeURIComponent(file.name) + "&domain=unknown";
+    var up = await fetch(upUrl, { method:"POST", headers:{ "Content-Type":"application/pdf" }, body:file });
+    if (!up.ok) throw new Error("업로드 실패 (" + up.status + ")");
+    var job = await up.json();
+    var jobId = job.job_id;
+    if (!jobId) throw new Error("job_id 를 받지 못했습니다.");
+    applyStage("QUEUED");
+
+    // 2) 상태 폴링 — palace_ready 가 켜질 때까지(또는 FAILED).
+    while (true){
+      await sleep(2500);
+      var r = await fetch(GRAPHRAG_BASE + "/orchestrator/jobs/" + jobId + "/status");
+      if (!r.ok) throw new Error("상태 조회 실패 (" + r.status + ")");
+      var s = await r.json();
+      applyStage(s.state);
+      if (s.state === "FAILED") throw new Error(s.error || "처리 중 오류가 발생했습니다.");
+      if (s.palace_ready) break;
+    }
+
+    // 3) palace.json 수신 -> mp_palace 로 저장(마인드팰리스가 방에 배치).
+    var pr = await fetch(GRAPHRAG_BASE + "/orchestrator/jobs/" + jobId + "/palace");
+    if (!pr.ok) throw new Error("palace 가져오기 실패 (" + pr.status + ")");
+    var text = await pr.text();
+    JSON.parse(text); // 형식 검증(깨졌으면 throw)
+    try { sessionStorage.setItem("mp_palace", text); localStorage.setItem("mp_palace", text); } catch(_){}
+
+    setStep(3); setProgress(100); setStatus("완성! 도시 선택으로 이동합니다…", "success");
+    if (elBackend) elBackend.textContent = "완료";
+    await sleep(700);
+    location.href = NEXT;
+  }
+
   if (form) form.addEventListener("submit", function(e){
     e.preventDefault(); e.stopImmediatePropagation();
     var f = inp && inp.files && inp.files[0];
-    try {
-      var st=document.getElementById("uploadStatus"); if(st){ st.className="upload-status-text success"; st.innerHTML="학습 자료를 기억의 궁전으로 준비하는 중…"; }
-      var bs=document.getElementById("backendState"); if(bs) bs.textContent="도시 선택 준비";
-      var pg=document.getElementById("uploadProgress"); if(pg) pg.style.width="100%";
-      var vs=document.getElementById("uploadVisibleStatus"); if(vs){ vs.className="upload-visible-status success"; vs.textContent="도시 선택으로 이동합니다…"; }
-    } catch(_){}
-    var go=function(){ location.href=NEXT; };
-    if (f && /\.json$/i.test(f.name)){
-      var rd=new FileReader();
-      rd.onload=function(){ try{ sessionStorage.setItem("mp_palace", rd.result); localStorage.setItem("mp_palace", rd.result); }catch(_){} setTimeout(go,650); };
-      rd.onerror=function(){ setTimeout(go,650); };
+    if (!f){ setStatus("먼저 PDF 파일을 선택해 주세요.", "error"); return; }
+
+    // 이미 만든 palace JSON 업로드: 변환 없이 그대로 사용.
+    if (/\.json$/i.test(f.name)){
+      showCard(); setStep(3); setProgress(100);
+      setStatus("학습 자료(JSON)를 불러왔습니다. 이동 중…", "success");
+      var rd = new FileReader();
+      rd.onload = function(){
+        try { sessionStorage.setItem("mp_palace", rd.result); localStorage.setItem("mp_palace", rd.result); } catch(_){}
+        setTimeout(function(){ location.href = NEXT; }, 650);
+      };
+      rd.onerror = function(){ setStatus("JSON 파일을 읽지 못했습니다.", "error"); };
       rd.readAsText(f);
-    } else {
-      try{ sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace"); }catch(_){}
-      setTimeout(go,1000);
+      return;
     }
+
+    // PDF: graphrag 로 보내 추출·인덱싱·방빌드 후 결과 수신.
+    runGraphrag(f).catch(function(err){
+      setStep(0); setProgress(0);
+      if (elBackend) elBackend.textContent = "오류";
+      setStatus("처리 실패: " + (err && err.message ? err.message : err), "error");
+    });
   }, true);
-  /* 둘러보기 입구는 #explore 섹션과 푸터의 region-select 링크로 노출(과거 no-op 제거) */
 })();
 </script>
 
