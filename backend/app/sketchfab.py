@@ -12,15 +12,18 @@
 from __future__ import annotations
 
 import io
+import ipaddress
 import json
 import logging
 import os
 import shutil
+import socket
 import tempfile
 import threading
 import zipfile
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 
@@ -29,6 +32,12 @@ log = logging.getLogger("mindpalace.sketchfab")
 SEARCH_URL = "https://api.sketchfab.com/v3/search"
 DOWNLOAD_URL = "https://api.sketchfab.com/v3/models/{uid}/download"
 MAX_BYTES_DEFAULT = 20 * 1024 * 1024  # 20MB — 이 이상이면 압축 발동
+
+# ── 압축 폭탄(zip bomb)·과대 다운로드 방어 한계치(환경변수로 조정 가능) ──
+MAX_DOWNLOAD_BYTES = int(os.getenv("SK_MAX_DOWNLOAD_BYTES", str(200 * 1024 * 1024)))  # 압축본 자체 200MB
+MAX_UNCOMPRESSED_BYTES = int(os.getenv("SK_MAX_UNCOMPRESSED_BYTES", str(500 * 1024 * 1024)))  # 해제 총량 500MB
+MAX_COMPRESSION_RATIO = float(os.getenv("SK_MAX_COMPRESSION_RATIO", "120"))  # 해제/압축 비 상한
+MAX_ZIP_ENTRIES = int(os.getenv("SK_MAX_ZIP_ENTRIES", "10000"))  # 엔트리 개수 상한
 
 BLOB_CONTAINER = "models"
 BLOB_IMPORTED_PREFIX = "imported"  # models/imported/<uid>.glb
@@ -197,14 +206,113 @@ def _apply_texture_cap(textures: list[tuple[Any, str, Any]], cap: int) -> None:
 
 
 def _safe_extract(zf: zipfile.ZipFile, dest: Path) -> None:
-    """zip slip 방어: 각 엔트리가 dest 밖으로 벗어나지 않는지 확인한 뒤 추출한다.
-    (악의적 zip 의 '../' 경로로 임의 위치에 파일을 쓰는 것을 차단)."""
+    """zip slip + 압축 폭탄(zip bomb) 방어. 추출 '전에' 메타데이터로 전수 검사한다.
+
+    - 경로 탈출('../')로 dest 밖에 파일을 쓰는 것 차단(zip slip).
+    - 엔트리 개수 / 총 해제 크기 / 압축비 상한 검사 → 10KB 파일이 수 GB로 팽창해
+      디스크·메모리를 고갈시키는 공격을 추출 전에 거부한다.
+    """
     dest = dest.resolve()
-    for member in zf.namelist():
-        target = (dest / member).resolve()
+    infos = zf.infolist()
+    if len(infos) > MAX_ZIP_ENTRIES:
+        raise ValueError(f"zip 항목이 너무 많습니다({len(infos)} > {MAX_ZIP_ENTRIES}) — 압축 폭탄 의심.")
+
+    total_uncompressed = 0
+    total_compressed = 0
+    for info in infos:
+        target = (dest / info.filename).resolve()
         if target != dest and dest not in target.parents:
-            raise ValueError(f"안전하지 않은 zip 경로가 감지되었습니다: {member!r}")
+            raise ValueError(f"안전하지 않은 zip 경로가 감지되었습니다: {info.filename!r}")
+        total_uncompressed += info.file_size
+        total_compressed += info.compress_size
+        if total_uncompressed > MAX_UNCOMPRESSED_BYTES:
+            raise ValueError(
+                f"압축 해제 크기가 상한을 초과했습니다(>{MAX_UNCOMPRESSED_BYTES} bytes) — 압축 폭탄 의심."
+            )
+
+    if total_compressed > 0:
+        ratio = total_uncompressed / total_compressed
+        if ratio > MAX_COMPRESSION_RATIO:
+            raise ValueError(
+                f"압축비가 비정상적으로 높습니다({ratio:.0f}:1 > {MAX_COMPRESSION_RATIO:.0f}:1) — 압축 폭탄 의심."
+            )
+
     zf.extractall(dest)
+
+
+def _is_public_host(host: str) -> bool:
+    """호스트가 해석되는 모든 IP가 공인(public)인지 확인.
+    사설/루프백/링크로컬(169.254.0.0/16 — 클라우드 메타데이터 포함)/예약 대역이면 False."""
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except Exception:
+        return False
+    if not infos:
+        return False
+    for info in infos:
+        ip = info[4][0]
+        try:
+            addr = ipaddress.ip_address(ip)
+        except ValueError:
+            return False
+        if (
+            addr.is_private
+            or addr.is_loopback
+            or addr.is_link_local
+            or addr.is_reserved
+            or addr.is_multicast
+            or addr.is_unspecified
+        ):
+            return False
+    return True
+
+
+def _guard_download_url(url: str) -> None:
+    """SSRF 방어: 서버가 외부 URL을 가져오기 '전에' 검증한다.
+
+    - https 스킴만 허용.
+    - 호스트가 사설/루프백/링크로컬(메타데이터 169.254.169.254)/예약 대역으로 해석되면 거부
+      → 내부망 스캔·클라우드 자격증명 탈취(SSRF)를 막는다.
+    - SK_DOWNLOAD_HOST_ALLOWLIST(쉼표구분) 설정 시 해당 호스트(접미사)만 허용.
+
+    한계(알려진): DNS rebinding(TOCTOU)을 완전히 막으려면 해석된 IP로 직접 연결해야 한다.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme.lower() != "https":
+        raise ValueError(f"안전하지 않은 다운로드 스킴입니다: {parsed.scheme!r} (https만 허용).")
+    host = parsed.hostname or ""
+    if not host:
+        raise ValueError("다운로드 URL에 호스트가 없습니다.")
+
+    allowlist = [h.strip().lower() for h in (os.getenv("SK_DOWNLOAD_HOST_ALLOWLIST") or "").split(",") if h.strip()]
+    if allowlist and not any(host.lower() == h or host.lower().endswith("." + h) for h in allowlist):
+        raise ValueError(f"허용되지 않은 다운로드 호스트입니다: {host}")
+
+    if not _is_public_host(host):
+        raise ValueError(f"내부/사설 주소로의 다운로드는 차단됩니다: {host}")
+
+
+def _download_capped(url: str, max_bytes: int, timeout: int = 180) -> bytes:
+    """스트리밍으로 받되 max_bytes를 넘으면 즉시 중단(과대 다운로드/압축본 폭탄 1차 차단)."""
+    resp = requests.get(url, timeout=timeout, stream=True)
+    resp.raise_for_status()
+    declared = resp.headers.get("Content-Length")
+    if declared and declared.isdigit() and int(declared) > max_bytes:
+        resp.close()
+        raise ValueError(f"다운로드 파일이 너무 큽니다(>{max_bytes} bytes).")
+    chunks: list[bytes] = []
+    total = 0
+    try:
+        for chunk in resp.iter_content(chunk_size=256 * 1024):
+            if not chunk:
+                continue
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError(f"다운로드 파일이 너무 큽니다(스트리밍 상한 {max_bytes} bytes 초과).")
+            chunks.append(chunk)
+    finally:
+        resp.close()
+    return b"".join(chunks)
 
 
 # 같은 uid 를 동시에 가져오면 한 번만 다운로드·변환하도록 uid별 락으로 직렬화한다
@@ -256,9 +364,8 @@ def import_model(uid: str, out_dir: Path, max_bytes: int = MAX_BYTES_DEFAULT) ->
         import trimesh  # 지연 로드(검색·캐시 경로엔 불필요)
 
         url, _declared = _fetch_gltf_download_url(uid)
-        resp = requests.get(url, timeout=180)
-        resp.raise_for_status()
-        zip_bytes = resp.content
+        _guard_download_url(url)  # SSRF 방어: 내부망/메타데이터로의 다운로드 차단
+        zip_bytes = _download_capped(url, MAX_DOWNLOAD_BYTES)  # 과대 다운로드 차단
         original_mb = round(len(zip_bytes) / 1_000_000, 2)
 
         tmp = Path(tempfile.mkdtemp(prefix="sk_"))
