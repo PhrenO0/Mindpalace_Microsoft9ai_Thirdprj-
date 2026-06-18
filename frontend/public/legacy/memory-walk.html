@@ -729,6 +729,7 @@
       }
       let entities = (room.kept||[]).slice().sort((a,b)=>(a.rank||99)-(b.rank||99));
       entities = applyStudioOrder(room, entities);   // 스튜디오(glb-customizer)에서 드래그로 바꾼 학습 순서 반영
+      window.__mwConcepts = entities.map(e => e.title);   // 전체 학습 개념 풀(새 핫스팟 의미 연결용)
       buildRoute(entities);
     }
 
@@ -952,6 +953,7 @@
         h.eye.y = Math.min(Math.max(base + 0.18, floor + 0.2), bounds.max.y - 0.12);
       });
       window.__mw = { route, anchors, ordered };   // 디버그
+      updateRoomState();   // 챗봇이 읽는 방 상태(핫스팟·개념) 초기화
       $("listBtn").style.display = "inline-flex"; $("listCount").textContent = route.length; buildObjectList();   // 실제 배치된 지점 수(디클러스터 반영) = 목록·마커와 일치
       $("cmapBtn").style.display = "inline-flex"; $("cmapBtn").onclick = openEditor;
       buildMarkers(); buildRouteLine(spawn); buildRelations();
@@ -1750,32 +1752,39 @@
     }
     // 인라인 이름 입력 — prompt()와 달리 페이지를 멈추지 않음. Enter=추가, Esc=취소.
     let _addBox = null;
-    function showAddNameBox(point) {
+    function showAddNameBox(point, mesh) {
       if (_addBox) _addBox.remove();
+      // 기존 인식 파이프라인 재적용: 클릭한 메쉬의 계층 이름에서 가구 종류를 인식(다른 핫스팟과 동일 방식)
+      const recogKey = mesh ? inferFurnLabel(mesh) : null;
+      const recogKo = recogKey ? furnKO(recogKey) : null;
       const box = document.createElement("div");
       box.className = "panel";
       box.style.cssText = "position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;" +
         "display:flex;gap:8px;align-items:center;padding:10px 12px;";
       const inp = document.createElement("input");
-      inp.value = "기억 지점";
-      inp.style.cssText = "width:200px;height:34px;border-radius:9px;border:1px solid var(--line);" +
+      inp.value = recogKo || "기억 지점";   // 인식된 객체명을 자동 채움(수정 가능)
+      inp.style.cssText = "width:190px;height:34px;border-radius:9px;border:1px solid var(--line);" +
         "background:rgba(51,46,40,.05);color:var(--text);font:inherit;font-size:13px;padding:0 10px;";
       const ok = document.createElement("button");
       ok.textContent = "추가"; ok.className = "btn";
       ok.style.cssText = "border:none;border-radius:9px;background:linear-gradient(180deg,var(--accent),var(--accent2));" +
         "color:#ffffff;font:inherit;font-weight:800;font-size:13px;padding:8px 14px;cursor:pointer;";
       const cancel = () => { box.remove(); _addBox = null; };
-      const confirm = () => { const nm = inp.value.trim(); if (nm) addHotspotAt(point, nm); cancel(); };
+      const confirm = () => { const nm = inp.value.trim(); if (nm) addHotspotAt(point, nm, recogKey); cancel(); };
       ok.onclick = confirm;
       inp.onkeydown = e => { e.stopPropagation(); if (e.key === "Enter") confirm(); if (e.key === "Escape") cancel(); };
       box.append(inp, ok);
+      if (recogKo) { const tag = document.createElement("span");   // 인식 결과 배지
+        tag.textContent = `🔍 ${recogKo} 인식`; tag.style.cssText = "font-size:11.5px;color:var(--accent);font-weight:800;white-space:nowrap;";
+        box.append(tag); }
       document.body.appendChild(box);
       _addBox = box;
       inp.focus(); inp.select();
     }
-    function addHotspotAt(point, nm) {
+    function addHotspotAt(point, nm, recogClass) {
       pushUndo();   // ↶ 되돌리기용 스냅샷
-      const h = { pos: point.clone(), label: nm, name: nm, entity: null, number: route.length + 1,
+      // label=인식 클래스(있으면)·name/ko=표시명 → 스캐너 핫스팟과 동일 구조(객체명·클래스·좌표)
+      const h = { pos: point.clone(), label: recogClass || nm, name: nm, ko: nm, entity: null, number: route.length + 1,
         eye: point.clone().setY(Math.min(point.y + 0.18, bounds.max.y - 0.12)) };
       route.push(h);
       const sp = numberSprite(h.number, false);
@@ -1783,7 +1792,40 @@
       scene.add(sp); h.marker = sp;
       renderDots(activeIdx); $("listCount").textContent = route.length; buildObjectList();
       saveOverrideFromRoute();
-      setStatus(`+ <b>${nm}</b> 추가(${route.length}번) — 이 브라우저에 저장됨. 평면도에서 위치 미세조정 가능`);
+      recognizeAndNotify(h, recogClass);   // 챗봇이 새 노드를 인식 + 의미 연결하도록 알림
+      setStatus(`+ <b>${nm}</b> 인식·추가(${route.length}번) — 챗봇이 의미를 연결합니다. 평면도에서 위치 미세조정 가능`);
+    }
+    // 새 핫스팟 → 챗봇에 "객체 인식 + 좌표 + (어거지로) 의미 연결" 통지. 다른 핫스팟처럼 챗봇이 인식하게 함.
+    function recognizeAndNotify(h, recogClass) {
+      const objName = dispName(h);
+      const pos = [ +h.pos.x.toFixed(2), +h.pos.y.toFixed(2), +h.pos.z.toFixed(2) ];
+      const concepts = (window.__mwConcepts || route.filter(r => r.entity).map(r => r.entity.title));
+      const concept = concepts && concepts.length ? concepts[h.number % concepts.length] : null;   // 방의 학습 개념 중 하나에 강제 연결
+      const mnemonic = concept ? mnemonicFor(objName, concept) : null;
+      updateRoomState();
+      try { window.dispatchEvent(new CustomEvent("mp-hotspot-added", {
+        detail: { object: objName, klass: recogClass || "", pos, concept, mnemonic } })); } catch (_) {}
+    }
+    function mnemonicFor(obj, concept) {
+      const T = [
+        `${obj} 위에 '${concept}'을(를) 올려두고, 지날 때마다 떠올리세요.`,
+        `이 ${obj}을(를) 볼 때마다 '${concept}'이(가) 생각나도록 한 장면으로 묶으세요.`,
+        `'${concept}' = 이 ${obj}! 둘을 하나의 그림으로 기억하면 잘 안 잊혀요.`,
+      ];
+      return T[(obj.length + concept.length) % T.length];
+    }
+    // 챗봇(assistant.js)이 읽는 방 상태 — 핫스팟(객체·좌표·연결개념) + 개념 목록
+    function updateRoomState() {
+      try {
+        window.mpRoom = {
+          roomName: ($("roomName").textContent || "").trim(),
+          palace: ($("palaceTitle").textContent || "").trim(),
+          hotspots: route.map(h => ({ n: h.number, object: dispName(h),
+            pos: [ +h.pos.x.toFixed(2), +h.pos.y.toFixed(2), +h.pos.z.toFixed(2) ],
+            concept: h.entity ? h.entity.title : null })),
+          concepts: route.filter(h => h.entity).map(h => h.entity.title),
+        };
+      } catch (_) {}
     }
 
     // 마커 클릭 → 그 지점 / 추가 모드면 클릭한 표면에 핫스팟 생성
@@ -1811,7 +1853,7 @@
       if (addMode) {
         const meshes = []; scene.traverse(c => { if (c.isMesh && c.visible) meshes.push(c); });
         const hit = rc.intersectObjects(meshes, false)[0];
-        if (hit) showAddNameBox(hit.point.clone());   // 비차단 인라인 입력(브라우저 prompt 금지 — 페이지를 멈춤)
+        if (hit) showAddNameBox(hit.point.clone(), hit.object);   // hit.object 메쉬를 넘겨 인식 파이프라인 재적용(비차단 인라인 입력)
         $("addBtn").onclick();   // 한 번 찍으면 모드 해제
         return;
       }

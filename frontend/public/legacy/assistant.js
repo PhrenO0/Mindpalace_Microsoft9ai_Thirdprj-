@@ -146,6 +146,17 @@
       if (/테마|색|팔레트|분위기|톤|theme|컬러/.test(t) || text === "테마"){ addMsg("테마를 골라보세요. 고르면 모든 화면에 바로 적용되고 유지돼요.", "bot"); return themeChips(); }
       if (/밝|어둡|글씨|크게|작게|크기|폰트|zoom/.test(t)){ addMsg("화면 크기를 조절해 드릴게요.", "bot"); return addChips([{label:"글씨 크게",act:"zoom",v:"1.12",say:1},{label:"글씨 작게",act:"zoom",v:"0.92",say:1},{label:"기본 크기",act:"zoom",v:"",say:1}]); }
       if (/가벼|렉|느려|성능|lite/.test(t)){ return setLite(get(LS_LITE,"0")!=="1"); }
+      if (/핫스팟|hotspot|노드|마커|이 방|뭐가 있|뭐있|배치|지점|인식/.test(t)){
+        var R = window.mpRoom;
+        if (R && R.hotspots && R.hotspots.length){
+          addMsg((R.roomName||"이 방")+"에 인식된 핫스팟 "+R.hotspots.length+"개:", "bot");
+          addMsg(R.hotspots.slice(0,12).map(function(h){ return h.n+". "+h.object+(h.concept?(" → "+h.concept):""); }).join("   ·   "), "bot");
+          addMsg("➕ 지점으로 새 자리를 찍으면 객체를 인식하고 학습 개념과 연결해 드려요.", "bot");
+          return;
+        }
+        addMsg("방에 들어가서 ➕ 지점으로 새 핫스팟을 찍으면, 객체를 인식하고 학습 개념과 연결해 드릴게요.", "bot");
+        return;
+      }
       if (/스튜디오|커스텀|꾸미|디자인|glb/.test(t)){ addMsg("'방 디자인 스튜디오'에서 방의 GLB·마커·학습을 깊이 꾸밀 수 있어요.", "bot"); return addChips([{label:"방 디자인 스튜디오 열기",act:"go",v:"glb-customizer.html",say:1}]); }
       if (/지도|3d|map|둘러/.test(t)){ addMsg("3D 지도에서 도시의 랜드마크를 둘러볼 수 있어요.", "bot"); return addChips([{label:"3D 지도 열기",act:"go",v:"vworld_map.html",say:1}]); }
       if (/업로드|pdf|학습|자료/.test(t)){ addMsg("학습 PDF는 외부에서 palace.json으로 변환돼요. 올리면 '구성' 화면에서 장소·방을 추천해 드려요.", "bot"); return addChips([{label:"구성 화면으로",act:"go",v:"compose.html",say:1}]); }
@@ -181,6 +192,15 @@
     document.getElementById("mpSend").onclick = function(){ var v = input.value.trim(); if (!v) return; addMsg(v, "me"); input.value = ""; setTimeout(function(){ getReply(v); }, 120); };
     input.addEventListener("keydown", function(e){ if (e.key === "Enter") document.getElementById("mpSend").click(); });
     if (get(LS_OPEN, "0") === "1") toggle(true);
+
+    // 방에서 새 핫스팟이 인식되면(객체+좌표) 챗봇이 패널을 열고 알린 뒤 학습 개념과 의미를 연결한다.
+    window.addEventListener("mp-hotspot-added", function (e) {
+      var d = (e && e.detail) || {};
+      toggle(true);
+      addMsg("🔍 새 핫스팟 인식: '" + (d.object || "지점") + "'  ·  좌표(" + ((d.pos || []).join(", ")) + ")", "bot");
+      if (d.concept) addMsg("'" + d.concept + "'과(와) 연결했어요 — " + (d.mnemonic || ""), "bot");
+      else addMsg("이 방에 학습 개념이 배치되면 이 자리에 의미를 연결해 드릴게요.", "bot");
+    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
