@@ -24,14 +24,11 @@
       --bg:#f5f1ea; --panel:rgba(255,255,255,.86); --panel2:#ffffff;
       --panel-strong:#ffffff;
       --line:rgba(51,46,40,.12); --text:#2a241d; --ink:#2a241d; --muted:rgba(42,36,29,.62);
-      --accent:#b5552f; --accent2:#c4623a; --gold:#98917f;
+      --accent:#2c7a63; --accent2:#348a72; --gold:#8a8170;
       --shadow:0 18px 50px rgba(40,34,26,.14);}
     *{box-sizing:border-box;}
     body{margin:0;font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
-         background:var(--bg);color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased;
-         word-break:keep-all;overflow-wrap:anywhere;}
-    /* 모든 버튼·입력이 같은 글꼴을 쓰도록(일부 버튼이 OS 기본폰트로 떨어지는 문제 방지) */
-    button,input,select,textarea{font-family:inherit;}
+         background:var(--bg);color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased;}
     #scene{position:fixed;inset:0;} canvas{display:block;width:100%;height:100%;}
     #scene::after{content:"";position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 220px rgba(40,34,26,.10);}
     .panel{position:fixed;border:1px solid var(--line);background:var(--panel);
@@ -70,7 +67,7 @@
     .card .body{padding:15px 18px 18px;}
     .card .head{display:flex;align-items:center;gap:10px;}
     .card .num{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-               background:radial-gradient(circle at 30% 25%,rgba(181, 85, 47,.22),rgba(181, 85, 47,.06));
+               background:radial-gradient(circle at 30% 25%,rgba(44,122,99,.22),rgba(44,122,99,.06));
                border:1.5px solid var(--accent);color:#2a241d;font-weight:800;font-size:14px;}
     .card .type{font-size:10.5px;font-weight:800;letter-spacing:.05em;color:var(--gold);
                 border:1px solid rgba(138,129,112,.4);border-radius:999px;padding:3px 10px;}
@@ -101,11 +98,11 @@
     .nav .btn.ghost{color:var(--muted);padding:9px 12px;}
     .dots{display:flex;gap:clamp(4px,0.7vw,6px);align-items:center;padding:0 4px;min-width:0;flex-wrap:nowrap;}
     .dots i{width:7px;height:7px;border-radius:50%;background:rgba(42,36,29,.22);transition:.2s;cursor:pointer;}
-    .dots i.done{background:rgba(181, 85, 47,.5);}
+    .dots i.done{background:rgba(44,122,99,.5);}
     .dots i.on{background:var(--accent);width:22px;border-radius:4px;}
     .dots i.study{box-shadow:0 0 0 2px rgba(138,129,112,.55);}   /* 학습 배치 지점 = 금색 테 */
     /* 토스트/힌트 */
-    .status{position:fixed;left:50%;top:64px;transform:translateX(-50%);background:var(--panel2);
+    .status{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:var(--panel2);
             border:1px solid var(--line);border-radius:999px;padding:7px 16px;color:var(--muted);font-size:12px;
             box-shadow:0 10px 30px rgba(40,34,26,.14);transition:opacity .5s;}
     .status b{color:var(--accent);}
@@ -151,7 +148,7 @@
     .edetail .eb{padding:13px 15px 15px;}
     .edetail .ehd{display:flex;align-items:center;gap:9px;}
     .edetail .enum{flex:none;width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-      background:radial-gradient(circle at 30% 25%,rgba(181, 85, 47,.22),rgba(181, 85, 47,.06));border:1.5px solid var(--accent);font-weight:800;font-size:13px;}
+      background:radial-gradient(circle at 30% 25%,rgba(44,122,99,.22),rgba(44,122,99,.06));border:1.5px solid var(--accent);font-weight:800;font-size:13px;}
     .edetail .etype{font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--gold);border:1px solid rgba(138,129,112,.4);border-radius:999px;padding:2px 9px;}
     .edetail h3{margin:11px 0 0;font-size:18px;font-weight:800;letter-spacing:-.01em;}
     .edetail .efurn{margin:7px 0 0;font-size:11.5px;font-weight:700;color:var(--gold);display:inline-block;border:1px solid rgba(138,129,112,.35);border-radius:8px;padding:3px 8px;}
@@ -214,7 +211,7 @@
     .mrow .ent{font-size:11.5px;color:var(--gold);font-weight:700;}
     .mrow .ent.none{color:var(--muted);font-weight:400;}
     @media(max-width:620px){ .top,.card{width:calc(100vw - 24px);} .card{top:auto;bottom:126px;left:12px;right:12px;} .hint{display:none;} .fab{bottom:84px;} .mini{display:none !important;} }
-  
+
     /* 첫 화면: '다음' 버튼이 둥실둥실 — 눌러보라는 유도(첫 상호작용 시 해제) */
     @keyframes mpBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
     #nextBtn.invite{animation:mpBob 1.3s ease-in-out infinite;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 24%, transparent),0 10px 22px color-mix(in srgb,var(--accent) 32%, transparent);}
@@ -471,6 +468,7 @@
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
     renderer.shadowMap.enabled = !LITE; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.autoUpdate = false;   // 정적 씬(카메라만 이동) — 그림자맵 매 프레임 재생성 금지. 방 로드 후 1회만 굽는다(needsUpdate=true).
     sceneEl.appendChild(renderer.domElement);
 
     const pmrem = new THREE.PMREMGenerator(renderer);
@@ -579,7 +577,7 @@
         if (!c.isMesh) return;
         if (backs.has(c)) { c.visible = false; return; }   // 배경 숨김(시야·바운즈 오염 방지)
         const mats = Array.isArray(c.material)?c.material:[c.material];
-        mats.forEach(m => { if (m){ m.side = THREE.DoubleSide; m.needsUpdate = true; } });
+        mats.forEach(m => { if (m){ m.side = THREE.FrontSide; m.needsUpdate = true; } });   // 양면→앞면: 프래그먼트 부하 절반. (얇은 면이 비어 보이면 일부만 DoubleSide로 예외 처리)
         c.castShadow = true; c.receiveShadow = true;
         if (/floor|wall|house|ceiling|structure|\broom\b/i.test(c.name||"")) hasOwnRoom = true;
         if (c.name && FURN_RE.test(c.name) && !/^None/i.test(c.name)) {
@@ -592,9 +590,8 @@
       //  → 어떤 GLB든(이름표 없거나 명명규칙 달라도) 정확도를 유지하며 최대 ~22개까지 인식. Claude 개입 불필요.
       {
         const TARGET = 22;   // 실제 메쉬 기반 인식 상한(노드 수 보장은 buildRoute의 합성이 별도 처리)
-        const STRUCT_RE = /floor|wall|ceiling|house|structure|\broom\b|backdrop|background|skybox|stair|door\b|curtain|window|light|lamp|pendant|chandelier|\bfan\b/i;
+        const STRUCT_RE = /floor|wall|ceiling|house|structure|\broom\b|backdrop|background|skybox|stair|door\b|curtain|window/i;
         const roomMax = 7.2; // 모델은 가로 7.2로 정규화됨(스캐너 좌표 호환)
-        const roomH = size.y * scale;   // 정규화된 방 높이 — 천장 부착물 판별용
         const cand = [];
         model.traverse(c => {
           if (!c.isMesh || backs.has(c) || c.visible === false) return;
@@ -602,9 +599,7 @@
           const b = new THREE.Box3().setFromObject(c); if (b.isEmpty()) return;
           const s = b.getSize(new THREE.Vector3()), maxd = Math.max(s.x, s.y, s.z);
           if (maxd < roomMax * 0.03 || maxd > roomMax * 0.92) return; // 소품(너무 작음)·구조물(너무 큼) 제외
-          const ctr = b.getCenter(new THREE.Vector3());
-          if (ctr.y > roomH * 0.72) return;   // 천장 부착물(조명·실링팬 등) 제외 — 마커가 천장에 찍히지 않게
-          cand.push({ pos: ctr, name: c.name || "object", vol: s.x * s.y * s.z,
+          cand.push({ pos: b.getCenter(new THREE.Vector3()), name: c.name || "object", vol: s.x * s.y * s.z,
             ko: (() => { const k = inferFurnLabel(c); return k ? furnKO(k) : null; })() }); // 계층 이름에서 가구명 추론
         });
         cand.sort((a, b) => b.vol - a.vol); // 큰 가구 우선
@@ -625,10 +620,10 @@
       setupSun();
       // 자체 방(바닥/벽)이 있으면 shell 생략(겹쳐서 z-fighting "이상함" 방지). 가구만 있는 GLB만 shell.
       if (!hasOwnRoom) buildShell(bounds, CEIL);
+      renderer.shadowMap.needsUpdate = true;   // 방·조명·shell 준비 끝 → 그림자맵 1회 굽기(이후 정적 유지).
       resolveAnchorsThenPalace();
-    }, e => { if (e.total){ const p = Math.round(e.loaded/e.total*100);   // 로딩 진행률 — 좌상단 카드에도 표시(상단 nav에 가려지지 않게)
-        setStatus(`방 로드… ${p}%`); const rn = $("roomName"); if (rn) rn.textContent = `방 로드 중… ${p}%`; } },
-       err => { setStatus("GLB 로드 실패: " + (err?.message||err)); const rn = $("roomName"); if (rn) rn.textContent = "⚠ 방 로드 실패 — 새로고침 해보세요"; });
+    }, e => { if (e.total) setStatus(`방 로드… ${Math.round(e.loaded/e.total*100)}%`); },
+       err => setStatus("GLB 로드 실패: " + (err?.message||err)));
 
     function mergeAnchors(list, d) {       // 같은 라벨이 가까우면 병합(수납장 패널 여러 개 → 하나)
       const out = [];
@@ -663,11 +658,6 @@
     //   Azure 검출 좌표로 동선을 깐다. (좌표계 동일: 둘 다 가로 7.2·바닥 0 정규화)
     // 우선순위: ① 사용자 편집(localStorage) > ② hotspots JSON > ③ GLB 이름표.
     const HOTSPOTS_URL = P.get("hotspots");
-    // 입장 경로가 hotspots 파라미터를 빠뜨려도, GLB 파일명에서 스캐너 JSON을 자동 유추 → 실제 가구명(의자·소파…) 보장
-    function derivedHotspotsURL() {
-      const base = (ROOM_GLB.split("/").pop() || "").split("?")[0].replace(/\.glb$/i, "");
-      return base ? "public/data/" + base + "-hotspots.json" : null;
-    }
     const OVERRIDE_KEY = "mw_edit:" + ROOM_GLB;
     function loadOverride() {
       try {
@@ -686,11 +676,9 @@
         loadPalaceThenBuild();
         return;
       }
-      // ② 스캐너 hotspots JSON — 명시 URL 우선, 없거나 실패하면 GLB 파일명에서 유추한 경로로 재시도
-      const urls = [...new Set([HOTSPOTS_URL, derivedHotspotsURL()].filter(Boolean))];
-      for (const url of urls) {
+      if (HOTSPOTS_URL) {
         try {
-          const j = await (await fetch(url)).json();
+          const j = await (await fetch(HOTSPOTS_URL)).json();
           const hs = (j.hotspots || []).filter(h => Array.isArray(h.markerPosition) && h.detectedClass);
           if (hs.length) {
             anchors = hs.map(h => ({ pos: new THREE.Vector3(...h.markerPosition),
@@ -698,9 +686,8 @@
               ko: furnKO(h.detectedClass || h.object || ""), conf: (typeof h.confidence === "number" ? h.confidence : 0.5) }));
             if (j.manualOrder) anchorsPreOrdered = true;   // manualOrder만 수동 순서 존중(그 외엔 동선 설계 파이프라인)
             setStatus(`스캐너 핫스팟 ${anchors.length}개로 동선 구성${j.manualOrder ? " (수동 순서)" : " (자동 동선)"}`);
-            break;   // 첫 성공 채택
           }
-        } catch (e) { console.warn("hotspots 로드 실패 → 다음 후보/이름표 앵커", url, e); }
+        } catch (e) { console.warn("hotspots 로드 실패 → 이름표 앵커 사용", e); }
       }
       loadPalaceThenBuild();
     }
@@ -795,20 +782,17 @@
       return kept;
     }
 
-    // 입장 시점 프레임: "공간의 앞"을 향하도록 — 더 긴 수평축을 따라 한쪽 끝(뒤)에 서서 방을 바라본다(깊이감).
-    //   마커가 한쪽으로 치우쳤으면 그쪽을 앞으로, 균등하면 +방향을 앞으로. 짧은 축은 중앙에 선다(옆면 응시 방지).
+    // 입장 시점 프레임: 마커 중심이 치우친 벽을 정면(fwd)으로, 반대쪽 벽 근처를 eye로.
     function entryFrame(){
       const c = bounds.getCenter(new THREE.Vector3());
       const sz = bounds.getSize(new THREE.Vector3());
       const mc = new THREE.Vector3();
       if (anchors.length){ anchors.forEach(a => mc.add(a.pos)); mc.multiplyScalar(1/anchors.length); } else mc.copy(c);
-      const longX = sz.x >= sz.z;                       // 더 긴 수평축
-      const axisLen = longX ? sz.x : sz.z;
-      const lean = longX ? (mc.x - c.x) : (mc.z - c.z);  // 마커 무게중심 치우침
-      const dir = (Math.abs(lean) > axisLen * 0.05) ? (Math.sign(lean) || 1) : 1;   // 앞(시선) 방향
-      const fwd = longX ? new THREE.Vector3(dir, 0, 0) : new THREE.Vector3(0, 0, dir);
-      const back = axisLen / 2 - Math.min(0.9, axisLen * 0.12);   // 뒤쪽 끝(벽에서 살짝 안쪽)
-      const eye = new THREE.Vector3(c.x - fwd.x * back, bounds.min.y + 1.6, c.z - fwd.z * back);  // 짧은 축은 중앙(c) 유지
+      const fx = mc.x - c.x, fz = mc.z - c.z;
+      const fwd = (Math.abs(fx) >= Math.abs(fz)) ? new THREE.Vector3(Math.sign(fx)||1,0,0)
+                                                 : new THREE.Vector3(0,0,Math.sign(fz)||1);
+      const half = Math.abs(fwd.x)*sz.x/2 + Math.abs(fwd.z)*sz.z/2;
+      const eye = new THREE.Vector3(c.x - fwd.x*Math.max(0.8, half-0.7), bounds.min.y+1.55, c.z - fwd.z*Math.max(0.8, half-0.7));
       const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0,1,0)).normalize();
       return { eye, fwd, right };
     }
@@ -1019,7 +1003,7 @@
       g.beginPath();g.arc(c,c,c*0.44,0,7);
       const gr=g.createLinearGradient(0,c*0.5,0,c*1.5);gr.addColorStop(0,"rgba(18,24,21,.96)");gr.addColorStop(1,"rgba(9,12,11,.96)");
       g.fillStyle=gr;g.fill();
-      g.lineWidth=S*0.03;g.strokeStyle=active?"#98917f":"var(--accent)";g.stroke();
+      g.lineWidth=S*0.03;g.strokeStyle=active?"#8a8170":"var(--accent)";g.stroke();
       g.fillStyle="#fffaf0";g.font=`900 ${S*0.36}px 'Malgun Gothic',Arial`;g.textAlign="center";g.textBaseline="middle";
       g.fillText(String(n),c,c+S*0.015);
       const tex=new THREE.CanvasTexture(cv);
@@ -1138,7 +1122,7 @@
       route.forEach((h, i) => {
         const row = document.createElement("div"); row.className = "mrow";
         const study = !!h.entity;
-        const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = study ? "#98917f" : "var(--accent)";
+        const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = study ? "#8a8170" : "var(--accent)";
         const fn = document.createElement("span"); fn.className = "fn";
         fn.textContent = `${h.number}. ` + dispName(h);
         const ent = document.createElement("span"); ent.className = "ent" + (study ? "" : " none");
@@ -1369,11 +1353,11 @@
       const [ox, oz] = px(bounds.min.x, bounds.min.z);
       g.strokeRect(ox, oz, (bounds.max.x - bounds.min.x) * S, (bounds.max.z - bounds.min.z) * S);
       // 가구 발자국
-      g.fillStyle = "rgba(181, 85, 47,.14)"; g.strokeStyle = "rgba(181, 85, 47,.32)"; g.lineWidth = 1;
+      g.fillStyle = "rgba(44,122,99,.14)"; g.strokeStyle = "rgba(44,122,99,.32)"; g.lineWidth = 1;
       furnRects.forEach(r => { const [x, z] = px(r.x1, r.z1);
         g.fillRect(x, z, (r.x2 - r.x1) * S, (r.z2 - r.z1) * S); g.strokeRect(x, z, (r.x2 - r.x1) * S, (r.z2 - r.z1) * S); });
       // 동선
-      g.strokeStyle = "rgba(181, 85, 47,.5)"; g.lineWidth = 1.4; g.beginPath();
+      g.strokeStyle = "rgba(44,122,99,.5)"; g.lineWidth = 1.4; g.beginPath();
       route.forEach((h, i) => { const [x, z] = px(h.pos.x, h.pos.z); i ? g.lineTo(x, z) : g.moveTo(x, z); });
       g.stroke();
       // 핫스팟(학습=금색, 현재=크게)
@@ -1381,7 +1365,7 @@
         const [x, z] = px(h.pos.x, h.pos.z);
         const cur = i === activeIdx;
         g.beginPath(); g.arc(x, z, cur ? 6.5 : (h.entity ? 5.5 : 3.5), 0, 7);   // 지식 점은 크게
-        g.fillStyle = h.entity ? "#98917f" : "var(--accent)"; g.fill();
+        g.fillStyle = h.entity ? "#8a8170" : "var(--accent)"; g.fill();
         if (cur) { g.strokeStyle = "#2a241d"; g.lineWidth = 1.6; g.stroke(); }
         g.fillStyle = "#fff"; g.font = "700 7px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
         g.fillText(String(h.number), x, z + 0.5);
@@ -1450,7 +1434,7 @@
       g.strokeStyle = "rgba(51,46,40,.45)"; g.lineWidth = 2;
       const [bx, bz] = e2c(bounds.min.x, bounds.min.z);
       g.strokeRect(bx, bz, (bounds.max.x - bounds.min.x) * eScale, (bounds.max.z - bounds.min.z) * eScale);
-      g.fillStyle = "rgba(181, 85, 47,.10)"; g.strokeStyle = "rgba(181, 85, 47,.26)"; g.lineWidth = 1;
+      g.fillStyle = "rgba(44,122,99,.10)"; g.strokeStyle = "rgba(44,122,99,.26)"; g.lineWidth = 1;
       furnRects.forEach(r => { const [x, z] = e2c(r.x1, r.z1);
         g.fillRect(x, z, (r.x2 - r.x1) * eScale, (r.z2 - r.z1) * eScale); g.strokeRect(x, z, (r.x2 - r.x1) * eScale, (r.z2 - r.z1) * eScale); });
       // ② 노드 표시 위치 계산 — 서로 밀어내 겹침 해소(드래그 중인 노드는 고정)
@@ -1482,7 +1466,7 @@
           g.strokeStyle = "rgba(42,36,29,.3)"; g.lineWidth = 1;
           g.beginPath(); g.moveTo(n.cx, n.cz); g.lineTo(n.dx, n.dz); g.stroke();
         }
-        g.fillStyle = n.h.ent ? "rgba(138,129,112,.8)" : "rgba(181, 85, 47,.6)";
+        g.fillStyle = n.h.ent ? "rgba(138,129,112,.8)" : "rgba(44,122,99,.6)";
         g.beginPath(); g.arc(n.cx, n.cz, 2.6, 0, 7); g.fill();   // 실제 위치 점(항상)
       });
       // ④ 개념 연결(related) — 금색 점선(표시 위치 기준)
@@ -1494,7 +1478,7 @@
       // ⑤ 사물 노드(작게·차분) → ⑥ 개념 노드(크게·금색) 순서로, 지식이 항상 위에
       eNodes.filter(n => !n.h.ent).forEach(n => {
         g.beginPath(); g.arc(n.dx, n.dz, 8, 0, 7);
-        g.fillStyle = n.i === dragIdx ? "var(--accent2)" : "rgba(181, 85, 47,.8)"; g.fill();
+        g.fillStyle = n.i === dragIdx ? "var(--accent2)" : "rgba(44,122,99,.8)"; g.fill();
         g.strokeStyle = "#2a241d"; g.lineWidth = 1.6; g.stroke();
         g.fillStyle = "#fff"; g.font = "800 8.5px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
         g.fillText(String(n.i + 1), n.dx, n.dz + 0.5);
@@ -1505,7 +1489,7 @@
       eNodes.filter(n => n.h.ent).forEach(n => {
         g.shadowColor = "rgba(138,129,112,.45)"; g.shadowBlur = 10;
         g.beginPath(); g.arc(n.dx, n.dz, 14, 0, 7);
-        g.fillStyle = n.i === dragIdx ? "#9c9384" : "#98917f"; g.fill();
+        g.fillStyle = n.i === dragIdx ? "#9c9384" : "#8a8170"; g.fill();
         g.shadowBlur = 0;
         g.strokeStyle = "#2a241d"; g.lineWidth = 2; g.stroke();
         g.fillStyle = "#fff"; g.font = "800 12px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
@@ -1538,7 +1522,7 @@
       });
       // 선택 강조 — 상세 패널이 열린 노드에 초록 링
       if (selENodeIdx >= 0) { const sn = eNodes.find(n => n.i === selENodeIdx);
-        if (sn) { g.strokeStyle = "#b5552f"; g.lineWidth = 2.5; g.beginPath(); g.arc(sn.dx, sn.dz, sn.r + 6, 0, 7); g.stroke(); } }
+        if (sn) { g.strokeStyle = "#2c7a63"; g.lineWidth = 2.5; g.beginPath(); g.arc(sn.dx, sn.dz, sn.r + 6, 0, 7); g.stroke(); } }
       // ⑦ 나 — 현재 위치 + 시선 방향
       const [mx, mz] = e2c(camera.position.x, camera.position.z);
       const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
@@ -1898,13 +1882,27 @@
     }
 
     let prev=performance.now();
+    let fpsFrames=0, fpsAccum=0;   // FPS 측정(콘솔 전용 — 화면 표시 안 함). 콘솔에서 1초마다 평균 fps 확인.
+    // 미니맵 스로틀: 카메라/시선/활성지점이 바뀌었을 때만, 그것도 최대 ~20fps로만 다시 그린다.
+    let miniLast=0, miniPrevX=NaN, miniPrevZ=NaN, miniPrevAng=NaN, miniPrevIdx=-1;
+    const _fwdTmp=new THREE.Vector3();
+    function maybeDrawMini(now){
+      camera.getWorldDirection(_fwdTmp); const ang=Math.atan2(_fwdTmp.x,-_fwdTmp.z);
+      const moved=miniLast===0||Math.abs(camera.position.x-miniPrevX)>0.01||Math.abs(camera.position.z-miniPrevZ)>0.01
+                 ||Math.abs(ang-miniPrevAng)>0.005||activeIdx!==miniPrevIdx;
+      if(!moved || now-miniLast<50) return;
+      miniLast=now; miniPrevX=camera.position.x; miniPrevZ=camera.position.z; miniPrevAng=ang; miniPrevIdx=activeIdx;
+      drawMini();
+    }
     function tick(now){
       const dt=Math.min((now-prev)/1000,0.05); prev=now;
+      fpsFrames++; fpsAccum+=dt;
+      if(fpsAccum>=1){ console.log(`[memory-walk] ${Math.round(fpsFrames/fpsAccum)} fps`); fpsFrames=0; fpsAccum=0; }
       if(camTween){ const k=Math.min(1,(now-camTween.t0)/(camTween.dur||1)); const e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
         camera.position.lerpVectors(camTween.fromPos,camTween.toPos,e); controls.target.lerpVectors(camTween.fromTgt,camTween.toTgt,e);
         if(k>=1){ const d=camTween.onDone; camTween=null; if(d)d(); } }
       walk(dt); controls.update(); clampInsideRoom();
-      renderer.render(scene,camera); drawMini(); requestAnimationFrame(tick);
+      renderer.render(scene,camera); maybeDrawMini(now); requestAnimationFrame(tick);
     }
     if (!DASH) requestAnimationFrame(tick);   // dash(임베드) 모드: 3D 렌더 루프 생략 — 숨긴 씬 대신 2D 대시보드만
     addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
