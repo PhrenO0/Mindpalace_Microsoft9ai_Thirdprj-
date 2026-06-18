@@ -10,7 +10,7 @@
 <style>
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
 @import url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/variable/woff2/SUIT-Variable.css");
-@import url("https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Nanum+Myeongjo&display=swap");
 
 @font-face {
   font-family: 'MapoFlowerIsland';
@@ -438,7 +438,7 @@ body {
 /* ───────── 구분 페이지: 스크롤리텔링 (히어로 → 콘텐츠) ───────── */
 .divider-scroll {
   position: relative;
-  height: 200vh;
+  height: 150vh;
 }
 .divider-sticky {
   position: sticky;
@@ -497,14 +497,19 @@ body {
 .divider-title.is-visible { opacity: 1; transform: translateY(0); }
 .divider-nav {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 20px 28px;
 }
+.divider-nav .divider-link:nth-child(1) { grid-column: 1 / 3; }
+.divider-nav .divider-link:nth-child(2) { grid-column: 3 / 5; }
+.divider-nav .divider-link:nth-child(3) { grid-column: 5 / 7; }
+.divider-nav .divider-link:nth-child(4) { grid-column: 2 / 4; }
+.divider-nav .divider-link:nth-child(5) { grid-column: 4 / 6; }
 .divider-link {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 0;
   padding: 18px 22px;
   min-height: 60px;
   background: rgba(255,255,255,0.08);
@@ -533,10 +538,22 @@ body {
   font-size: 12px;
   color: var(--c-acc);
   font-weight: 700;
-  min-width: 24px;
+  min-width: 28px;
+  flex-shrink: 0;
+  text-align: left;
+}
+.divider-text {
+  flex: 1;
+  text-align: center;
 }
 @media (max-width: 600px) {
   .divider-nav { grid-template-columns: repeat(2, 1fr); }
+  .divider-nav .divider-link:nth-child(1),
+  .divider-nav .divider-link:nth-child(2),
+  .divider-nav .divider-link:nth-child(3),
+  .divider-nav .divider-link:nth-child(4),
+  .divider-nav .divider-link:nth-child(5) { grid-column: auto; }
+  .divider-nav .divider-link:nth-child(5) { grid-column: 1 / 3; }
 }
 
 /* ───────── 2단 레이아웃 ───────── */
@@ -555,6 +572,7 @@ body {
 
 .content-main {
   order: 1;
+  min-width: 0;
 }
 
 .phone-sidebar-inner {
@@ -776,8 +794,370 @@ body {
 #upload { min-height: 1000px; }
 #objects { min-height: 1400px; }
 #spaces { min-height: 900px; }
-#philosophy { min-height: 100px; }
+#philosophy { min-height: 0; padding-top: 0; padding-bottom: 0; }
 #explore { min-height: 1000px; }
+#what { min-height: 800px; }
+#benefit { min-height: 900px; }
+
+/* ───────── #what 기억의 궁전이란 ───────── */
+#what .sec-eyebrow { font-size: 16px; letter-spacing: 0.18em; }
+#what .sec-title { font-size: clamp(30px, 3.6vw, 48px); letter-spacing: -0.02em; }
+#what .sec-body { font-size: clamp(17px, 1.5vw, 19px); line-height: 2; letter-spacing: 0.01em; }
+#what .sec-body .em-line {
+  display: block;
+  margin-top: 14px;
+  color: var(--c-acc);
+  font-weight: 600;
+}
+#what .what-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 16px;
+  margin-top: 38px;
+}
+#what .what-card {
+  background: rgba(51, 46, 40, 0.55);
+  border: 1px solid rgba(99, 91, 81, 0.28);
+  border-radius: 14px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), border-color 0.3s;
+}
+#what .what-card:nth-child(1) { grid-column: 1 / 4; }
+#what .what-card:nth-child(2) { grid-column: 4 / 7; }
+#what .what-card:nth-child(3) { grid-column: 2 / 6; }
+#what .what-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(252, 164, 53, 0.4);
+}
+#what .what-card .card-label {
+  font-family: var(--font-accent);
+  font-size: 14px;
+  color: var(--c-acc);
+  letter-spacing: 0.15em;
+  margin-bottom: 14px;
+}
+#what .what-card .card-title {
+  font-family: var(--font-title-soft);
+  font-size: 20px;
+  color: var(--c-paper);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+#what .what-card .card-desc {
+  font-size: 15px;
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+  color: rgba(245, 240, 232, 0.58);
+  word-break: keep-all;
+  margin-top: auto;
+}
+@media (max-width: 600px) {
+  #what .what-cards { grid-template-columns: 1fr; }
+  #what .what-card:nth-child(1),
+  #what .what-card:nth-child(2),
+  #what .what-card:nth-child(3) { grid-column: auto; }
+}
+
+/* ───────── #what ① 간략한 원리 — 4단계 다이어그램 ───────── */
+#what .principle-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 42px;
+}
+#what .principle-step {
+  background: rgba(51, 46, 40, 0.55);
+  border: 1px solid rgba(99, 91, 81, 0.28);
+  border-radius: 14px;
+  padding: 26px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), border-color 0.3s;
+}
+#what .principle-step:hover {
+  transform: translateY(-4px);
+  border-color: rgba(252, 164, 53, 0.4);
+}
+#what .principle-num {
+  font-family: var(--font-accent);
+  font-size: 12px;
+  color: var(--c-acc);
+  letter-spacing: 0.2em;
+  margin-bottom: 14px;
+}
+#what .principle-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(252, 164, 53, 0.45);
+  background: rgba(252, 164, 53, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-acc);
+  margin-bottom: 16px;
+}
+#what .principle-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: var(--c-acc);
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#what .principle-title {
+  font-family: var(--font-title-soft);
+  font-size: 18px;
+  color: var(--c-paper);
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+#what .principle-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  color: rgba(245, 240, 232, 0.58);
+  word-break: keep-all;
+}
+#what .principle-arrow {
+  align-self: center;
+  font-family: var(--font-accent);
+  font-size: 24px;
+  color: rgba(252, 164, 53, 0.55);
+  user-select: none;
+}
+#what .principle-footnote {
+  margin-top: 28px;
+  text-align: center;
+  font-family: var(--font-accent);
+  font-size: 15px;
+  color: rgba(245, 240, 232, 0.7);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 1180px) {
+  #what .principle-flow {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 14px;
+  }
+  /* 4번째 자식(중간 화살표)을 한 줄 전체로 띄워 2×2 배치 만들기 */
+  #what .principle-flow > *:nth-child(4) {
+    grid-column: 1 / -1;
+    transform: rotate(90deg);
+    justify-self: center;
+  }
+}
+@media (max-width: 640px) {
+  #what .principle-flow {
+    grid-template-columns: 1fr;
+  }
+  #what .principle-arrow,
+  #what .principle-flow > *:nth-child(4) {
+    grid-column: auto;
+    transform: rotate(90deg);
+    justify-self: center;
+  }
+}
+
+/* ───────── #benefit 이점 ───────── */
+#benefit .sec-eyebrow { font-size: 16px; letter-spacing: 0.18em; }
+#benefit .sec-title { font-size: clamp(30px, 3.6vw, 48px); letter-spacing: -0.02em; }
+#benefit .benefit-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 16px;
+  margin-top: 38px;
+}
+#benefit .benefit-card {
+  background: rgba(51, 46, 40, 0.55);
+  border: 1px solid rgba(99, 91, 81, 0.28);
+  border-radius: 14px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), border-color 0.3s;
+}
+#benefit .benefit-card:nth-child(1) { grid-column: 1 / 3; }
+#benefit .benefit-card:nth-child(2) { grid-column: 3 / 5; }
+#benefit .benefit-card:nth-child(3) { grid-column: 5 / 7; }
+#benefit .benefit-card:nth-child(4) { grid-column: 2 / 4; }
+#benefit .benefit-card:nth-child(5) { grid-column: 4 / 6; }
+@media (max-width: 600px) {
+  #benefit .benefit-cards { grid-template-columns: 1fr; }
+  #benefit .benefit-card:nth-child(1),
+  #benefit .benefit-card:nth-child(2),
+  #benefit .benefit-card:nth-child(3),
+  #benefit .benefit-card:nth-child(4),
+  #benefit .benefit-card:nth-child(5) { grid-column: auto; }
+}
+#benefit .benefit-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(252, 164, 53, 0.4);
+}
+#benefit .benefit-card .card-label {
+  font-family: var(--font-accent);
+  font-size: 14px;
+  color: var(--c-acc);
+  letter-spacing: 0.15em;
+  margin-bottom: 14px;
+}
+#benefit .benefit-card .card-title {
+  font-family: var(--font-title-soft);
+  font-size: 20px;
+  color: var(--c-paper);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+#benefit .benefit-card .card-desc {
+  font-size: 15px;
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+  color: rgba(245, 240, 232, 0.58);
+  word-break: keep-all;
+  flex: 1;
+  margin-top: 10px;
+}
+#benefit .benefit-card .card-source {
+  display: block;
+  margin-top: auto;
+  padding-top: 14px;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(252, 164, 53, 0.6);
+}
+
+/* ───────── #benefit ② 학술적 논거 — 연대기 타임라인 ───────── */
+#benefit .evidence-timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+  padding-top: 28px;
+}
+#benefit .evidence-track {
+  position: absolute;
+  top: 28px;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    rgba(252, 164, 53, 0) 0%,
+    rgba(252, 164, 53, 0.55) 12%,
+    rgba(252, 164, 53, 0.55) 88%,
+    rgba(252, 164, 53, 0) 100%
+  );
+  pointer-events: none;
+}
+#benefit .evidence-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+#benefit .evidence-dot {
+  position: relative;
+  top: -28px;
+  margin-bottom: -16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--c-bg, #1f1c19);
+  border: 1px solid rgba(252, 164, 53, 0.55);
+  box-shadow: 0 0 0 4px rgba(252, 164, 53, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-acc);
+  flex-shrink: 0;
+}
+#benefit .evidence-dot svg {
+  width: 28px;
+  height: 28px;
+  stroke: var(--c-acc);
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#benefit .evidence-card {
+  background: rgba(51, 46, 40, 0.55);
+  border: 1px solid rgba(99, 91, 81, 0.28);
+  border-radius: 14px;
+  padding: 28px 22px 22px;
+  width: 100%;
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), border-color 0.3s;
+}
+#benefit .evidence-timeline { align-items: stretch; }
+#benefit .evidence-title { min-height: 2.6em; display: flex; align-items: center; justify-content: center; }
+#benefit .evidence-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(252, 164, 53, 0.4);
+}
+#benefit .evidence-year {
+  font-family: var(--font-accent);
+  font-size: 13px;
+  color: var(--c-acc);
+  letter-spacing: 0.18em;
+  margin-bottom: 12px;
+}
+#benefit .evidence-title {
+  font-family: var(--font-title-soft);
+  font-size: 20px;
+  color: var(--c-paper);
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+  word-break: keep-all;
+}
+#benefit .evidence-desc {
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(245, 240, 232, 0.6);
+  word-break: keep-all;
+  flex: 1;
+}
+#benefit .evidence-source {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(99, 91, 81, 0.35);
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(252, 164, 53, 0.7);
+}
+#benefit .evidence-source em { font-style: italic; }
+#benefit .evidence-footnote {
+  margin-top: 32px;
+  text-align: center;
+  font-family: var(--font-accent);
+  font-size: 15px;
+  color: rgba(245, 240, 232, 0.7);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 820px) {
+  #benefit .evidence-timeline {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: 0;
+  }
+  #benefit .evidence-track { display: none; }
+  #benefit .evidence-dot {
+    top: 0;
+    margin-bottom: 14px;
+  }
+}
 
 .panel {
   background: var(--panel-bg);
@@ -869,90 +1249,254 @@ body {
   word-break: keep-all;
 }
 
-#spaces {
-}
-
 #spaces .panel {
   padding: clamp(44px, 6vw, 82px);
 }
-
 #spaces .sec-body {
   max-width: 760px;
 }
-
-#spaces .detail-grid {
-  display: block;
+.region-carousel {
   position: relative;
-  overflow: hidden;
-  margin-top: clamp(42px, 5vw, 70px);
-  padding-top: 6px;
-  padding-bottom: 6px;
-  width: 100%;
+  margin-top: clamp(36px, 5vw, 60px);
+  min-width: 0;
+  max-width: 100%;
 }
-
-.carousel-track {
-  display: flex;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+.region-carousel-inner {
+  position: relative;
+  padding: 0 62px;
+  min-width: 0;
+  max-width: 100%;
 }
-
-.carousel-track .detail-item {
-  flex: 0 0 100%;
-  min-height: 200px;
-  padding: 36px 32px;
-  border-radius: 18px;
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(51, 46, 40, 0.85);
+  border: 1px solid rgba(252, 164, 53, 0.35);
+  color: var(--c-paper);
+  font-size: 22px;
+  line-height: 1;
   cursor: pointer;
-  isolation: isolate;
-  background: rgba(51, 46, 40, 0.55);
-  border: 1px solid rgba(252,164,53,0.12);
-  box-sizing: border-box;
-  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), border-color 0.3s, box-shadow 0.3s;
-}
-
-.carousel-track .detail-item:hover {
-  border-color: rgba(252,164,53,0.5);
-  box-shadow: 0 12px 36px rgba(0,0,0,0.25), 0 0 0 1px rgba(252,164,53,0.08) inset;
-}
-
-.carousel-controls {
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.carousel-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  border: 1px solid rgba(252,164,53,0.4);
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.3s;
   padding: 0;
+  transition: background 0.2s, border-color 0.2s, opacity 0.25s;
 }
-.carousel-dot.is-active {
-  background: var(--c-acc);
-  transform: scale(1.25);
+.carousel-arrow:hover {
+  background: rgba(252, 164, 53, 0.18);
+  border-color: rgba(252, 164, 53, 0.6);
 }
-
-.carousel-prev,
-.carousel-next {
-  background: none; border: none;
-  color: rgba(245,240,232,0.6);
-  font-size: 20px;
+.carousel-arrow.is-disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
+.carousel-prev { left: 0; }
+.carousel-next { right: 0; }
+.carousel-track-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 4px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+}
+.carousel-track-wrap::-webkit-scrollbar { display: none; }
+.carousel-track {
+  display: inline-flex;
+  gap: 8px;
+  padding: 4px 2px 10px;
+}
+.region-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border: 1px solid rgba(99, 91, 81, 0.32);
+  border-radius: 999px;
+  background: rgba(51, 46, 40, 0.5);
+  color: var(--c-paper);
+  font-family: var(--font-title-soft);
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  padding: 4px 8px;
-  transition: color 0.2s;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  transition: background 0.2s, border-color 0.25s, transform 0.2s, box-shadow 0.25s;
 }
-.carousel-prev:hover,
-.carousel-next:hover { color: var(--c-acc); }
-
-.carousel-counter {
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: rgba(245,240,232,0.5);
-  min-width: 50px;
+.region-tab:hover {
+  border-color: rgba(252, 164, 53, 0.45);
+  background: rgba(252, 164, 53, 0.07);
+  transform: translateY(-1px);
+}
+.region-tab.is-active {
+  border-color: rgba(252, 164, 53, 0.7);
+  background: rgba(252, 164, 53, 0.16);
+  box-shadow: 0 6px 18px rgba(252, 164, 53, 0.14);
+}
+.region-tab .tab-icon {
+  font-size: 17px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+.region-tab .tab-name {
+  flex: 0 0 auto;
+}
+.region-tab .tab-count {
+  font-family: var(--font-accent);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: rgba(252, 164, 53, 0.72);
+  padding-left: 8px;
+  border-left: 1px solid rgba(252, 164, 53, 0.28);
+  flex: 0 0 auto;
+}
+.region-panels {
+  margin-top: 16px;
+  padding: 24px clamp(20px, 3vw, 32px) 26px;
+  border: 1px solid rgba(252, 164, 53, 0.28);
+  border-radius: 16px;
+  background: rgba(51, 46, 40, 0.42);
+}
+.region-panel { display: none; }
+.region-panel.is-active { display: block; }
+.region-panel > .region-subgroup:first-child { margin-top: 0; }
+@media (max-width: 640px) {
+  .region-carousel-inner { padding: 0 42px; }
+  .carousel-arrow { width: 34px; height: 34px; font-size: 20px; }
+  .region-tab { padding: 9px 14px; font-size: 13.5px; }
+  .region-tab .tab-icon { font-size: 16px; }
+}
+.region-subgroup + .region-subgroup {
+  margin-top: 26px;
+}
+.subgroup-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 2px 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px dashed rgba(252, 164, 53, 0.22);
+}
+.subgroup-title {
+  font-family: var(--font-title-soft);
+  font-size: 14.5px;
+  color: rgba(252, 164, 53, 0.8);
+  letter-spacing: 0.02em;
+}
+.subgroup-count {
+  font-family: var(--font-accent);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: rgba(245, 240, 232, 0.4);
+}
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.city-card {
+  background: rgba(51, 46, 40, 0.6);
+  border: 1px solid rgba(99, 91, 81, 0.3);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+}
+.city-card:hover {
+  border-color: rgba(252, 164, 53, 0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+}
+.city-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background-color: rgba(38, 34, 30, 0.8);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(99, 91, 81, 0.28);
+}
+.city-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(252, 164, 53, 0.10), transparent 60%),
+    linear-gradient(135deg, rgba(99, 91, 81, 0.22), rgba(38, 34, 30, 0.05));
+}
+.city-image::after {
+  content: '대표 이미지';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-accent);
+  font-size: 10.5px;
+  letter-spacing: 0.32em;
+  color: rgba(252, 164, 53, 0.32);
+  text-transform: uppercase;
+}
+.city-image[style*="background-image"]::before,
+.city-image[style*="background-image"]::after {
+  display: none;
+}
+.city-card:hover .city-image::before {
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(252, 164, 53, 0.16), transparent 60%),
+    linear-gradient(135deg, rgba(252, 164, 53, 0.10), rgba(38, 34, 30, 0.05));
+}
+.city-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.city-name {
+  font-family: var(--font-accent);
+  font-size: 11px;
+  color: rgba(245, 240, 232, 0.5);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.city-lm {
+  font-family: var(--font-title-soft);
+  font-size: 16px;
+  color: var(--c-paper);
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+}
+.city-desc {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: rgba(245, 240, 232, 0.55);
+  word-break: keep-all;
+}
+.region-total {
+  margin-top: 20px;
   text-align: center;
+  font-family: var(--font-accent);
+  font-size: 13px;
+  color: rgba(245, 240, 232, 0.4);
+  letter-spacing: 0.1em;
 }
 
 #philosophy {
@@ -2220,6 +2764,143 @@ body {
   border: 0 !important;
 }
 
+/* ───────── PDF 업로드 로딩 오버레이 ───────── */
+.upload-loading-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  border-radius: inherit;
+  background: rgba(20, 18, 16, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 40px;
+  text-align: center;
+}
+.upload-loading-overlay.is-active { display: flex; }
+
+.loading-spinner {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid rgba(252,164,53,0.15);
+  border-top-color: var(--c-acc);
+  animation: uploadSpin 0.85s linear infinite;
+}
+@keyframes uploadSpin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-title {
+  font-family: var(--font-title);
+  font-size: clamp(22px, 3vw, 32px);
+  letter-spacing: -0.03em;
+  color: var(--c-paper);
+}
+
+.loading-sub {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(245,240,232,0.6);
+  max-width: 420px;
+}
+
+.loading-progress-wrap {
+  width: min(460px, 90%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.loading-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(245,240,232,0.08);
+}
+.loading-progress-bar {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(252,164,53,0.5), var(--c-acc));
+  transition: width 0.32s cubic-bezier(0.22,1,0.36,1);
+}
+.loading-progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(245,240,232,0.52);
+  font-variant-numeric: tabular-nums;
+}
+
+.loading-steps {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px 28px;
+  margin-top: 8px;
+}
+.loading-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(245,240,232,0.42);
+  transition: color 0.3s;
+}
+.loading-steps li .lstep-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(245,240,232,0.15);
+  transition: background 0.3s, box-shadow 0.3s;
+  flex-shrink: 0;
+}
+.loading-steps li.is-active {
+  color: rgba(245,240,232,0.82);
+}
+.loading-steps li.is-active .lstep-dot {
+  background: var(--c-acc);
+  box-shadow: 0 0 0 4px rgba(252,164,53,0.18), 0 0 12px rgba(252,164,53,0.3);
+  animation: lstepPulse 1.2s ease-in-out infinite;
+}
+.loading-steps li.is-done {
+  color: rgba(245,240,232,0.72);
+}
+.loading-steps li.is-done .lstep-dot {
+  background: var(--c-acc);
+  box-shadow: 0 0 0 3px rgba(252,164,53,0.12);
+}
+@keyframes lstepPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(252,164,53,0.18), 0 0 12px rgba(252,164,53,0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(252,164,53,0.28), 0 0 18px rgba(252,164,53,0.45); }
+}
+
+.loading-complete-icon {
+  display: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(252,164,53,0.16);
+  border: 2px solid var(--c-acc);
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  animation: loadCheckPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.loading-complete-icon.is-visible {
+  display: flex;
+}
+@keyframes loadCheckPop {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 #objects.section-wide {
 }
 
@@ -2344,7 +3025,7 @@ body {
   .journey-point:nth-of-type(6) { left: 46% !important; top: 49% !important; }
   #spaces .panel { padding: 34px 18px; }
   #spaces .detail-grid { /* carousel: no grid override needed */ }
-  #philosophy { padding-top: 10vh; padding-bottom: 10vh; }
+  #philosophy { padding-top: 0; padding-bottom: 0; }
   .projection-panel { padding: 30px 14px 22px; }
   .memory-lab-panel { padding: 32px 18px; }
   .memory-orbit-stage { min-height: 360px; }
@@ -2493,9 +3174,10 @@ body {
   text-align: center;
 }
 .scroll-line {
-  font-family: "MapoFlowerIsland", cursive;
+  font-family: "Nanum Myeongjo", serif;
   color: #424242;
   font-size: clamp(17px, 2vw, 22px);
+  font-weight: 400;
   line-height: 2;
   margin: 0 0 10px;
   letter-spacing: 0.03em;
@@ -2503,11 +3185,10 @@ body {
     0 0 1px rgba(66,66,66,0.4),
     0 0 3px rgba(66,66,66,0.08),
     1px 1px 2px rgba(66,66,66,0.06);
-  filter: url(#ink-bleed);
 }
 .scroll-line--title {
-  font-family: "MapoFlowerIsland", cursive;
-  font-size: clamp(36px, 4.2vw, 56px);
+  font-family: "Nanum Myeongjo", serif;
+  font-size: clamp(28px, 3.2vw, 42px);
   font-weight: 400;
   color: #1A1A1A;
   margin-bottom: 22px;
@@ -2714,10 +3395,11 @@ body.perf-lite .perf-toggle .perf-dot { background: #fca435; }
   padding: 24px;
 }
 .explore-placeholder p {
-  max-width: 460px;
+  max-width: none;
   color: rgba(245, 240, 232, 0.78);
   font-size: 0.92rem;
   line-height: 1.65;
+  white-space: nowrap;
 }
 .explore-load-btn {
   padding: 13px 26px;
@@ -2886,6 +3568,7 @@ end of keeper CSS */
 @media (max-width: 640px) {
   .perf-toggle { left: 12px; bottom: 12px; padding: 8px 12px; font-size: 0.72rem; }
 }
+
 </style>
 </head>
 <body>
@@ -2902,11 +3585,10 @@ end of keeper CSS */
 <nav class="nav" id="nav">
   <a class="nav-brand" href="#">기억의 궁전</a>
   <div class="nav-links">
-    <a href="#about">소개</a>
-    <a href="#upload">PDF 업로드</a>
-    <a href="#objects">기억의 책</a>
-    <a href="#spaces">전각</a>
-    <a href="#philosophy">빛의 조각</a>
+    <a href="#what">간략한 원리</a>
+    <a href="#benefit">학술적 논거</a>
+    <a href="#objects">체험 순서</a>
+    <a href="#spaces">공간 프리셋</a>
     <a href="#explore">3D 둘러보기</a>
     <a class="nav-cta" href="#upload">시작하기</a>
   </div>
@@ -2934,7 +3616,7 @@ end of keeper CSS */
       <a class="journey-point" href="#upload" style="--x:48%;--y:81%;" data-label="PDF 업로드" aria-label="PDF 업로드로 이동"></a>
       <a class="journey-point" href="#objects" style="--x:56%;--y:73%;" data-label="기억의 책" aria-label="기억의 책으로 이동"></a>
       <a class="journey-point" href="#spaces" style="--x:54%;--y:67%;" data-label="전각" aria-label="전각으로 이동"></a>
-      <a class="journey-point" href="#philosophy" style="--x:49%;--y:63%;" data-label="빛의 조각" aria-label="빛의 조각으로 이동"></a>
+      <a class="journey-point" href="#philosophy" style="--x:49%;--y:63%;" data-label="궁전 내부" aria-label="궁전 내부로 이동"></a>
       <a class="journey-point" href="#enter" style="--x:46%;--y:55%;" data-label="시작" aria-label="시작 영역으로 이동"></a>
     </div>
 
@@ -2958,12 +3640,11 @@ end of keeper CSS */
       <div class="divider-label">目 · 次</div>
       <h2 class="divider-title">기억의 궁전을 둘러보세요</h2>
       <nav class="divider-nav">
-        <a href="#about" class="divider-link"><span class="divider-num">01</span>기억의 흐름</a>
-        <a href="#upload" class="divider-link"><span class="divider-num">02</span>PDF 업로드</a>
-        <a href="#objects" class="divider-link"><span class="divider-num">03</span>기억의 책</a>
-        <a href="#spaces" class="divider-link"><span class="divider-num">04</span>여섯 개의 전각</a>
-        <a href="#philosophy" class="divider-link"><span class="divider-num">05</span>빛의 조각</a>
-        <a href="#explore" class="divider-link"><span class="divider-num">06</span>3D 둘러보기</a>
+        <a href="#what" class="divider-link"><span class="divider-num">01</span><span class="divider-text">간략한 원리</span></a>
+        <a href="#benefit" class="divider-link"><span class="divider-num">02</span><span class="divider-text">학술적 논거</span></a>
+        <a href="#objects" class="divider-link"><span class="divider-num">03</span><span class="divider-text">체험 순서</span></a>
+        <a href="#spaces" class="divider-link"><span class="divider-num">04</span><span class="divider-text">공간 프리셋</span></a>
+        <a href="#explore" class="divider-link"><span class="divider-num">05</span><span class="divider-text">3D 둘러보기</span></a>
       </nav>
     </div>
   </div>
@@ -2992,11 +3673,11 @@ end of keeper CSS */
         </div>
         <div class="phone-chat-quick" id="phoneQuick">
           <button type="button" data-phone-quick="pdf">PDF 맡기기</button>
+          <button type="button" data-phone-quick="what">궁전이란?</button>
+          <button type="button" data-phone-quick="benefit">이점</button>
           <button type="button" data-phone-quick="how">사용법</button>
           <button type="button" data-phone-quick="explore">3D 둘러보기</button>
-          <button type="button" data-phone-quick="slow">렉이 걸려요</button>
-          <button type="button" data-phone-quick="book">기억의 책</button>
-          <button type="button" data-phone-quick="lite">가벼운 모드</button>
+          <button type="button" data-phone-quick="spaces">공간 프리셋</button>
         </div>
         <div class="phone-chat-input">
           <input type="file" id="phonePdfInput" accept="application/pdf" hidden>
@@ -3010,45 +3691,263 @@ end of keeper CSS */
   </aside>
   <div class="content-main">
 
-<!-- ABOUT : 기억의 흐름 -->
-<section class="section" id="about">
-  <div class="panel reveal flow-panel">
-    <div class="sec-eyebrow">첫 번째 이야기</div>
-    <h2 class="sec-title">기억은 흐름 속에서 더 오래 남습니다</h2>
+<!-- WHAT : ① 간략한 원리 -->
+<section class="section section-wide" id="what">
+  <div class="panel reveal">
+    <div class="sec-eyebrow">① 간략한 원리</div>
+    <h2 class="sec-title">익숙한 공간이 기억을 붙잡습니다</h2>
     <p class="sec-body">
-      하나의 개념은 다음 개념으로 이어지고, 하나의 장소는 다음 장소를 자연스럽게 안내합니다.
-      기억의 궁전은 흩어진 지식을 공간의 동선 위에 놓아, 다시 떠올리기 쉬운 경험으로 바꿉니다.
+      기억의 궁전은 정보를 익숙한 공간의 위치에 놓고, 그 길을 걸어다니며 기억하는 암기 기술입니다.
+      뇌가 잘 기억하는 세 가지 — <span class="em-line">공간기억, 동선 순서, 생생한 이미지</span> — 를 한 번에 활용합니다.
     </p>
 
-    <div class="memory-flow-thread" aria-hidden="true">
-      <span></span><i></i><i></i><i></i>
+    <div class="principle-flow" role="list" aria-label="기억의 궁전 4단계 원리">
+      <div class="principle-step" role="listitem">
+        <div class="principle-num">01</div>
+        <div class="principle-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+        </div>
+        <div class="principle-title">익숙한 공간</div>
+        <div class="principle-desc">자주 다녀 본 집·골목·학교처럼 머릿속에 또렷한 장소를 무대로 고릅니다.</div>
+      </div>
+      <div class="principle-arrow" aria-hidden="true">→</div>
+      <div class="principle-step" role="listitem">
+        <div class="principle-num">02</div>
+        <div class="principle-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 4v6a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v4"/><circle cx="6" cy="4" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M9 8l-3 2-3-2"/><path d="M21 16l-3 2-3-2"/></svg>
+        </div>
+        <div class="principle-title">경로 고정</div>
+        <div class="principle-desc">현관에서 거실로, 거실에서 책상으로 — 항상 같은 순서로 걷는 동선을 정해 둡니다.</div>
+      </div>
+      <div class="principle-arrow" aria-hidden="true">→</div>
+      <div class="principle-step" role="listitem">
+        <div class="principle-num">03</div>
+        <div class="principle-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/><path d="M9.5 11.5l1.5-1.5 1 1 2.5-2.5"/></svg>
+        </div>
+        <div class="principle-title">장소 · 기억 결합</div>
+        <div class="principle-desc">외우고 싶은 개념을 동선 위의 각 지점에 생생한 이미지로 걸어 둡니다.</div>
+      </div>
+      <div class="principle-arrow" aria-hidden="true">→</div>
+      <div class="principle-step" role="listitem">
+        <div class="principle-num">04</div>
+        <div class="principle-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M9 21h4"/><path d="M10 18h2"/><path d="M8.5 15c-2-1.2-3-3.2-3-5.3a6 6 0 0 1 12 0c0 2.1-1 4.1-3 5.3v3h-6v-3z"/><path d="M11 3.2V1.5"/><path d="M5.5 5l-1-1"/><path d="M18.5 5l1-1"/></svg>
+        </div>
+        <div class="principle-title">떠오르는 기억</div>
+        <div class="principle-desc">동선을 따라 머릿속을 다시 걸으면, 걸린 이미지가 한 점씩 떠오릅니다.</div>
+      </div>
     </div>
 
-    <div class="detail-grid memory-flow-grid">
-      <div class="detail-item">
-        <div class="detail-num">壹 · 시작</div>
-        <div class="detail-title">익숙한 공간에서 시작합니다</div>
-        <div class="detail-desc">처음 만나는 정보도 낯선 텍스트가 아니라, 익숙한 장소의 첫 장면으로 기억됩니다.</div>
+    <p class="principle-footnote">공간기억 + 동선 순서 + 생생한 이미지 — 이 셋이 합쳐질 때 기억은 오래 남습니다.</p>
+  </div>
+</section>
+
+<!-- BENEFIT : ② 학술적 논거 -->
+<section class="section section-wide" id="benefit">
+  <div class="panel reveal">
+    <div class="sec-eyebrow">② 학술적 논거</div>
+    <h2 class="sec-title">오래 검증된 방법입니다</h2>
+    <p class="sec-body">
+      장소법(Method of Loci)은 2,500년 동안 전해 내려오며, 현대 신경과학에서도 효과가 거듭 확인된 암기 기술입니다.
+      이야기와 실험이 같은 결론을 가리킵니다.
+    </p>
+
+    <div class="evidence-timeline" aria-label="장소법 학술 연대기">
+      <div class="evidence-track" aria-hidden="true"></div>
+
+      <div class="evidence-node">
+        <div class="evidence-dot" aria-label="고대 그리스 기둥">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 5h18"/>
+            <path d="M4 8h16"/>
+            <path d="M4 5v-1.2"/>
+            <path d="M20 5v-1.2"/>
+            <path d="M7 8v11"/>
+            <path d="M12 8v11"/>
+            <path d="M17 8v11"/>
+            <path d="M3 19h18"/>
+            <path d="M2 21h20"/>
+          </svg>
+        </div>
+        <div class="evidence-card">
+          <div class="evidence-year">기원전 5세기</div>
+          <div class="evidence-title">시모니데스의 원형</div>
+          <div class="evidence-desc">고대 그리스 시인 시모니데스가 무너진 연회장 손님들의 앉아 있던 자리를 떠올려 시신을 식별했다는 일화. 장소법의 기원으로 전해집니다.</div>
+          <div class="evidence-source">Cicero, <em>De Oratore</em></div>
+        </div>
       </div>
-      <div class="detail-item">
-        <div class="detail-num">貳 · 연결</div>
-        <div class="detail-title">경로를 따라 연결됩니다</div>
-        <div class="detail-desc">정보는 흩어지지 않고 하나의 동선 위에서 서로 이어지며, 다음 장면을 자연스럽게 안내합니다.</div>
+
+      <div class="evidence-node">
+        <div class="evidence-dot" aria-label="뇌">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5a3 3 0 0 0-3 3 2.5 2.5 0 0 0-2.5 2.5c0 .6.2 1.1.5 1.5a2.5 2.5 0 0 0 .5 4.5 2.5 2.5 0 0 0 4.5 1.5V5z"/>
+            <path d="M12 5a3 3 0 0 1 3 3 2.5 2.5 0 0 1 2.5 2.5c0 .6-.2 1.1-.5 1.5a2.5 2.5 0 0 1-.5 4.5 2.5 2.5 0 0 1-4.5 1.5V5z"/>
+            <path d="M9 11h1.5"/>
+            <path d="M13.5 11H15"/>
+          </svg>
+        </div>
+        <div class="evidence-card">
+          <div class="evidence-year">2003</div>
+          <div class="evidence-title">기억 챔피언의 90%가 장소법</div>
+          <div class="evidence-desc">세계 기억력 대회 상위 입상자 중 약 90%가 장소법을 핵심 전략으로 사용. fMRI에서 일반인과 다른 공간 기억 회로가 활성화됨이 관찰되었습니다.</div>
+          <div class="evidence-source">Maguire et al., 2003 · <em>Nature Neuroscience</em></div>
+        </div>
       </div>
-      <div class="detail-item">
-        <div class="detail-num">參 · 회상</div>
-        <div class="detail-title">마지막에는 자연스럽게 떠오릅니다</div>
-        <div class="detail-desc">반복해서 걷는 기억의 길은 결국 오래 남는 지식의 위치가 됩니다.</div>
+
+      <div class="evidence-node">
+        <div class="evidence-dot" aria-label="성장 차트">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 20h16"/>
+            <path d="M4 20V6"/>
+            <path d="M7 17v-4"/>
+            <path d="M11 17V9"/>
+            <path d="M15 17v-6"/>
+            <path d="M19 17V7"/>
+            <path d="M4 8l5-3 4 2 6-4"/>
+            <path d="M16 3h3v3"/>
+          </svg>
+        </div>
+        <div class="evidence-card">
+          <div class="evidence-year">2017</div>
+          <div class="evidence-title">6주 훈련, 4달 뒤에도 유지</div>
+          <div class="evidence-desc">일반인을 6주간 훈련한 결과 외운 단어가 26개 → 62개로 증가. 4개월 후에도 효과가 유지되었고, 뇌 연결망이 챔피언과 유사하게 재구성되었습니다.</div>
+          <div class="evidence-source">Dresler et al., 2017 · <em>Neuron</em></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="evidence-footnote">2,500년의 전통 + 신경과학의 확인 — 효과는 이미 결론이 났습니다.</p>
+  </div>
+</section>
+
+<!-- HOW TO USE : ③ 우리 서비스 체험 순서 -->
+<section class="section section-wide" id="objects">
+  <div class="panel reveal">
+    <div class="book-header">
+      <div>
+        <div class="sec-eyebrow">③ 우리 서비스 체험 순서</div>
+        <h2 class="sec-title">기억의 궁전, 여섯 걸음이면 됩니다</h2>
+        <p class="sec-body">
+          PDF를 올리는 것부터 다시 떠올리기까지 — 책장을 넘기듯 여섯 단계로 체험해 보세요.
+          각 단계는 우리가 실제로 제공하는 흐름 그대로입니다.
+        </p>
+      </div>
+      <div class="book-toolbar">
+        <div class="book-status-pill" id="bookStatusPill">체험 순서</div>
+        <div class="book-count"><strong id="bookCurrent">01</strong> / 06</div>
+        <div class="book-controls" aria-label="체험 순서 페이지 이동">
+          <button type="button" class="round-btn" id="bookPrev" aria-label="이전 페이지">←</button>
+          <button type="button" class="round-btn" id="bookNext" aria-label="다음 페이지">→</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="book-stage-grid">
+      <div class="book-shell" id="bookShell" tabindex="0">
+        <div class="flip-book book-fallback" id="landmarkBook" aria-label="기억의 궁전 체험 순서 6단계">
+          <article class="book-page is-active" data-density="hard" data-book-page data-page-index="0">
+            <div class="book-page-inner">
+              <div class="book-meta"><span>STEP 01</span><span>UPLOAD</span></div>
+              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">上</span></div>
+              <p class="book-kicker" data-book-landmark>PDF 업로드</p>
+              <h3 class="book-page-title" data-book-title>학습할 PDF를 올려주세요</h3>
+              <p class="book-page-desc" data-book-desc>강의 자료, 교재, 논문 등 외우고 싶은 PDF를 드래그 앤 드롭하거나 선택해 업로드합니다. 한 번에 한 문서씩 집중해서 다룹니다.</p>
+              <div class="memory-role">
+                <span>포인트</span>
+                <strong data-book-role>드래그 앤 드롭으로 한 번에 업로드</strong>
+              </div>
+              <p class="pdf-slot" data-book-pdfnote>업로드 직후 다음 단계로 자동 연결됩니다.</p>
+              <div class="book-footer"><span>01 / 06</span><span>Upload</span></div>
+            </div>
+          </article>
+          <article class="book-page" data-density="soft" data-book-page data-page-index="1">
+            <div class="book-page-inner">
+              <div class="book-meta"><span>STEP 02</span><span>ANALYZE</span></div>
+              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">析</span></div>
+              <p class="book-kicker" data-book-landmark>AI 자동 분석</p>
+              <h3 class="book-page-title" data-book-title>AI가 핵심 내용을 추출합니다</h3>
+              <p class="book-page-desc" data-book-desc>업로드된 문서를 AI가 읽고 핵심 개념·키워드·흐름을 자동으로 분류합니다. 무엇이 중요한지 직접 골라낼 필요가 없습니다.</p>
+              <div class="memory-role">
+                <span>포인트</span>
+                <strong data-book-role>핵심 개념·키워드·흐름 자동 추출</strong>
+              </div>
+              <p class="pdf-slot" data-book-pdfnote>분석은 수 초 안에 끝납니다.</p>
+              <div class="book-footer"><span>02 / 06</span><span>Analyze</span></div>
+            </div>
+          </article>
+          <article class="book-page" data-density="soft" data-book-page data-page-index="2">
+            <div class="book-page-inner">
+              <div class="book-meta"><span>STEP 03</span><span>SELECT PLACE</span></div>
+              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">都</span></div>
+              <p class="book-kicker" data-book-landmark>도시 · 랜드마크 선택</p>
+              <h3 class="book-page-title" data-book-title>기억을 저장할 공간을 고르세요</h3>
+              <p class="book-page-desc" data-book-desc>전국 84개 도시와 랜드마크 중에서 익숙하거나 마음에 드는 곳을 선택합니다. 익숙한 장소일수록 기억이 더 잘 붙습니다.</p>
+              <div class="memory-role">
+                <span>포인트</span>
+                <strong data-book-role>도시 84곳 + 권역별 랜드마크 프리셋</strong>
+              </div>
+              <p class="pdf-slot" data-book-pdfnote>3D 지도에서 직접 클릭해 선택할 수 있습니다.</p>
+              <div class="book-footer"><span>03 / 06</span><span>Select Place</span></div>
+            </div>
+          </article>
+          <article class="book-page" data-density="soft" data-book-page data-page-index="3">
+            <div class="book-page-inner">
+              <div class="book-meta"><span>STEP 04</span><span>PLACEMENT</span></div>
+              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">配</span></div>
+              <p class="book-kicker" data-book-landmark>공간 배치</p>
+              <h3 class="book-page-title" data-book-title>핵심 내용이 공간 곳곳에 놓입니다</h3>
+              <p class="book-page-desc" data-book-desc>추출된 핵심 내용을 AI가 공간 안의 핫스팟에 자동 배치합니다. 벽면, 책상, 선반 등 시선이 머무는 곳마다 정보가 자리를 잡습니다.</p>
+              <div class="memory-role">
+                <span>포인트</span>
+                <strong data-book-role>핫스팟에 핵심 개념을 자동 배치</strong>
+              </div>
+              <p class="pdf-slot" data-book-pdfnote>배치된 내용은 직접 수정할 수도 있습니다.</p>
+              <div class="book-footer"><span>04 / 06</span><span>Placement</span></div>
+            </div>
+          </article>
+          <article class="book-page" data-density="soft" data-book-page data-page-index="4">
+            <div class="book-page-inner">
+              <div class="book-meta"><span>STEP 05</span><span>WALK</span></div>
+              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">歩</span></div>
+              <p class="book-kicker" data-book-landmark>3D 산책</p>
+              <h3 class="book-page-title" data-book-title>공간을 걸어다니며 외웁니다</h3>
+              <p class="book-page-desc" data-book-desc>1인칭 시점으로 공간을 자유롭게 거닐며 핫스팟을 클릭해 봅니다. 정해진 동선을 반복하면 공간의 순서가 곧 지식의 순서가 됩니다.</p>
+              <div class="memory-role">
+                <span>포인트</span>
+                <strong data-book-role>동선 = 기억의 순서 (장소법 핵심)</strong>
+              </div>
+              <p class="pdf-slot" data-book-pdfnote>마우스와 키보드로 자유롭게 이동할 수 있습니다.</p>
+              <div class="book-footer"><span>05 / 06</span><span>Walk</span></div>
+            </div>
+          </article>
+          <article class="book-page" data-density="hard" data-book-page data-page-index="5">
+            <div class="book-page-inner">
+              <div class="book-meta"><span>STEP 06</span><span>RECALL</span></div>
+              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">復</span></div>
+              <p class="book-kicker" data-book-landmark>복습 · 인출</p>
+              <h3 class="book-page-title" data-book-title>다시 떠올리며 기억을 굳힙니다</h3>
+              <p class="book-page-desc" data-book-desc>시간이 지난 뒤 같은 공간을 다시 찾습니다. 핫스팟의 내용을 먼저 떠올린 다음 확인하는 능동적 회상으로 장기 기억이 단단해집니다.</p>
+              <div class="memory-role">
+                <span>포인트</span>
+                <strong data-book-role>망각 곡선에 맞춘 복습 알림 제공</strong>
+              </div>
+              <p class="pdf-slot" data-book-pdfnote>문서를 더할수록 나만의 기억의 궁전이 넓어집니다.</p>
+              <div class="book-footer"><span>06 / 06</span><span>Recall</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+      <div class="book-nav-strip" aria-label="체험 순서 진행 정보">
+        <div class="book-progress"><span id="bookProgressBar"></span></div>
+        <div class="book-dots" id="bookDots" aria-label="단계 바로가기">
+            <button type="button" class="book-dot is-active" data-book-dot="0" aria-label="1단계로 이동">1</button><button type="button" class="book-dot" data-book-dot="1" aria-label="2단계로 이동">2</button><button type="button" class="book-dot" data-book-dot="2" aria-label="3단계로 이동">3</button><button type="button" class="book-dot" data-book-dot="3" aria-label="4단계로 이동">4</button><button type="button" class="book-dot" data-book-dot="4" aria-label="5단계로 이동">5</button><button type="button" class="book-dot" data-book-dot="5" aria-label="6단계로 이동">6</button>
+          </div>
+        <p class="book-source" id="bookSourceText"><strong>6단계로 체험하는 기억의 궁전</strong><br>업로드부터 복습까지, 공간이 기억을 만듭니다.</p>
       </div>
     </div>
   </div>
 </section>
-
-<!-- BAND -->
-<div class="band">
-  <p class="reveal">기억의 길은 하나의 선으로 이어집니다.<br>
-  <span class="hl">지식은 그 흐름 위에서</span> 오래 남습니다.</p>
-</div>
 
 <!-- PDF UPLOAD : 백엔드 연결 지점 -->
 <section class="section section-wide" id="upload">
@@ -3067,7 +3966,7 @@ end of keeper CSS */
             <div class="upload-icon" aria-hidden="true">PDF</div>
             <h3 class="upload-title">PDF를 이곳에 놓거나 선택하세요</h3>
             <p class="upload-desc">
-              드래그 앤 드롭 또는 클릭하여 PDF 파일을 업로드할 수 있습니다.
+              드래그 앤 드롭 또는 클릭하여 PDF 파일을 업로드할 수 있습니다.<br>
               선택한 자료는 기억의 책을 여는 첫 번째 재료가 됩니다.
             </p>
             <div class="file-chip" id="fileChip"><span>선택된 파일</span><strong>아직 없음</strong></div>
@@ -3077,6 +3976,29 @@ end of keeper CSS */
             <button type="button" class="ghost-btn" id="choosePdfBtn">PDF 선택하기</button>
             <button type="submit" class="upload-button" id="uploadPdfBtn" disabled>업로드 시작</button>
             <button type="button" class="remove-pdf-btn" id="removePdfBtn" disabled>선택 해제</button>
+          </div>
+
+          <!-- 업로드 로딩 오버레이 -->
+          <div class="upload-loading-overlay" id="uploadLoadingOverlay" aria-live="polite">
+            <div class="loading-spinner" id="loadingSpinner"></div>
+            <div class="loading-complete-icon" id="loadingCompleteIcon">✓</div>
+            <h3 class="loading-title" id="loadingTitle">PDF를 전송하고 있습니다</h3>
+            <p class="loading-sub" id="loadingSub">파일을 백엔드 서버로 보내는 중입니다. 잠시만 기다려 주세요.</p>
+            <div class="loading-progress-wrap">
+              <div class="loading-progress-track">
+                <span class="loading-progress-bar" id="loadingProgressBar"></span>
+              </div>
+              <div class="loading-progress-text">
+                <span id="loadingStage">파일 전송 중</span>
+                <span id="loadingPercent">0%</span>
+              </div>
+            </div>
+            <ul class="loading-steps">
+              <li id="lstep0" class="is-active"><span class="lstep-dot"></span>파일 전송</li>
+              <li id="lstep1"><span class="lstep-dot"></span>서버 수신</li>
+              <li id="lstep2"><span class="lstep-dot"></span>분석 처리</li>
+              <li id="lstep3"><span class="lstep-dot"></span>기억 페이지 생성</li>
+            </ul>
           </div>
         </div>
       </form>
@@ -3095,9 +4017,8 @@ end of keeper CSS */
         </p>
         <ul class="upload-steps" id="uploadSteps">
           <li><span class="step-dot"></span>PDF 선택</li>
-          <li><span class="step-dot"></span>텍스트·이미지 추출</li>
-          <li><span class="step-dot"></span>개념 그래프 인덱싱</li>
-          <li><span class="step-dot"></span>방 구성 완료</li>
+          <li><span class="step-dot"></span>자료 보내기</li>
+          <li><span class="step-dot"></span>기억 페이지 만들기</li>
         </ul>
         <pre class="api-response" id="apiResponse" hidden>API 응답 대기 중</pre>
       </aside>
@@ -3105,248 +4026,311 @@ end of keeper CSS */
   </div>
 </section>
 
-<!-- MEMORY BOOK : 10개 랜드마크 페이지 -->
-<section class="section section-wide" id="objects">
-  <div class="panel reveal">
-    <div class="book-header">
-      <div>
-        <div class="sec-eyebrow">랜드마크 기억의 책</div>
-        <h2 class="sec-title">PDF는 열 개의 랜드마크 페이지로 기억됩니다</h2>
-        <p class="sec-body">
-          업로드한 자료는 광화문에서 보신각까지 이어지는 기억의 책으로 정리됩니다.
-          각 페이지는 하나의 랜드마크이며, 그 랜드마크를 열면 직접 제작한 건물 내부로 들어가 내용을 공간에 배치합니다.
-        </p>
-      </div>
-      <div class="book-toolbar">
-        <div class="book-status-pill" id="bookStatusPill">기본 기억 루트</div>
-        <div class="book-count"><strong id="bookCurrent">01</strong> / 10</div>
-        <div class="book-controls" aria-label="기억의 책 페이지 이동">
-          <button type="button" class="round-btn" id="bookPrev" aria-label="이전 페이지">←</button>
-          <button type="button" class="round-btn" id="bookNext" aria-label="다음 페이지">→</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="book-stage-grid">
-      <div class="book-shell" id="bookShell" tabindex="0">
-        <div class="flip-book book-fallback" id="landmarkBook" aria-label="10개 랜드마크 기억의 책">
-          <article class="book-page is-active" data-density="hard" data-book-page data-page-index="0">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 01</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">光</span></div>
-              <p class="book-kicker" data-book-landmark>광화문</p>
-              <h3 class="book-page-title" data-book-title>기억의 입구</h3>
-              <p class="book-page-desc" data-book-desc>PDF의 제목, 목차, 전체 주제를 처음 통과하는 문에 배치합니다. 사용자는 이곳에서 오늘 외울 지식의 방향을 잡습니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>전체 주제와 학습 범위 배치</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>업로드한 PDF의 첫 번째 핵심 문장이 이곳에 들어갑니다.</p>
-              <div class="book-footer"><span>01 / 10</span><span>Gwanghwamun</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="soft" data-book-page data-page-index="1">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 02</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">正</span></div>
-              <p class="book-kicker" data-book-landmark>경복궁 근정전</p>
-              <h3 class="book-page-title" data-book-title>핵심 개념의 전각</h3>
-              <p class="book-page-desc" data-book-desc>문서에서 반드시 외워야 하는 정의, 공식, 주장처럼 중심이 되는 내용을 가장 큰 전각에 저장합니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>핵심 정의와 중심 주장 저장</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>PDF에서 추출된 핵심 개념 1~2개가 이 페이지에 배치됩니다.</p>
-              <div class="book-footer"><span>02 / 10</span><span>Geunjeongjeon</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="soft" data-book-page data-page-index="2">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 03</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">景</span></div>
-              <p class="book-kicker" data-book-landmark>경회루</p>
-              <h3 class="book-page-title" data-book-title>예시와 이미지의 누각</h3>
-              <p class="book-page-desc" data-book-desc>사례, 도표, 그림처럼 장면으로 떠올리기 쉬운 정보를 물가의 누각에 놓아 시각 기억을 강화합니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>예시·도표·이미지 연결</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>PDF의 예시 문장이나 도표 설명이 이곳에 들어갑니다.</p>
-              <div class="book-footer"><span>03 / 10</span><span>Gyeonghoeru</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="soft" data-book-page data-page-index="3">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 04</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">苑</span></div>
-              <p class="book-kicker" data-book-landmark>창덕궁 후원</p>
-              <h3 class="book-page-title" data-book-title>배경 맥락의 정원</h3>
-              <p class="book-page-desc" data-book-desc>직접 암기보다 이해가 필요한 배경지식과 전후 맥락을 조용한 정원 동선에 배치합니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>배경 설명과 맥락 이해</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>PDF의 배경 설명이나 문제 제기 부분이 이곳에 배치됩니다.</p>
-              <div class="book-footer"><span>04 / 10</span><span>Secret Garden</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="soft" data-book-page data-page-index="4">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 05</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">北</span></div>
-              <p class="book-kicker" data-book-landmark>북촌 한옥마을</p>
-              <h3 class="book-page-title" data-book-title>세부 키워드의 골목</h3>
-              <p class="book-page-desc" data-book-desc>작지만 중요한 용어, 이름, 수치, 분류를 골목마다 하나씩 배치해 세부 정보를 회상하게 만듭니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>세부 키워드와 분류 저장</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>키워드 목록과 짧은 정의가 이 페이지에 배치됩니다.</p>
-              <div class="book-footer"><span>05 / 10</span><span>Bukchon</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="soft" data-book-page data-page-index="5">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 06</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">川</span></div>
-              <p class="book-kicker" data-book-landmark>청계천</p>
-              <h3 class="book-page-title" data-book-title>흐름과 순서의 물길</h3>
-              <p class="book-page-desc" data-book-desc>시간순, 과정, 인과관계처럼 순서가 중요한 내용을 물길을 따라 걷듯이 저장합니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>절차와 인과관계 정리</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>PDF의 단계별 설명이나 흐름도가 이곳에 들어갑니다.</p>
-              <div class="book-footer"><span>06 / 10</span><span>Cheonggyecheon</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="soft" data-book-page data-page-index="6">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 07</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">塔</span></div>
-              <p class="book-kicker" data-book-landmark>남산서울타워</p>
-              <h3 class="book-page-title" data-book-title>개념 간 연결</h3>
-              <p class="book-page-desc" data-book-desc>높은 지점에서 도시를 내려다보듯 서로 떨어진 개념 사이의 관계를 한눈에 연결합니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>챕터 사이의 연결 관계 조망</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>비교, 연결 키워드, 관계도가 이 페이지에 배치됩니다.</p>
-              <div class="book-footer"><span>07 / 10</span><span>N Seoul Tower</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="soft" data-book-page data-page-index="7">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 08</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">漢</span></div>
-              <p class="book-kicker" data-book-landmark>한강</p>
-              <h3 class="book-page-title" data-book-title>비교와 확장</h3>
-              <p class="book-page-desc" data-book-desc>넓게 펼쳐지는 개념, 반대 관점, 장단점, 확장 사례를 강변처럼 나란히 놓습니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>비슷한 개념과 헷갈리는 개념 구분</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>비교표와 장단점 정리가 이 페이지에 들어갑니다.</p>
-              <div class="book-footer"><span>08 / 10</span><span>Hangang</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="soft" data-book-page data-page-index="8">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 09</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">構</span></div>
-              <p class="book-kicker" data-book-landmark>DDP</p>
-              <h3 class="book-page-title" data-book-title>구조화와 재해석</h3>
-              <p class="book-page-desc" data-book-desc>복잡한 표, 분류 체계, 비정형 텍스트를 현대적인 구조물처럼 다시 조립합니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>정보를 카드·표·마인드맵으로 재구성</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>분류 체계와 목차 재구성이 이곳에 배치됩니다.</p>
-              <div class="book-footer"><span>09 / 10</span><span>DDP</span></div>
-            </div>
-          </article>
-          <article class="book-page" data-density="hard" data-book-page data-page-index="9">
-            <div class="book-page-inner">
-              <div class="book-meta"><span>PAGE 10</span><span>LANDMARK ROUTE</span></div>
-              <div class="landmark-visual" aria-hidden="true"><span class="landmark-orb">鐘</span></div>
-              <p class="book-kicker" data-book-landmark>보신각</p>
-              <h3 class="book-page-title" data-book-title>최종 회상과 복습</h3>
-              <p class="book-page-desc" data-book-desc>종이 울리면 기억을 다시 불러오듯, 전체 문서를 마지막으로 복습하는 지점입니다.</p>
-              <div class="memory-role">
-                <span>기억 역할</span>
-                <strong data-book-role>핵심 요약과 복습 질문 보관</strong>
-              </div>
-              <p class="pdf-slot" data-book-pdfnote>마지막 요약과 예상 질문이 이 페이지에 들어갑니다.</p>
-              <div class="book-footer"><span>10 / 10</span><span>Bosingak</span></div>
-            </div>
-          </article>
-        </div>
-      </div>
-      <div class="book-nav-strip" aria-label="기억의 책 진행 정보">
-        <div class="book-progress"><span id="bookProgressBar"></span></div>
-        <div class="book-dots" id="bookDots" aria-label="기억 페이지 바로가기">
-            <button type="button" class="book-dot is-active" data-book-dot="0" aria-label="1페이지로 이동">1</button><button type="button" class="book-dot" data-book-dot="1" aria-label="2페이지로 이동">2</button><button type="button" class="book-dot" data-book-dot="2" aria-label="3페이지로 이동">3</button><button type="button" class="book-dot" data-book-dot="3" aria-label="4페이지로 이동">4</button><button type="button" class="book-dot" data-book-dot="4" aria-label="5페이지로 이동">5</button><button type="button" class="book-dot" data-book-dot="5" aria-label="6페이지로 이동">6</button><button type="button" class="book-dot" data-book-dot="6" aria-label="7페이지로 이동">7</button><button type="button" class="book-dot" data-book-dot="7" aria-label="8페이지로 이동">8</button><button type="button" class="book-dot" data-book-dot="8" aria-label="9페이지로 이동">9</button><button type="button" class="book-dot" data-book-dot="9" aria-label="10페이지로 이동">10</button>
-          </div>
-        <p class="book-source" id="bookSourceText"><strong>PDF 연결 대기</strong><br>업로드가 완료되면 기억의 책 문구가 갱신됩니다.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- SPACES -->
 <section class="section" id="spaces">
   <div class="panel reveal">
-    <div class="sec-eyebrow">두 번째 이야기</div>
-    <h2 class="sec-title">랜드마크 안으로 들어가면, 직접 지은 공간이 펼쳐집니다</h2>
+    <div class="sec-eyebrow">공간 프리셋</div>
+    <h2 class="sec-title">구역별로 준비된 다채로운 공간 프리셋을 둘러보세요</h2>
     <p class="sec-body">
-      기억의 책에서 랜드마크를 선택하면, 우리가 직접 제작한 건물 내부로 들어갑니다.
-      그 안은 여섯 개의 전각으로 나뉘어 각 공간이 하나의 지식 영역을 담습니다.
-      광화문에서 시작해 향원정의 쉼에 이르기까지 — 당신의 동선이 곧 당신만의 기억 지도가 됩니다.
+      내 문서와 가장 어울리는 기억의 공간은 어디일까요?<br>
+      다양한 콘셉트로 나누어진 랜드마크 프리셋들을 가볍게 살펴보세요.
+      '이런 공간도 있구나' 하고 편하게 둘러보신 후,
+      당신만의 기억 지도를 그려나갈 마음에 드는 테마를 자유롭게 골라보세요.
     </p>
-    <div class="detail-grid" id="spacesCarousel">
-      <div class="carousel-track" id="spacesTrack">
-        <div class="detail-item">
-          <div class="detail-num">光化門</div>
-          <div class="detail-title">광화문 — 입구</div>
-          <div class="detail-desc">궁전의 시작. 온보딩과 안내가 이루어지는 첫 관문.</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-num">勤政殿</div>
-          <div class="detail-title">근정전 — 본전</div>
-          <div class="detail-desc">핵심 지식의 전당. 가장 중요한 아카이브가 머무는 곳.</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-num">慶會樓</div>
-          <div class="detail-title">경회루 — 갤러리</div>
-          <div class="detail-desc">물 위의 미디어 공간. 이미지와 영상이 흐르는 누각.</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-num">康寧殿</div>
-          <div class="detail-title">강녕전 — 서재</div>
-          <div class="detail-desc">깊이 읽고 쓰는 학습 공간. 아티클과 노트의 처소.</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-num">香遠亭</div>
-          <div class="detail-title">향원정 — 쉼</div>
-          <div class="detail-desc">연못 위의 정자. 음악과 계절이 머무는 휴식의 자리.</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-num">集玉齋</div>
-          <div class="detail-title">집옥재 — 서고</div>
-          <div class="detail-desc">모든 기록의 보관소. 검색과 자료의 깊은 서가.</div>
+    <div class="region-carousel" id="regionCarousel">
+      <div class="region-carousel-inner">
+        <button type="button" class="carousel-arrow carousel-prev" aria-label="이전 시/도 보기">‹</button>
+        <button type="button" class="carousel-arrow carousel-next" aria-label="다음 시/도 보기">›</button>
+        <div class="carousel-track-wrap" id="regionTrackWrap">
+          <div class="carousel-track" id="regionTrack">
+          <button type="button" class="region-tab" data-region="seoul"><span class="tab-icon">🏯</span><span class="tab-name">서울특별시</span><span class="tab-count">1곳</span></button>
+          <button type="button" class="region-tab" data-region="busan"><span class="tab-icon">🌊</span><span class="tab-name">부산광역시</span><span class="tab-count">1곳</span></button>
+          <button type="button" class="region-tab" data-region="daegu"><span class="tab-icon">🎵</span><span class="tab-name">대구광역시</span><span class="tab-count">1곳</span></button>
+          <button type="button" class="region-tab" data-region="incheon"><span class="tab-icon">⚓</span><span class="tab-name">인천광역시</span><span class="tab-count">1곳</span></button>
+          <button type="button" class="region-tab" data-region="gwangju"><span class="tab-icon">🎨</span><span class="tab-name">광주광역시</span><span class="tab-count">1곳</span></button>
+          <button type="button" class="region-tab" data-region="daejeon"><span class="tab-icon">🔬</span><span class="tab-name">대전광역시</span><span class="tab-count">1곳</span></button>
+          <button type="button" class="region-tab" data-region="ulsan"><span class="tab-icon">🐋</span><span class="tab-name">울산광역시</span><span class="tab-count">1곳</span></button>
+          <button type="button" class="region-tab" data-region="sejong"><span class="tab-icon">🏛</span><span class="tab-name">세종특별자치시</span><span class="tab-count">1곳</span></button>
+          <button type="button" class="region-tab" data-region="gyeonggi"><span class="tab-icon">🏙</span><span class="tab-name">경기도</span><span class="tab-count">27곳</span></button>
+          <button type="button" class="region-tab" data-region="gangwon"><span class="tab-icon">⛰</span><span class="tab-name">강원특별자치도</span><span class="tab-count">7곳</span></button>
+          <button type="button" class="region-tab" data-region="chungbuk"><span class="tab-icon">🌾</span><span class="tab-name">충청북도</span><span class="tab-count">3곳</span></button>
+          <button type="button" class="region-tab" data-region="chungnam"><span class="tab-icon">🌅</span><span class="tab-name">충청남도</span><span class="tab-count">8곳</span></button>
+          <button type="button" class="region-tab" data-region="jeonbuk"><span class="tab-icon">🍚</span><span class="tab-name">전북특별자치도</span><span class="tab-count">6곳</span></button>
+          <button type="button" class="region-tab" data-region="jeonnam"><span class="tab-icon">🌿</span><span class="tab-name">전라남도</span><span class="tab-count">5곳</span></button>
+          <button type="button" class="region-tab" data-region="gyeongbuk"><span class="tab-icon">🛕</span><span class="tab-name">경상북도</span><span class="tab-count">10곳</span></button>
+          <button type="button" class="region-tab" data-region="gyeongnam"><span class="tab-icon">🚢</span><span class="tab-name">경상남도</span><span class="tab-count">8곳</span></button>
+          <button type="button" class="region-tab" data-region="jeju"><span class="tab-icon">🌋</span><span class="tab-name">제주특별자치도</span><span class="tab-count">2곳</span></button>
+          </div>
         </div>
       </div>
-      <div class="carousel-controls">
-        <button class="carousel-prev" id="spacesCarouselPrev" aria-label="이전">‹</button>
-        <button class="carousel-dot is-active" data-carousel-dot="0"></button>
-        <button class="carousel-dot" data-carousel-dot="1"></button>
-        <button class="carousel-dot" data-carousel-dot="2"></button>
-        <button class="carousel-dot" data-carousel-dot="3"></button>
-        <button class="carousel-dot" data-carousel-dot="4"></button>
-        <button class="carousel-dot" data-carousel-dot="5"></button>
-        <span class="carousel-counter" id="spacesCounter">1 / 6</span>
-        <button class="carousel-next" id="spacesCarouselNext" aria-label="다음">›</button>
+
+      <div class="region-panels" id="regionPanels">
+        <!-- 서울특별시 (1) -->
+        <div class="region-panel" data-region="seoul">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">종로구</div><div class="city-lm">경복궁</div><div class="city-desc">조선의 법궁(1395). 종로구의 대표 궁궐.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 부산광역시 (1) -->
+        <div class="region-panel" data-region="busan">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">해운대구</div><div class="city-lm">해운대해수욕장</div><div class="city-desc">고운 백사장과 고층 스카이라인이 어우러진 대표 해변.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 대구광역시 (1) -->
+        <div class="region-panel" data-region="daegu">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">중구</div><div class="city-lm">김광석 다시그리기길</div><div class="city-desc">가수 김광석을 추모하는 벽화와 음악의 골목.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 인천광역시 (1) -->
+        <div class="region-panel" data-region="incheon">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">중구</div><div class="city-lm">차이나타운</div><div class="city-desc">개항기에 형성된 국내 최대 화교 거리.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 광주광역시 (1) -->
+        <div class="region-panel" data-region="gwangju">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">동구</div><div class="city-lm">국립아시아문화전당</div><div class="city-desc">옛 전남도청 자리에 들어선 복합 문화예술 공간.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 대전광역시 (1) -->
+        <div class="region-panel" data-region="daejeon">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">유성구</div><div class="city-lm">엑스포과학공원</div><div class="city-desc">1993 대전엑스포를 상징하는 탑과 과학 공원.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 울산광역시 (1) -->
+        <div class="region-panel" data-region="ulsan">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">동구</div><div class="city-lm">대왕암공원</div><div class="city-desc">기암괴석과 해송림이 어우러진 해안 절경 공원.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 세종특별자치시 (1) -->
+        <div class="region-panel" data-region="sejong">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">어진동</div><div class="city-lm">정부세종청사</div><div class="city-desc">중앙행정기관이 모여 있는 행정도시의 중심.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 경기도 (27) -->
+        <div class="region-panel" data-region="gyeonggi">
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">경기 북부</div><div class="subgroup-count">8곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">고양시</div><div class="city-lm">일산호수공원</div><div class="city-desc">도심 속 국내 최대급 인공 호수공원.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">남양주시</div><div class="city-lm">다산유적지</div><div class="city-desc">실학자 정약용의 생가와 묘가 있는 유적지.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">파주시</div><div class="city-lm">임진각·평화누리공원</div><div class="city-desc">분단의 상징과 평화 공원.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">김포시</div><div class="city-lm">애기봉평화생태공원</div><div class="city-desc">한강 하구 너머 북녘이 보이는 전망 공원.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">의정부시</div><div class="city-lm">부대찌개거리</div><div class="city-desc">의정부의 명물 부대찌개 원조 골목.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">양주시</div><div class="city-lm">회암사지</div><div class="city-desc">고려 말 최대 규모를 자랑하던 절터 유적.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">포천시</div><div class="city-lm">산정호수</div><div class="city-desc">명성산 자락을 비추는 그림 같은 호수.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">동두천시</div><div class="city-lm">소요산</div><div class="city-desc">경기의 소금강이라 불리는 산.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">경기 남부</div><div class="subgroup-count">19곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">수원시</div><div class="city-lm">수원화성</div><div class="city-desc">정조가 축조한 유네스코 세계유산 성곽.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">용인시</div><div class="city-lm">에버랜드</div><div class="city-desc">국내 최대 규모의 종합 테마파크.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">성남시</div><div class="city-lm">판교테크노밸리</div><div class="city-desc">국내 IT 기업이 밀집한 첨단산업 단지.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">부천시</div><div class="city-lm">아인스월드</div><div class="city-desc">세계 유명 건축물을 미니어처로 재현.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">화성시</div><div class="city-lm">궁평항</div><div class="city-desc">낙조가 아름다운 서해의 항구.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">안산시</div><div class="city-lm">대부도</div><div class="city-desc">갯벌·포도·해솔길로 유명한 서해의 큰 섬.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">평택시</div><div class="city-lm">평택호 관광단지</div><div class="city-desc">넓은 호수를 낀 산책로의 관광지.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">안양시</div><div class="city-lm">안양예술공원</div><div class="city-desc">계곡을 따라 현대 미술 조형물이 놓인 공원.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">시흥시</div><div class="city-lm">오이도</div><div class="city-desc">빨간 등대와 조개구이로 유명한 서해 관광지.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">광주시</div><div class="city-lm">남한산성</div><div class="city-desc">유네스코 세계유산 산성.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">하남시</div><div class="city-lm">미사경정공원</div><div class="city-desc">한강 변 조정 경기장을 낀 시민 공원.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">광명시</div><div class="city-lm">광명동굴</div><div class="city-desc">폐광을 빛과 예술로 단장한 동굴 테마파크.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">군포시</div><div class="city-lm">수리산 철쭉동산</div><div class="city-desc">봄이면 철쭉이 산자락을 물들이는 명소.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">오산시</div><div class="city-lm">물향기수목원</div><div class="city-desc">주제별 정원과 습지를 갖춘 도립 수목원.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">이천시</div><div class="city-lm">이천예스파크</div><div class="city-desc">도자 공방과 갤러리가 모인 도예 예술 마을.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">안성시</div><div class="city-lm">안성팜랜드</div><div class="city-desc">드넓은 초지와 목장 체험의 농촌 테마파크.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">의왕시</div><div class="city-lm">왕송호수</div><div class="city-desc">레일바이크와 조류생태원을 낀 큰 호수.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">여주시</div><div class="city-lm">신륵사</div><div class="city-desc">남한강 변에 자리한 천년 고찰.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">과천시</div><div class="city-lm">서울대공원</div><div class="city-desc">동물원과 식물원을 갖춘 대규모 가족 공원.</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 강원특별자치도 (7) -->
+        <div class="region-panel" data-region="gangwon">
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">영서</div><div class="subgroup-count">3곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">춘천시</div><div class="city-lm">남이섬</div><div class="city-desc">메타세쿼이아 길과 강변 풍경으로 사랑받는 섬.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">원주시</div><div class="city-lm">소금산 출렁다리</div><div class="city-desc">협곡을 가로지르는 출렁다리와 잔도 명소.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">태백시</div><div class="city-lm">태백산·천제단</div><div class="city-desc">주목 군락과 영봉 일출로 유명한 명산.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">영동</div><div class="subgroup-count">4곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">강릉시</div><div class="city-lm">경포대·경포해변</div><div class="city-desc">동해를 대표하는 호수와 백사장 명소.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">동해시</div><div class="city-lm">추암 촛대바위</div><div class="city-desc">애국가 일출 영상의 배경으로 유명한 기암.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">속초시</div><div class="city-lm">설악산·권금성</div><div class="city-desc">동해를 굽어보는 명산과 케이블카.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">삼척시</div><div class="city-lm">환선굴·대금굴</div><div class="city-desc">대이리 일대의 대규모 석회 동굴.</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 충청북도 (3) -->
+        <div class="region-panel" data-region="chungbuk">
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">청주시</div><div class="city-lm">고인쇄박물관</div><div class="city-desc">세계 最古 금속활자본 '직지'의 인쇄 유산.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">충주시</div><div class="city-lm">충주호</div><div class="city-desc">유람선이 오가는 거대한 인공 호수.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">제천시</div><div class="city-lm">청풍호·청풍문화재단지</div><div class="city-desc">수몰을 피해 옮겨 복원한 문화재와 호반.</div></div></div>
+            </div>
+        </div>
+
+        <!-- 충청남도 (8) -->
+        <div class="region-panel" data-region="chungnam">
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">천안·아산권</div><div class="subgroup-count">2곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">천안시</div><div class="city-lm">독립기념관</div><div class="city-desc">민족의 독립운동사를 집대성한 기념관.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">아산시</div><div class="city-lm">온양온천</div><div class="city-desc">국내에서 가장 오래된 온천으로 전한다.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">내륙권</div><div class="subgroup-count">3곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">공주시</div><div class="city-lm">공산성</div><div class="city-desc">백제 웅진 도읍기의 유네스코 세계유산 성곽.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">논산시</div><div class="city-lm">관촉사 은진미륵</div><div class="city-desc">국내 최대급 석조 미륵불이 있는 사찰.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">계룡시</div><div class="city-lm">계룡산 신도안</div><div class="city-desc">조선 천도 후보지로 거론되던 옛 도읍 터.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">서해안권</div><div class="subgroup-count">3곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">보령시</div><div class="city-lm">대천해수욕장</div><div class="city-desc">머드 축제로 세계에 알려진 서해 대표 해변.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">서산시</div><div class="city-lm">마애여래삼존상</div><div class="city-desc">'백제의 미소'로 불리는 국보 마애불.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">당진시</div><div class="city-lm">왜목마을</div><div class="city-desc">일출과 일몰을 함께 볼 수 있는 해안 명소.</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 전북특별자치도 (6) -->
+        <div class="region-panel" data-region="jeonbuk">
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">도심·서부권</div><div class="subgroup-count">4곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">전주시</div><div class="city-lm">전주한옥마을</div><div class="city-desc">수백 채의 한옥이 모인 국내 대표 한옥 군락.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">군산시</div><div class="city-lm">경암동 철길마을</div><div class="city-desc">옛 철길을 따라 집이 늘어선 추억의 마을.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">익산시</div><div class="city-lm">미륵사지·석탑</div><div class="city-desc">국내 최대·最古 석탑이 있는 유네스코 백제 유적.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">김제시</div><div class="city-lm">벽골제</div><div class="city-desc">국내에서 가장 오래된 저수지 유적.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">남부권</div><div class="subgroup-count">2곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">정읍시</div><div class="city-lm">내장산</div><div class="city-desc">가을 단풍으로 전국에 이름난 명산.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">남원시</div><div class="city-lm">광한루원</div><div class="city-desc">춘향전의 배경이 된 누각과 정원.</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 전라남도 (5) -->
+        <div class="region-panel" data-region="jeonnam">
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">서남권</div><div class="subgroup-count">2곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">목포시</div><div class="city-lm">유달산</div><div class="city-desc">노적봉과 함께 목포를 상징하는 진산.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">나주시</div><div class="city-lm">나주읍성·금학헌</div><div class="city-desc">조선 목사가 집무하던 관아와 내아.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">동남·남해안권</div><div class="subgroup-count">3곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">여수시</div><div class="city-lm">여수 밤바다</div><div class="city-desc">노래로 유명해진 항구의 야경.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">순천시</div><div class="city-lm">순천만 습지</div><div class="city-desc">세계적으로 손꼽히는 연안 갈대 습지.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">광양시</div><div class="city-lm">매화마을</div><div class="city-desc">봄이면 매화가 산자락을 뒤덮는 명소.</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 경상북도 (10) -->
+        <div class="region-panel" data-region="gyeongbuk">
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">도심·동해안권</div><div class="subgroup-count">3곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">포항시</div><div class="city-lm">호미곶 상생의 손</div><div class="city-desc">한반도 동쪽 끝에서 일출을 맞는 명소.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">경주시</div><div class="city-lm">불국사</div><div class="city-desc">유네스코 세계문화유산. 신라 불교예술의 정수.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">구미시</div><div class="city-lm">금오산·케이블카</div><div class="city-desc">구미의 진산으로 케이블카가 오른다.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">내륙권</div><div class="subgroup-count">7곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">김천시</div><div class="city-lm">직지사</div><div class="city-desc">황악산 자락에 자리한 천년 대찰.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">안동시</div><div class="city-lm">하회마을</div><div class="city-desc">유네스코에 등재된 전통 씨족 마을.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">영주시</div><div class="city-lm">부석사</div><div class="city-desc">무량수전으로 유명한 유네스코 등재 산사.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">영천시</div><div class="city-lm">은해사</div><div class="city-desc">팔공산 자락에 자리한 큰 사찰.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">상주시</div><div class="city-lm">경천대</div><div class="city-desc">낙동강 절경을 굽어보는 전망대.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">문경시</div><div class="city-lm">문경새재</div><div class="city-desc">영남대로의 옛 관문이 남은 고갯길.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">경산시</div><div class="city-lm">갓바위</div><div class="city-desc">소원을 들어준다는 영험한 기도처.</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 경상남도 (8) -->
+        <div class="region-panel" data-region="gyeongnam">
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">내륙권</div><div class="subgroup-count">5곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">창원시</div><div class="city-lm">진해 군항제</div><div class="city-desc">여좌천과 경화역을 물들이는 국내 최대 벚꽃 축제.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">진주시</div><div class="city-lm">진주성·촉석루</div><div class="city-desc">임진왜란 진주대첩의 현장과 남강변 누각.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">김해시</div><div class="city-lm">수로왕릉</div><div class="city-desc">가락국 시조 김수로왕이 잠든 무덤.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">밀양시</div><div class="city-lm">영남루</div><div class="city-desc">밀양강을 굽어보는 국보급 누각.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">양산시</div><div class="city-lm">통도사</div><div class="city-desc">부처의 진신사리를 모신 유네스코 등재 산사.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">남해안권</div><div class="subgroup-count">3곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">통영시</div><div class="city-lm">동피랑 벽화마을</div><div class="city-desc">언덕 골목을 수놓은 벽화 마을.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">사천시</div><div class="city-lm">바다케이블카</div><div class="city-desc">바다와 산을 함께 잇는 케이블카.</div></div></div>
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">거제시</div><div class="city-lm">외도 보타니아</div><div class="city-desc">바다 위 식물 정원으로 꾸민 섬.</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 제주특별자치도 (2) -->
+        <div class="region-panel" data-region="jeju">
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">제주시</div><div class="subgroup-count">1곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">제주시</div><div class="city-lm">한라산(백록담)</div><div class="city-desc">남한 최고봉이자 유네스코 세계자연유산.</div></div></div>
+            </div>
+          </div>
+
+          <div class="region-subgroup">
+            <div class="subgroup-header"><div class="subgroup-title">서귀포시</div><div class="subgroup-count">1곳</div></div>
+            <div class="city-grid">
+              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">서귀포시</div><div class="city-lm">천지연폭포</div><div class="city-desc">도심 가까이서 만나는 빼어난 폭포.</div></div></div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div class="region-total">총 84개 랜드마크 · 17개 시·도</div>
     </div>
   </div>
 </section>
@@ -3355,7 +4339,7 @@ end of keeper CSS */
 <section class="section" id="philosophy">
   <div class="panel reveal memory-lab-panel">
     <div class="memory-lab-head">
-      <div class="sec-eyebrow">세 번째 이야기</div>
+      <div class="sec-eyebrow">기억의 좌표실</div>
       <h2 class="sec-title">기억은 좌표가 생길 때 오래 남습니다</h2>
       <p class="sec-body">
         이곳은 기억의 궁전이 단순한 분위기형 웹사이트가 아니라, PDF를 공간·동선·회상 구조로 바꾸는 장치임을 보여주는 좌표실입니다.
@@ -3407,7 +4391,7 @@ end of keeper CSS */
 <!-- 3D 둘러보기 -->
 <section class="section section-wide" id="explore">
   <div class="panel reveal">
-    <div class="sec-eyebrow">세 번째 이야기</div>
+    <div class="sec-eyebrow">3D 둘러보기</div>
     <h2 class="sec-title">기억의 궁전을 직접 둘러보세요</h2>
     <p class="sec-body">
       기억의 책에서 만난 랜드마크 안으로 들어갑니다. 직접 제작한 건물 내부를 걸으며,
@@ -3423,8 +4407,7 @@ end of keeper CSS */
 
     <div class="explore-actions">
       <button type="button" id="exploreFullscreenBtn" hidden>전체 화면으로 보기</button>
-      <a href="region-select.html" class="explore-primary" style="font-weight:800">🗺 어디에 지을지 둘러보기 (84개 도시) →</a>
-      <a href="https://3d-mindpalace-ai-fxf8dyfqega3hvbp.canadacentral-01.azurewebsites.net/legacy/vworld_map.html?city=jongno&lite=0" target="_blank" rel="noopener">종로 3D 지도 새 탭 ↗</a>
+      <a href="https://3d-mindpalace-ai-fxf8dyfqega3hvbp.canadacentral-01.azurewebsites.net/legacy/region-select.html" target="_blank" rel="noopener">새 탭에서 열기 ↗</a>
     </div>
   </div>
 </section>
@@ -3451,23 +4434,18 @@ end of keeper CSS */
         <p class="scroll-line">지금 첫 방을 열어보세요.</p>
       </div>
       <a class="cta-btn" href="#upload">시작하기 →</a>
-      <a class="cta-sub" href="region-select.html" style="display:block;margin-top:14px;color:inherit;opacity:.82;font-size:14px;text-decoration:underline">또는, 어디에 지을지 먼저 둘러보기 →</a>
     </div>
     <div class="scroll-rod scroll-rod--bottom"></div>
     <div class="footer-note">記憶宮殿 · Memory Palace, Seoul</div>
   </div>
 </section>
 
-  </div><!-- /.content-main -->
+</div><!-- /.content-main -->
 </div><!-- /.content-layout -->
 
 </div><!-- /.page -->
 
-<!-- 성능 토글 -->
-<button type="button" class="perf-toggle" id="perfToggleBtn" aria-pressed="false">
-  <span class="perf-dot" aria-hidden="true"></span>
-  <span id="perfToggleLabel">가벼운 모드</span>
-</button>
+<!-- 성능 토글 제거: 가벼운 모드 상시 적용 -->
 
 <!-- 기억 창고지기 → 스마트폰 챗봇으로 통합됨 -->
 
@@ -3479,55 +4457,17 @@ end of keeper CSS */
      - 모든 캔버스 애니메이션은 visibleRafLoop()로 등록:
        화면 밖이거나 탭이 숨겨지면 자동 정지, 라이트 모드에서는 30fps 제한 */
   const PERF = (function () {
-    const params = new URLSearchParams(location.search);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const lowDevice =
-      (navigator.deviceMemory && navigator.deviceMemory <= 4) ||
-      (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
-      /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-
-    let saved = null;
-    try { saved = localStorage.getItem('mp-perf-lite'); } catch (_) {}
-
-    let lite;
-    if (params.get('lite') === '1') lite = true;
-    else if (params.get('lite') === '0') lite = false;
-    else if (saved === '1') lite = true;
-    else if (saved === '0') lite = false;
-    else lite = reducedMotion || lowDevice;
-
     const listeners = [];
     function apply() {
-      document.body.classList.toggle('perf-lite', lite);
-      listeners.forEach((fn) => { try { fn(lite); } catch (_) {} });
+      document.body.classList.add('perf-lite');
+      listeners.forEach((fn) => { try { fn(true); } catch (_) {} });
     }
-
-    /* 프레임 시간이 계속 느리면 자동으로 라이트 모드 진입 */
-    let slowFrames = 0;
-    let lastT = performance.now();
-    function watchdog(now) {
-      const dt = now - lastT;
-      lastT = now;
-      if (!lite && dt > 50 && dt < 1000) {
-        slowFrames += 1;
-        if (slowFrames > 90) { lite = true; apply(); return; }
-      } else if (dt <= 50) {
-        slowFrames = Math.max(0, slowFrames - 1);
-      }
-      requestAnimationFrame(watchdog);
-    }
-    requestAnimationFrame(watchdog);
-
     return {
-      get lite() { return lite; },
+      get lite() { return true; },
       reducedMotion,
       onChange(fn) { listeners.push(fn); },
-      toggle() {
-        lite = !lite;
-        try { localStorage.setItem('mp-perf-lite', lite ? '1' : '0'); } catch (_) {}
-        slowFrames = 0;
-        apply();
-      },
+      toggle() {},
       init: apply
     };
   })();
@@ -3841,45 +4781,61 @@ end of keeper CSS */
 
   document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
-  /* ═══════ 전각 캐러셀 ═══════ */
-  (function initSpacesCarousel() {
-    const track = document.getElementById('spacesTrack');
-    const dots = document.querySelectorAll('#spacesCarousel [data-carousel-dot]');
-    const counter = document.getElementById('spacesCounter');
-    const prevBtn = document.getElementById('spacesCarouselPrev');
-    const nextBtn = document.getElementById('spacesCarouselNext');
-    if (!track) return;
-    const items = track.querySelectorAll('.detail-item');
-    const total = items.length;
-    let current = 0;
-    let autoTimer = null;
+  /* ═══════ 시/도 캐러셀 + 탭 ═══════ */
+  (function initRegionCarousel() {
+    const carousel = document.getElementById('regionCarousel');
+    if (!carousel) return;
+    const trackWrap = carousel.querySelector('.carousel-track-wrap');
+    const track = carousel.querySelector('.carousel-track');
+    const prev = carousel.querySelector('.carousel-prev');
+    const next = carousel.querySelector('.carousel-next');
+    const tabs = Array.from(track.querySelectorAll('.region-tab'));
+    const panels = Array.from(document.querySelectorAll('.region-panel'));
+    if (!tabs.length || !panels.length) return;
 
-    function goTo(idx) {
-      current = ((idx % total) + total) % total;
-      track.style.transform = `translateX(-${current * 100}%)`;
-      dots.forEach((d, i) => d.classList.toggle('is-active', i === current));
-      if (counter) counter.textContent = `${current + 1} / ${total}`;
-      resetAuto();
-    }
-
-    function resetAuto() {
-      clearInterval(autoTimer);
-      autoTimer = setInterval(() => goTo(current + 1), 4000);
-    }
-
-    prevBtn?.addEventListener('click', () => goTo(current - 1));
-    nextBtn?.addEventListener('click', () => goTo(current + 1));
-    dots.forEach(d => d.addEventListener('click', () => goTo(Number(d.dataset.carouselDot))));
-    items.forEach((item, i) => item.addEventListener('click', () => goTo(i + 1)));
-
-    const carouselEl = document.getElementById('spacesCarousel');
-    const carouselObs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) { resetAuto(); }
-        else { clearInterval(autoTimer); autoTimer = null; }
+    function setActive(regionId, opts) {
+      opts = opts || {};
+      tabs.forEach(t => {
+        const on = t.dataset.region === regionId;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
-    }, { threshold: 0.3 });
-    carouselObs.observe(carouselEl);
+      panels.forEach(p => {
+        p.classList.toggle('is-active', p.dataset.region === regionId);
+      });
+      if (opts.scrollIntoTab !== false) {
+        const activeTab = tabs.find(t => t.dataset.region === regionId);
+        if (activeTab) {
+          const tw = trackWrap.getBoundingClientRect();
+          const ab = activeTab.getBoundingClientRect();
+          if (ab.left < tw.left + 8 || ab.right > tw.right - 8) {
+            const target = activeTab.offsetLeft - (trackWrap.clientWidth - activeTab.offsetWidth) / 2;
+            trackWrap.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+          }
+        }
+      }
+    }
+
+    tabs.forEach(t => {
+      t.addEventListener('click', () => setActive(t.dataset.region));
+    });
+
+    function updateArrows() {
+      const max = trackWrap.scrollWidth - trackWrap.clientWidth - 1;
+      prev.classList.toggle('is-disabled', trackWrap.scrollLeft <= 0);
+      next.classList.toggle('is-disabled', trackWrap.scrollLeft >= max);
+    }
+    function step(dir) {
+      const amount = Math.max(160, trackWrap.clientWidth * 0.7) * dir;
+      trackWrap.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+    prev.addEventListener('click', () => step(-1));
+    next.addEventListener('click', () => step(1));
+    trackWrap.addEventListener('scroll', updateArrows, { passive: true });
+    window.addEventListener('resize', updateArrows);
+
+    setActive(tabs[0].dataset.region, { scrollIntoTab: false });
+    requestAnimationFrame(updateArrows);
   })();
 
   const memoryLabContent = {
@@ -4334,83 +5290,174 @@ end of keeper CSS */
     if (!usingStPageFlip) initMemoryBook();
   });
 
+  const PALACE_3D_URL = 'https://3d-mindpalace-ai-fxf8dyfqega3hvbp.canadacentral-01.azurewebsites.net';
+
+  /* ── 로딩 오버레이 요소 ── */
+  const loadingOverlay = document.getElementById('uploadLoadingOverlay');
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  const loadingCompleteIcon = document.getElementById('loadingCompleteIcon');
+  const loadingTitle = document.getElementById('loadingTitle');
+  const loadingSub = document.getElementById('loadingSub');
+  const loadingProgressBar = document.getElementById('loadingProgressBar');
+  const loadingStage = document.getElementById('loadingStage');
+  const loadingPercent = document.getElementById('loadingPercent');
+  const lsteps = [0,1,2,3].map(i => document.getElementById(`lstep${i}`));
+
+  function setLoadingStep(activeIndex) {
+    lsteps.forEach((el, i) => {
+      if (!el) return;
+      el.classList.remove('is-active', 'is-done');
+      if (i < activeIndex) el.classList.add('is-done');
+      else if (i === activeIndex) el.classList.add('is-active');
+    });
+  }
+
+  function showLoadingOverlay() {
+    if (!loadingOverlay) return;
+    loadingOverlay.classList.add('is-active');
+    loadingSpinner.style.display = '';
+    loadingCompleteIcon.classList.remove('is-visible');
+    loadingProgressBar.style.width = '0%';
+    loadingPercent.textContent = '0%';
+    loadingStage.textContent = '파일 전송 중';
+    loadingTitle.textContent = 'PDF를 전송하고 있습니다';
+    loadingSub.textContent = '파일을 백엔드 서버로 보내는 중입니다. 잠시만 기다려 주세요.';
+    setLoadingStep(0);
+  }
+
+  function hideLoadingOverlay() {
+    if (loadingOverlay) loadingOverlay.classList.remove('is-active');
+  }
+
+  function setLoadingProgress(pct) {
+    const v = Math.max(0, Math.min(100, pct));
+    if (loadingProgressBar) loadingProgressBar.style.width = v + '%';
+    if (loadingPercent) loadingPercent.textContent = Math.round(v) + '%';
+  }
+
+  function showLoadingComplete(filename) {
+    loadingSpinner.style.display = 'none';
+    loadingCompleteIcon.classList.add('is-visible');
+    loadingTitle.textContent = '처리 완료!';
+    loadingSub.textContent = `${filename} 파일이 기억 페이지와 연결되었습니다.`;
+    setLoadingProgress(100);
+    loadingStage.textContent = '완료';
+    setLoadingStep(4);
+  }
+
+  function showLoadingError(msg) {
+    loadingSpinner.style.display = 'none';
+    loadingTitle.textContent = '업로드 실패';
+    loadingSub.textContent = msg || '오류가 발생했습니다. 다시 시도해 주세요.';
+    loadingStage.textContent = '오류';
+  }
+
   if (pdfForm) {
+    /* ═══════ GraphRAG 연결: PDF → 추출·인덱싱·방빌드 → palace.json → mp_palace → 이동 ═══════ */
+    // graphrag Azure 주소. 우선순위: window > localStorage > ?graphrag= > 기본값.
+    const GRAPHRAG_BASE = (
+      window.GRAPHRAG_BASE ||
+      (function(){ try { return localStorage.getItem('mp_graphrag_base'); } catch(_) { return null; } })() ||
+      new URLSearchParams(location.search).get('graphrag') ||
+      'https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net'
+    ).replace(/\/+$/, '');
+    // 처리 완료 후 이동할 곳(도시 선택 허브). 마인드팰리스 앱과 같은 출처라 mp_palace 공유됨.
+    const NEXT_URL = 'https://3d-mindpalace-ai-fxf8dyfqega3hvbp.canadacentral-01.azurewebsites.net/legacy/region-select.html';
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    // graphrag state → 로딩 오버레이 4단계(파일전송0·서버수신1·분석처리2·기억페이지생성3) + 진행% + 문구.
+    const STAGE = {
+      QUEUED:        { step: 1, pct: 35,  stage: '대기 중',         title: '처리 순서를 기다리는 중',     sub: '서버 대기열에서 차례를 기다립니다.' },
+      PREPROCESSING: { step: 1, pct: 52,  stage: '텍스트·이미지 추출', title: 'PDF에서 내용을 추출하는 중',   sub: '텍스트와 이미지를 뽑아내고 있습니다.' },
+      INDEXING:      { step: 2, pct: 72,  stage: '개념 그래프 인덱싱', title: '개념 그래프를 만드는 중',     sub: '자료가 크면 수 분 걸릴 수 있습니다.' },
+      PALACE_READY:  { step: 3, pct: 95,  stage: '방 구성',          title: '기억의 방을 구성하는 중',     sub: '추출한 개념을 방에 배치합니다.' },
+      RAG_READY:     { step: 3, pct: 98,  stage: '마무리',          title: '마무리하는 중',             sub: '' },
+      DONE:          { step: 3, pct: 100, stage: '완료',            title: '완료',                    sub: '' }
+    };
+
+    function applyStage(state) {
+      const s = STAGE[state];
+      if (!s) return;
+      setLoadingStep(s.step);
+      setLoadingProgress(s.pct);
+      if (loadingStage) loadingStage.textContent = s.stage;
+      if (loadingTitle) loadingTitle.textContent = s.title;
+      if (s.sub && loadingSub) loadingSub.textContent = s.sub;
+      if (backendState) backendState.textContent = state;
+      setUploadStep(s.step >= 3 ? 2 : 1);
+      setUploadProgress(s.pct);
+    }
+
+    async function runGraphrag(file) {
+      // 1) 업로드 — orchestrator 는 raw 본문을 읽는다(multipart 아님).
+      const upUrl = GRAPHRAG_BASE + '/orchestrator/upload?filename=' +
+                    encodeURIComponent(file.name) + '&domain=unknown';
+      const up = await fetch(upUrl, { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: file });
+      if (!up.ok) throw new Error('업로드 실패 (' + up.status + ')');
+      const job = await up.json();
+      const jobId = job.job_id;
+      if (!jobId) throw new Error('job_id 를 받지 못했습니다.');
+      applyStage('QUEUED');
+
+      // 2) 상태 폴링 — palace_ready 가 켜질 때까지(또는 FAILED).
+      while (true) {
+        await sleep(2500);
+        const r = await fetch(GRAPHRAG_BASE + '/orchestrator/jobs/' + jobId + '/status');
+        if (!r.ok) throw new Error('상태 조회 실패 (' + r.status + ')');
+        const s = await r.json();
+        applyStage(s.state);
+        if (s.state === 'FAILED') throw new Error(s.error || '처리 중 오류가 발생했습니다.');
+        if (s.palace_ready) break;
+      }
+
+      // 3) palace.json 수신 → mp_palace 저장(마인드팰리스가 방에 배치).
+      const pr = await fetch(GRAPHRAG_BASE + '/orchestrator/jobs/' + jobId + '/palace');
+      if (!pr.ok) throw new Error('palace 가져오기 실패 (' + pr.status + ')');
+      const text = await pr.text();
+      JSON.parse(text); // 형식 검증
+      try { sessionStorage.setItem('mp_palace', text); localStorage.setItem('mp_palace', text); } catch (_) {}
+    }
+
     pdfForm.addEventListener('submit', (event) => {
       event.preventDefault();
       if (!selectedPdf) return;
 
-      const formData = new FormData();
-      formData.append('pdf', selectedPdf);
-      formData.append('objectMode', 'landmark-book-pages');
-      formData.append('maxObjects', '10');
       uploadPdfBtn.disabled = true;
       if (removePdfBtn) removePdfBtn.disabled = true;
       backendState.textContent = '전송 중';
       setUploadStep(1);
-      setUploadProgress(28);
-      setUploadStatus('PDF를 업로드하고 있습니다. 잠시만 기다려 주세요.', '');
-      apiResponse.textContent = `POST ${API_UPLOAD_ENDPOINT}\n파일명: ${selectedPdf.name}\nobjectMode: landmark-book-pages`;
+      setUploadProgress(10);
+      setUploadStatus('PDF를 GraphRAG 서버로 전송하고 있습니다.', '');
+      showLoadingOverlay();
 
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', API_UPLOAD_ENDPOINT);
-
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const percent = 28 + (event.loaded / event.total) * 52;
-          setUploadProgress(percent);
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        uploadPdfBtn.disabled = false;
-        if (removePdfBtn && selectedPdf) removePdfBtn.disabled = false;
-        let data = null;
-        try { data = JSON.parse(xhr.responseText); } catch (_) { data = null; }
-
-        if (xhr.status >= 200 && xhr.status < 300 && data && data.ok) {
-          backendState.textContent = '업로드 완료';
-          setUploadProgress(100);
-          setUploadStep(2);
-          setUploadStatus(`업로드가 완료되었습니다. 이제 기억의 책에서 10개의 랜드마크 페이지를 확인할 수 있습니다.`, 'success');
-          apiResponse.textContent = JSON.stringify(data, null, 2);
-          updateMemoryBookPages(data.memoryPages || data.memoryObjects, data.originalName || data.filename || selectedPdf.name);
-          turnBookTo(0);
-        } else {
-          backendState.textContent = '응답 오류';
-          setUploadProgress(0);
-          setUploadStatus(`백엔드 응답을 처리하지 못했습니다. 상태 코드: <strong>${xhr.status}</strong>`, 'error');
-          apiResponse.textContent = xhr.responseText || '응답 본문 없음';
-        }
-      });
-
-      xhr.addEventListener('error', () => {
-        uploadPdfBtn.disabled = false;
-        if (removePdfBtn && selectedPdf) removePdfBtn.disabled = false;
-        backendState.textContent = '연결 실패';
+      runGraphrag(selectedPdf).then(() => {
+        showLoadingComplete(selectedPdf?.name || 'PDF');
+        setUploadProgress(100);
+        setUploadStep(2);
+        backendState.textContent = '연결 완료';
+        setUploadStatus(`<strong>${selectedPdf?.name || 'PDF'}</strong> 처리 완료. 기억의 궁전으로 이동합니다.`, 'success');
+        setTimeout(() => { location.href = NEXT_URL; }, 1500);
+      }).catch((err) => {
+        const msg = (err && err.message) ? err.message : String(err);
+        showLoadingError(msg);
+        setUploadStatus(msg, 'error');
+        backendState.textContent = '오류';
         setUploadProgress(0);
-        setUploadStatus('백엔드에 연결하지 못했습니다. <strong>npm install</strong> 후 <strong>npm start</strong>로 서버를 실행하고 http://localhost:3000 에서 열어 주세요.', 'error');
-        apiResponse.textContent = `연결 실패: ${API_UPLOAD_ENDPOINT}`;
+        setTimeout(() => {
+          hideLoadingOverlay();
+          uploadPdfBtn.disabled = false;
+          if (removePdfBtn) removePdfBtn.disabled = false;
+        }, 3000);
       });
-
-      xhr.send(formData);
     });
   }
 
   /* ═══════ 성능 토글 버튼 ═══════ */
-  const perfToggleBtn = document.getElementById('perfToggleBtn');
-  const perfToggleLabel = document.getElementById('perfToggleLabel');
-  function syncPerfToggle(lite) {
-    if (!perfToggleBtn) return;
-    perfToggleBtn.setAttribute('aria-pressed', lite ? 'true' : 'false');
-    if (perfToggleLabel) perfToggleLabel.textContent = lite ? '가벼운 모드 켜짐' : '가벼운 모드';
-  }
-  PERF.onChange(syncPerfToggle);
-  if (perfToggleBtn) perfToggleBtn.addEventListener('click', () => PERF.toggle());
   PERF.init();
-  syncPerfToggle(PERF.lite);
 
   /* ═══════ 3D 둘러보기: 클릭 시에만 iframe 로드 ═══════ */
-  const EXPLORE_URL = 'https://3d-mindpalace-ai-fxf8dyfqega3hvbp.canadacentral-01.azurewebsites.net/legacy/vworld_map.html?city=jongno&lite=0';
+  const EXPLORE_URL = 'https://3d-mindpalace-ai-fxf8dyfqega3hvbp.canadacentral-01.azurewebsites.net/legacy/region-select.html';
   const exploreStage = document.getElementById('exploreStage');
   const explorePlaceholder = document.getElementById('explorePlaceholder');
   const exploreLoadBtn = document.getElementById('exploreLoadBtn');
@@ -4461,12 +5508,12 @@ end of keeper CSS */
   }
 
   const phoneAnswers = [
-    { test: /(pdf|업로드|파일|맡기)/i, reply: '📎 버튼을 눌러 PDF를 첨부해 주세요.\n10개의 랜드마크 페이지로 연결해 드립니다.' },
-    { test: /(사용법|어떻게|뭐하는|소개|설명)/i, reply: 'PDF를 공간 기억으로 바꾸는 궁전입니다.\n1) PDF 맡기기 → 2) 기억의 책 배치 → 3) 3D 공간 둘러보기' },
-    { test: /(3d|둘러보|탐험|공간|구경)/i, reply: '"3D 둘러보기" 섹션으로 안내할게요.', action: 'goExplore' },
-    { test: /(렉|느려|버벅|무거|성능|끊)/i, reply: '좌측 하단 "가벼운 모드"를 켜보세요.\n"켜줘"라고 하시면 바로 켜드릴게요.' },
-    { test: /(켜줘|켜 줘|라이트 모드 on)/i, reply: '가벼운 모드를 켰습니다.', action: 'liteOn' },
-    { test: /(책|랜드마크|페이지)/i, reply: '기억의 책은 광화문~보신각 10개 랜드마크 페이지로 구성돼요.\nPDF를 맡기시면 각 페이지에 배치됩니다.' },
+    { test: /(pdf|업로드|파일|맡기)/i, reply: '📎 버튼을 눌러 PDF를 첨부해 주세요.\n업로드하면 백엔드에서 분석 후 10개의 랜드마크 페이지로 연결됩니다.' },
+    { test: /(사용법|어떻게|쓰는법|절차|순서)/i, reply: '1) PDF 업로드 — 학습할 자료를 올립니다\n2) AI 분석 — 핵심 개념·키워드를 자동 분류합니다\n3) 공간 배치 — 10개 랜드마크에 기억을 배치합니다\n4) 3D 탐험 — 궁전을 걸으며 기억합니다\n5) 반복 복습 — 망각 곡선에 맞춰 복습합니다' },
+    { test: /(뭐하는|소개|기억의 궁전이란|궁전이 뭐|설명)/i, reply: '정보를 익숙한 공간에 배치해 기억하는 암기법입니다.\nAI가 PDF를 분석하고 3D 공간에 자동 배치해 줍니다.\n직접 준비할 필요 없이 걸어다니며 기억할 수 있습니다.' },
+    { test: /(이점|장점|효과|왜 좋|뭐가 좋)/i, reply: '공간 암기법으로 기억력이 2배 이상 향상됩니다.\nAI가 분류·배치를 대신해 준비 부담이 없습니다.\n간격 복습으로 장기 기억 전환까지 도와줍니다.' },
+    { test: /(3d|둘러보|탐험|구경)/i, reply: '"3D 둘러보기" 섹션으로 안내할게요.', action: 'goExplore' },
+    { test: /(프리셋|전각|공간|테마|분위기)/i, reply: '6가지 공간 프리셋이 준비되어 있어요.\n"전각" 섹션에서 확인할 수 있습니다.', action: 'goSpaces' },
     { test: /(안녕|하이|hello|hi)/i, reply: '어서 오세요, 기억 여행자님.\n무엇을 도와드릴까요?' },
     { test: /(고마워|감사)/i, reply: '천만에요. 맡기신 기억은 잘 보관하겠습니다.' }
   ];
@@ -4476,11 +5523,11 @@ end of keeper CSS */
       if (item.test.test(text)) {
         phoneSay(item.reply);
         if (item.action === 'goExplore') document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' });
-        if (item.action === 'liteOn' && !PERF.lite) PERF.toggle();
+        if (item.action === 'goSpaces') document.getElementById('spaces')?.scrollIntoView({ behavior: 'smooth' });
         return;
       }
     }
-    phoneSay('PDF 맡기기, 사용법, 기억의 책, 3D 둘러보기에 대해 물어봐 주세요.');
+    phoneSay('PDF 맡기기, 궁전이란?, 이점, 사용법, 3D 둘러보기에 대해 물어봐 주세요.');
   }
 
   function phoneHandleInput() {
@@ -4498,48 +5545,15 @@ end of keeper CSS */
 
     phoneUploading = true;
     phoneSay(file.name, 'user');
-    const progressBubble = phoneSay('업로드 중… ⏳');
+    phoneSay('PDF를 확인하고 있습니다…');
 
-    const formData = new FormData();
-    formData.append('pdf', file);
-    formData.append('objectMode', 'landmark-book-pages');
-    formData.append('maxObjects', '10');
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', API_UPLOAD_ENDPOINT);
-
-    xhr.upload.addEventListener('progress', (event) => {
-      if (event.lengthComputable && progressBubble) {
-        const pct = Math.round((event.loaded / event.total) * 100);
-        progressBubble.querySelector('p').textContent = `업로드 중… ${pct}% ⏳`;
-      }
-    });
-
-    xhr.addEventListener('load', () => {
+    setTimeout(() => {
+      phoneSay(`"${file.name}" 확인 완료! 기억의 궁전으로 이동합니다.`);
       phoneUploading = false;
-      let data = null;
-      try { data = JSON.parse(xhr.responseText); } catch (_) {}
-      if (xhr.status >= 200 && xhr.status < 300 && data && data.ok) {
-        if (progressBubble) progressBubble.querySelector('p').textContent = '보관 완료! ✅';
-        const applied = updateMemoryBookPages(data.memoryPages || data.memoryObjects, data.originalName || data.filename || file.name);
-        turnBookTo(0);
-        phoneSay(applied
-          ? `"${file.name}" 기억의 책에 연결했습니다. 📖`
-          : `보관은 끝났지만 연결에 문제가 있었어요.`);
-        document.getElementById('objects')?.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        if (progressBubble) progressBubble.querySelector('p').textContent = '실패 ⚠️';
-        phoneSay('서버 연결에 문제가 있어요.\n서버가 켜져 있는지 확인해 주세요.');
-      }
-    });
-
-    xhr.addEventListener('error', () => {
-      phoneUploading = false;
-      if (progressBubble) progressBubble.querySelector('p').textContent = '연결 실패 ⚠️';
-      phoneSay('서버에 연결하지 못했습니다.');
-    });
-
-    xhr.send(formData);
+      setTimeout(() => {
+        window.open(PALACE_3D_URL, '_blank');
+      }, 800);
+    }, 1200);
   }
 
   if (phoneSendBtn) phoneSendBtn.addEventListener('click', phoneHandleInput);
@@ -4556,151 +5570,33 @@ end of keeper CSS */
       if (!btn) return;
       const kind = btn.dataset.phoneQuick;
       if (kind === 'pdf') { phoneSay('PDF 맡기기', 'user'); window.setTimeout(() => { phoneRespond('pdf'); phonePdfInput?.click(); }, 200); }
+      else if (kind === 'what') { phoneSay('기억의 궁전이란?', 'user'); window.setTimeout(() => phoneRespond('기억의 궁전이란'), 200); }
+      else if (kind === 'benefit') { phoneSay('이점', 'user'); window.setTimeout(() => phoneRespond('이점'), 200); }
       else if (kind === 'how') { phoneSay('사용법', 'user'); window.setTimeout(() => phoneRespond('사용법'), 200); }
       else if (kind === 'explore') { phoneSay('3D 둘러보기', 'user'); window.setTimeout(() => phoneRespond('3d'), 200); }
-      else if (kind === 'slow') { phoneSay('렉이 걸려요', 'user'); window.setTimeout(() => phoneRespond('렉'), 200); }
-      else if (kind === 'book') { phoneSay('기억의 책', 'user'); window.setTimeout(() => phoneRespond('책'), 200); }
-      else if (kind === 'lite') { phoneSay('가벼운 모드', 'user'); window.setTimeout(() => phoneRespond('켜줘'), 200); }
+      else if (kind === 'spaces') { phoneSay('공간 프리셋', 'user'); window.setTimeout(() => phoneRespond('프리셋'), 200); }
     });
   }
 
   /* 기억의 책 인터랙션은 initMemoryBook()에서 처리됩니다. */
 
-})();
-</script>
+  /* ── 키보드 스크롤 200px 단위 ── */
+  (() => {
+    const STEP = 200;
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
 
+      let dir = 0;
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') dir = 1;
+      else if (e.key === 'ArrowUp' || e.key === 'PageUp') dir = -1;
+      else return;
 
-<script>
-/* 일방통행 파이프라인: PDF 업로드 -> 외부 GraphRAG(추출·인덱싱·방빌드) -> palace.json
-   -> mp_palace 저장 -> 도시 선택 허브 -> 구성(compose).
-   PDF 는 graphrag 로 실제 전송하고, status 를 폴링해 추출/인덱싱 진행을 스테퍼로 보여준다.
-   JSON 업로드는 (이미 만든 palace) 그대로 mp_palace 에 넣고 통과한다. */
-(function(){
-  var NEXT = "region-select.html";   // 업로드·처리 후 도시 선택 허브로 이동
-
-  // ── graphrag Azure 주소 설정 ────────────────────────────────────────────
-  // 우선순위: window.GRAPHRAG_BASE > localStorage('mp_graphrag_base') > ?graphrag= > 아래 기본값.
-  // ▼▼▼ 여기에 배포한 graphrag App Service 주소를 넣으세요(끝에 / 없이) ▼▼▼
-  var DEFAULT_GRAPHRAG = "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net";
-  var GRAPHRAG_BASE = (
-    window.GRAPHRAG_BASE ||
-    (function(){ try { return localStorage.getItem("mp_graphrag_base"); } catch(_) { return null; } })() ||
-    new URLSearchParams(location.search).get("graphrag") ||
-    DEFAULT_GRAPHRAG
-  ).replace(/\/+$/, "");
-
-  // graphrag state -> { 스테퍼 단계(0~3), 진행바%, 안내문구 }
-  var STAGE = {
-    QUEUED:        { step:1, pct:30,  msg:"대기 중… 처리 순서를 기다립니다." },
-    PREPROCESSING: { step:1, pct:45,  msg:"PDF에서 텍스트·이미지를 추출하는 중…" },
-    INDEXING:      { step:2, pct:70,  msg:"개념 그래프를 만드는 중… (자료가 크면 수 분 걸릴 수 있어요)" },
-    PALACE_READY:  { step:3, pct:95,  msg:"방 구성 완료! 학습 자료를 불러오는 중…" },
-    RAG_READY:     { step:3, pct:98,  msg:"마무리 중…" },
-    DONE:          { step:3, pct:100, msg:"완료되었습니다." }
-  };
-
-  var inp  = document.getElementById("pdfFileInput");
-  var form = document.getElementById("pdfUploadForm");
-  var elStatus  = document.getElementById("uploadStatus");
-  var elVisible = document.getElementById("uploadVisibleStatus");
-  var elBackend = document.getElementById("backendState");
-  var elProgress= document.getElementById("uploadProgress");
-  var elSteps   = document.getElementById("uploadSteps");
-  var elCard    = document.querySelector(".upload-status-card");
-
-  if (inp) inp.setAttribute("accept", ".pdf,.json,application/pdf,application/json");
-
-  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
-  function showCard(){ if (elCard) elCard.classList.remove("upload-status-hidden"); }
-  function setProgress(p){ if (elProgress) elProgress.style.width = Math.max(0, Math.min(100, p)) + "%"; }
-  function setStep(i){ if (elSteps) [].forEach.call(elSteps.children, function(li, idx){ li.classList.toggle("complete", idx <= i); }); }
-  function setStatus(html, type){
-    if (elStatus){ elStatus.className = ("upload-status-text " + (type||"")).trim(); elStatus.innerHTML = html; }
-    if (elVisible){ elVisible.className = ("upload-visible-status " + (type||"")).trim(); elVisible.textContent = html.replace(/<[^>]*>/g, ""); }
-  }
-  function applyStage(state){
-    var s = STAGE[state]; if (!s) return;
-    setStep(s.step); setProgress(s.pct); setStatus(s.msg, "");
-    if (elBackend) elBackend.textContent = state;
-  }
-
-  // 파일 선택 시 버튼 활성화(JSON 도 허용). PDF UI 디테일은 기존 selectPdf 가 처리.
-  if (inp) inp.addEventListener("change", function(){
-    var f = inp.files && inp.files[0];
-    var btn = document.getElementById("uploadPdfBtn");
-    if (f && btn){
-      btn.disabled = false;
-      setStatus("<strong>" + f.name + "</strong> 준비됨 — '업로드 시작'을 누르세요.", "success");
-      if (elBackend) elBackend.textContent = "파일 선택됨";
-    }
-  });
-
-  // graphrag 실제 연동: 업로드 -> 폴링(추출/인덱싱 진행 표시) -> palace 수신 -> mp_palace 저장.
-  async function runGraphrag(file){
-    showCard(); setStep(0); setProgress(15);
-    if (elBackend) elBackend.textContent = "전송 중";
-    setStatus("학습 자료를 서버로 보내는 중…", "");
-
-    // 1) 업로드 — orchestrator 는 raw 본문을 읽는다(multipart 아님).
-    var upUrl = GRAPHRAG_BASE + "/orchestrator/upload?filename=" +
-                encodeURIComponent(file.name) + "&domain=unknown";
-    var up = await fetch(upUrl, { method:"POST", headers:{ "Content-Type":"application/pdf" }, body:file });
-    if (!up.ok) throw new Error("업로드 실패 (" + up.status + ")");
-    var job = await up.json();
-    var jobId = job.job_id;
-    if (!jobId) throw new Error("job_id 를 받지 못했습니다.");
-    applyStage("QUEUED");
-
-    // 2) 상태 폴링 — palace_ready 가 켜질 때까지(또는 FAILED).
-    while (true){
-      await sleep(2500);
-      var r = await fetch(GRAPHRAG_BASE + "/orchestrator/jobs/" + jobId + "/status");
-      if (!r.ok) throw new Error("상태 조회 실패 (" + r.status + ")");
-      var s = await r.json();
-      applyStage(s.state);
-      if (s.state === "FAILED") throw new Error(s.error || "처리 중 오류가 발생했습니다.");
-      if (s.palace_ready) break;
-    }
-
-    // 3) palace.json 수신 -> mp_palace 로 저장(마인드팰리스가 방에 배치).
-    var pr = await fetch(GRAPHRAG_BASE + "/orchestrator/jobs/" + jobId + "/palace");
-    if (!pr.ok) throw new Error("palace 가져오기 실패 (" + pr.status + ")");
-    var text = await pr.text();
-    JSON.parse(text); // 형식 검증(깨졌으면 throw)
-    try { sessionStorage.setItem("mp_palace", text); localStorage.setItem("mp_palace", text); } catch(_){}
-
-    setStep(3); setProgress(100); setStatus("완성! 도시 선택으로 이동합니다…", "success");
-    if (elBackend) elBackend.textContent = "완료";
-    await sleep(700);
-    location.href = NEXT;
-  }
-
-  if (form) form.addEventListener("submit", function(e){
-    e.preventDefault(); e.stopImmediatePropagation();
-    var f = inp && inp.files && inp.files[0];
-    if (!f){ setStatus("먼저 PDF 파일을 선택해 주세요.", "error"); return; }
-
-    // 이미 만든 palace JSON 업로드: 변환 없이 그대로 사용.
-    if (/\.json$/i.test(f.name)){
-      showCard(); setStep(3); setProgress(100);
-      setStatus("학습 자료(JSON)를 불러왔습니다. 이동 중…", "success");
-      var rd = new FileReader();
-      rd.onload = function(){
-        try { sessionStorage.setItem("mp_palace", rd.result); localStorage.setItem("mp_palace", rd.result); } catch(_){}
-        setTimeout(function(){ location.href = NEXT; }, 650);
-      };
-      rd.onerror = function(){ setStatus("JSON 파일을 읽지 못했습니다.", "error"); };
-      rd.readAsText(f);
-      return;
-    }
-
-    // PDF: graphrag 로 보내 추출·인덱싱·방빌드 후 결과 수신.
-    runGraphrag(f).catch(function(err){
-      setStep(0); setProgress(0);
-      if (elBackend) elBackend.textContent = "오류";
-      setStatus("처리 실패: " + (err && err.message ? err.message : err), "error");
+      e.preventDefault();
+      window.scrollBy({ top: dir * STEP, behavior: 'smooth' });
     });
-  }, true);
+  })();
+
 })();
 </script>
 
