@@ -198,9 +198,9 @@ if FRONTEND_DIST.exists():
 
     @app.get("/")
     def serve_frontend_index() -> RedirectResponse:
-        # 단일 진입점 통합: 루트(/)를 정본 흐름(지역 선택 → 지도 → 방)으로 리다이렉트.
-        #   기존 Mind Palace SPA(dist)는 보존되며 직접 경로로는 접근 가능하나, 진입은 region-select로 일원화.
-        return RedirectResponse("/legacy/region-select.html")
+        # 단일 진입점 통합: 루트(/)를 랜딩(home.html: PDF 업로드 → GraphRAG → 도시 선택 → 방)으로 리다이렉트.
+        #   기존 Mind Palace SPA(dist)는 보존되며 직접 경로로는 접근 가능하나, 진입은 home으로 일원화.
+        return RedirectResponse("/legacy/home.html")
 
     @app.get("/{path:path}")
     def serve_frontend_path(path: str) -> FileResponse:
@@ -212,7 +212,7 @@ elif LEGACY_DIR.exists():
 
     @app.get("/")
     def serve_legacy_entry() -> RedirectResponse:
-        return RedirectResponse("/legacy/region-select.html")
+        return RedirectResponse("/legacy/home.html")
 
 
 def decode_data_url(value: str) -> bytes:
