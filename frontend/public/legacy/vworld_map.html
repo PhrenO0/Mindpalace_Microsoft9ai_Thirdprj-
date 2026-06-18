@@ -322,6 +322,14 @@
       .mini-compass .s { bottom: 3px; left: 50%; transform: translateX(-50%); }
       .mini-compass .e { right: 5px; top: 50%; transform: translateY(-50%); }
       .mini-compass .w { left: 5px; top: 50%; transform: translateY(-50%); }
+      /* 화면 밖 마커 가장자리 인디케이터 — 안 보이는 명소의 방향·번호를 가장자리 화살표로 */
+      .mini-edges { position: absolute; inset: 0; z-index: 540; pointer-events: none; }
+      .mini-edge { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; }
+      .mini-edge .me-arrow { font-size: 12px; line-height: 1; color: #c5282a; text-shadow: 0 1px 2px rgba(255,255,255,.95); }
+      .mini-edge .me-num { font-size: 8.5px; font-weight: 900; color: #fff; background: #c5282a; border-radius: 6px;
+        min-width: 11px; text-align: center; padding: 0 3px; box-shadow: 0 1px 3px rgba(40,34,26,.35); margin-top: -1px; }
+      .mini-edge.on .me-arrow { color: var(--accent); }
+      .mini-edge.on .me-num { background: var(--accent); }
       /* 5개 루트 포인트 — 반짝(펄스) */
       .mini-pin-dot {
         position: absolute;
@@ -1550,6 +1558,7 @@
       }
 
       function flyToAnchor(index) {
+        releaseLock();   // 사용자 의도 이동 → 초기 조망 강제(initLock) 해제(줌이 조망으로 튕기는 것 방지)
         activeIndex = Math.max(0, Math.min(STOPS.length - 1, index));
         navLocked = true;
         clearTimeout(navLocked._t);
@@ -1570,6 +1579,7 @@
       //   → "랜드마크를 내려다보다가 쭉 그 방으로 들어가는" 카메라 무브. 방에선 entryFrame이 정면을 잘 잡아줌.
       function diveAndEnter(stop) {
         if (!stop || !stop.page) { setStatus(`${stop ? stop.title : "이 명소"}: 입장 가능한 방이 없습니다.`); return; }
+        releaseLock();   // 다이브가 초기 조망 강제(initLock)에 튕기지 않게
         const c = stop.camera || {}; let gone = false;
         const go = () => { if (gone) return; gone = true; location.href = stop.page; };
         const dive = { lon: c.lon, lat: c.lat,
@@ -1780,7 +1790,7 @@
 
       // 우하단 미니맵 — 상공뷰. 한옥 위치/경로 + "내 카메라 현위치·바라보는 방향"(실시간, 북=위).
       // ── 미니맵: Leaflet 2D 지도(VWorld Base 타일) — 카메라 현위치/방향 실시간 동기 ──
-      let miniMap = null, miniMarker = null;
+      let miniMap = null, miniMarker = null, miniEdges = [];
       function getMiniKey() {
         return (
           window.__VWORLD_BOOT_KEY__ ||
@@ -1797,12 +1807,11 @@
           scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false,
           keyboard: false, touchZoom: false, zoomSnap: 0,
         }).setView([(CITY.center && CITY.center.lat) || CITY_CENTROID.lat, (CITY.center && CITY.center.lon) || CITY_CENTROID.lon], (CITY.center && CITY.center.zoom) || 13);
-        if (key) {
-          L.tileLayer(
-            `https://api.vworld.kr/req/wmts/1.0.0/${key}/Base/{z}/{y}/{x}.png`,
-            { minZoom: 12, maxZoom: 19, opacity: 0.45 }, // 타일 흐리게 → 텍스트·도로 덜 보이고 핀만 또렷
-          ).addTo(miniMap);
-        }
+        // 무라벨 지도(CARTO light_nolabels) — POI 텍스트('경원재…' 등) 제거, 지리만. 키 불필요.
+        L.tileLayer(
+          "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+          { subdomains: "abcd", minZoom: 11, maxZoom: 19, opacity: 0.82, attribution: "" },
+        ).addTo(miniMap);
         LANDMARKS.forEach((b, i) => {
           const color = "#e23b3b"; // 마커와 동일 빨강
           L.marker([b.lat, b.lon], {
@@ -1826,7 +1835,30 @@
         compass.className = "mini-compass";
         compass.innerHTML = '<b class="n">N</b><b class="s">S</b><b class="e">E</b><b class="w">W</b>';
         qs("minimap").appendChild(compass);
+        // 화면 밖 마커 가장자리 인디케이터(번호 화살표) — 각 명소마다 하나
+        const edgeLayer = document.createElement("div"); edgeLayer.className = "mini-edges";
+        qs("minimap").appendChild(edgeLayer);
+        miniEdges = LANDMARKS.map((b, i) => { const el = document.createElement("div"); el.className = "mini-edge";
+          el.innerHTML = `<span class="me-arrow">▲</span><span class="me-num">${i + 1}</span>`;
+          el.style.display = "none"; edgeLayer.appendChild(el); return el; });
         setTimeout(() => miniMap && miniMap.invalidateSize(), 100);
+      }
+      // 화면 밖 마커 → 미니맵 가장자리에 방향 화살표 + 번호로 표시(안에 있으면 Leaflet 핀이 보여줌)
+      function updateMiniEdges() {
+        if (!miniMap || !miniEdges.length) return;
+        const cont = qs("minimap"); if (!cont) return;
+        const W = cont.clientWidth, H = cont.clientHeight, cx = W / 2, cy = H / 2, margin = 13;
+        LANDMARKS.forEach((b, i) => {
+          const ed = miniEdges[i]; if (!ed) return;
+          const p = miniMap.latLngToContainerPoint([b.lat, b.lon]);
+          if (p.x >= margin && p.x <= W - margin && p.y >= margin && p.y <= H - margin) { ed.style.display = "none"; return; }
+          const dx = p.x - cx, dy = p.y - cy, ang = Math.atan2(dy, dx), hw = W / 2 - margin, hh = H / 2 - margin;
+          const t = Math.min(Math.abs(dx) > 1e-3 ? hw / Math.abs(dx) : Infinity, Math.abs(dy) > 1e-3 ? hh / Math.abs(dy) : Infinity);
+          ed.style.left = (cx + dx * t) + "px"; ed.style.top = (cy + dy * t) + "px";
+          const arr = ed.querySelector(".me-arrow"); if (arr) arr.style.transform = `rotate(${ang * 180 / Math.PI + 90}deg)`;
+          ed.classList.toggle("on", i === activeIndex);
+          ed.style.display = "flex";
+        });
       }
       // GPS형: 화살표는 항상 중앙 고정, 지도가 내 위치를 따라 움직인다(setView).
       // ── 성능: Leaflet setView는 무거우므로 매 프레임이 아니라 ~15fps로 제한 ──
@@ -1847,6 +1879,7 @@
             const arrow = qs("miniArrow");
             if (arrow)
               arrow.style.transform = `translate(-50%, -50%) rotate(${((viewer.camera.heading || 0) * 180) / Math.PI}deg)`;
+            updateMiniEdges();   // 화면 밖 마커 가장자리 인디케이터 갱신
           }
         } catch (e) {}
       }
