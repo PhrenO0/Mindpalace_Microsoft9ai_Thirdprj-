@@ -730,6 +730,7 @@
       let entities = (room.kept||[]).slice().sort((a,b)=>(a.rank||99)-(b.rank||99));
       entities = applyStudioOrder(room, entities);   // 스튜디오(glb-customizer)에서 드래그로 바꾼 학습 순서 반영
       window.__mwConcepts = entities.map(e => e.title);   // 전체 학습 개념 풀(새 핫스팟 의미 연결용)
+      window.__mwEntities = entities;                     // 전체 엔티티(새 지점에 학습 항목 바인딩용)
       buildRoute(entities);
     }
 
@@ -1750,61 +1751,121 @@
           posMethod: "manual-edit", entityId: h.entity ? h.entity.id : null })) };
       try { localStorage.setItem(OVERRIDE_KEY, JSON.stringify(j)); } catch {}
     }
-    // 인라인 이름 입력 — prompt()와 달리 페이지를 멈추지 않음. Enter=추가, Esc=취소.
+    // 새 지점 "정의" 패널 — 객체 인식(로컬 기본 + 🔬정밀=우리 Azure 파이프라인) + 학습 항목 연결(AI추천+수동).
     let _addBox = null;
+    const _esc = s => String(s == null ? "" : s).replace(/[<>&"]/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;" }[c]));
     function showAddNameBox(point, mesh) {
       if (_addBox) _addBox.remove();
-      // 기존 인식 파이프라인 재적용: 클릭한 메쉬의 계층 이름에서 가구 종류를 인식(다른 핫스팟과 동일 방식)
-      const recogKey = mesh ? inferFurnLabel(mesh) : null;
-      const recogKo = recogKey ? furnKO(recogKey) : null;
+      // 1) 로컬 인식(기존 방식): 클릭 메쉬 계층 이름 → 가구 종류. 정확도 보통(정밀은 🔬 버튼=Azure).
+      let curClass = mesh ? inferFurnLabel(mesh) : null;
+      let curName = curClass ? furnKO(curClass) : "기억 지점";
+      // 2) 학습 항목 후보: 미배치 개념 우선 + AI 추천(객체 종류 친화)
+      const entities = window.__mwEntities || [];
+      const assigned = new Set(route.filter(h => h.entity).map(h => h.entity.id));
+      const unassigned = entities.filter(e => !assigned.has(e.id));
+      const recommend = () => { const pool = unassigned.length ? unassigned : entities;   // 미배치 우선, 없으면 전체에서
+        if (!pool.length) return null;
+        if (curClass){ const sc = pool.map(e => ({ e, s: typeAffinity(e.type, curClass) })).sort((a,b)=>b.s-a.s); if (sc[0].s>0) return sc[0].e; }
+        return pool[0]; };
+      const recEnt = recommend();
+      let opt = "";
+      if (recEnt) opt += `<option value="${_esc(recEnt.id)}" selected>⭐ 추천: ${_esc(recEnt.title)}</option>`;
+      unassigned.forEach(e => { if (!recEnt || e.id !== recEnt.id) opt += `<option value="${_esc(e.id)}">${_esc(e.title)}</option>`; });
+      opt += `<option value="">— 나중에 연결 —</option>`;
+      entities.filter(e => assigned.has(e.id) && (!recEnt || e.id !== recEnt.id)).forEach(e => opt += `<option value="${_esc(e.id)}">${_esc(e.title)} (이미 배치)</option>`);
       const box = document.createElement("div");
       box.className = "panel";
-      box.style.cssText = "position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;" +
-        "display:flex;gap:8px;align-items:center;padding:10px 12px;";
-      const inp = document.createElement("input");
-      inp.value = recogKo || "기억 지점";   // 인식된 객체명을 자동 채움(수정 가능)
-      inp.style.cssText = "width:190px;height:34px;border-radius:9px;border:1px solid var(--line);" +
-        "background:rgba(51,46,40,.05);color:var(--text);font:inherit;font-size:13px;padding:0 10px;";
-      const ok = document.createElement("button");
-      ok.textContent = "추가"; ok.className = "btn";
-      ok.style.cssText = "border:none;border-radius:9px;background:linear-gradient(180deg,var(--accent),var(--accent2));" +
-        "color:#ffffff;font:inherit;font-weight:800;font-size:13px;padding:8px 14px;cursor:pointer;";
+      box.style.cssText = "position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;padding:13px 15px;width:min(340px,calc(100vw - 28px));";
+      const fld = "height:34px;border-radius:9px;border:1px solid var(--line);background:rgba(51,46,40,.05);color:var(--text);font:inherit;font-size:13px;padding:0 10px;";
+      const sbtn = "border:1px solid var(--line);border-radius:9px;background:rgba(51,46,40,.05);color:var(--text);font:inherit;font-weight:700;font-size:12px;padding:7px 10px;cursor:pointer;white-space:nowrap;";
+      box.innerHTML =
+        `<div style="font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.06em;margin-bottom:9px;">새 지점 정의</div>
+         <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;">
+           <span style="font-size:13px;color:var(--muted);width:22px;flex:none;text-align:center;">🔍</span>
+           <input id="_dfName" value="${_esc(curName)}" style="${fld}flex:1;min-width:0;" />
+           <button id="_dfPrecise" style="${sbtn}" title="우리 Azure 비전 파이프라인으로 정밀 인식">🔬 정밀</button>
+         </div>
+         <div style="display:flex;gap:7px;align-items:center;margin-bottom:11px;">
+           <span style="font-size:13px;color:var(--muted);width:22px;flex:none;text-align:center;">📚</span>
+           <select id="_dfConcept" style="${fld}flex:1;min-width:0;">${opt}</select>
+         </div>
+         <div style="display:flex;gap:7px;justify-content:flex-end;">
+           <button id="_dfCancel" style="${sbtn}">취소</button>
+           <button id="_dfOk" style="border:none;border-radius:9px;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#fff;font:inherit;font-weight:800;font-size:13px;padding:8px 15px;cursor:pointer;">이 지점 정의</button>
+         </div>`;
+      document.body.appendChild(box); _addBox = box;
+      const $n = box.querySelector("#_dfName"), $c = box.querySelector("#_dfConcept"),
+            $p = box.querySelector("#_dfPrecise"), $ok = box.querySelector("#_dfOk"), $cc = box.querySelector("#_dfCancel");
       const cancel = () => { box.remove(); _addBox = null; };
-      const confirm = () => { const nm = inp.value.trim(); if (nm) addHotspotAt(point, nm, recogKey); cancel(); };
-      ok.onclick = confirm;
-      inp.onkeydown = e => { e.stopPropagation(); if (e.key === "Enter") confirm(); if (e.key === "Escape") cancel(); };
-      box.append(inp, ok);
-      if (recogKo) { const tag = document.createElement("span");   // 인식 결과 배지
-        tag.textContent = `🔍 ${recogKo} 인식`; tag.style.cssText = "font-size:11.5px;color:var(--accent);font-weight:800;white-space:nowrap;";
-        box.append(tag); }
-      document.body.appendChild(box);
-      _addBox = box;
-      inp.focus(); inp.select();
+      const confirm = () => { const nm = ($n.value || "").trim() || "기억 지점";
+        const ent = $c.value ? entities.find(e => e.id === $c.value) : null;
+        addHotspotAt(point, nm, curClass, ent); cancel(); };
+      $ok.onclick = confirm; $cc.onclick = cancel;
+      $n.onkeydown = e => { e.stopPropagation(); if (e.key === "Enter") confirm(); if (e.key === "Escape") cancel(); };
+      // 🔬 정밀 인식 = 현재 화면 캡처 → /api/detect(우리 Azure 비전) → 마커 위치의 객체 채택
+      $p.onclick = async () => {
+        $p.disabled = true; const old = $p.textContent; $p.textContent = "인식 중…";
+        const res = await preciseRecognize(point);
+        if (res && res.ok) { curClass = res.label; curName = res.ko; $n.value = res.ko;
+          $p.textContent = `✓ ${res.ko}${res.score ? " " + Math.round(res.score*100) + "%" : ""}`;
+          setTimeout(() => { $p.disabled = false; $p.textContent = "🔬 정밀"; }, 1900); }
+        else { $p.textContent = (res && res.reason) || "검출 없음";
+          setTimeout(() => { $p.disabled = false; $p.textContent = old; }, 1900); }
+      };
+      $n.focus(); $n.select();
     }
-    function addHotspotAt(point, nm, recogClass) {
+    // 정밀 인식: 화면 캡처 → /api/detect → 마커 화면위치(0~1)를 덮는 객체 박스를 채택(없으면 최근접).
+    async function preciseRecognize(point) {
+      try {
+        renderer.render(scene, camera);   // preserveDrawingBuffer=false → 캡처 직전 1회 렌더
+        const W = renderer.domElement.width, H = renderer.domElement.height;
+        const dataURL = renderer.domElement.toDataURL("image/png");
+        const r = await fetch("/api/detect", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: dataURL, width: W, height: H }) });
+        if (!r.ok) return { ok: false, reason: "서버 오류" };
+        const j = await r.json();
+        if (!j.configured) return { ok: false, reason: "Azure 미설정" };
+        const objs = j.objects || [];
+        if (!objs.length) return { ok: false, reason: "검출 없음" };
+        const v = point.clone().project(camera);
+        const sx = (v.x + 1) / 2, sy = (1 - v.y) / 2;
+        let best = null, bestD = Infinity, inside = false;
+        objs.forEach(o => { const b = o.box || {}; if (b.xmin == null) return;
+          const cx = (b.xmin + b.xmax) / 2, cy = (b.ymin + b.ymax) / 2, d = Math.hypot(sx - cx, sy - cy);
+          const ins = sx >= b.xmin && sx <= b.xmax && sy >= b.ymin && sy <= b.ymax;
+          if (ins && (!inside || d < bestD)) { inside = true; bestD = d; best = o; }
+          else if (!inside && d < bestD) { bestD = d; best = o; } });
+        if (!best) return { ok: false, reason: "검출 없음" };
+        return { ok: true, label: best.label, ko: furnKO(best.label), score: best.score };
+      } catch (e) { return { ok: false, reason: "연결 실패" }; }
+    }
+    function addHotspotAt(point, nm, recogClass, entity) {
       pushUndo();   // ↶ 되돌리기용 스냅샷
-      // label=인식 클래스(있으면)·name/ko=표시명 → 스캐너 핫스팟과 동일 구조(객체명·클래스·좌표)
-      const h = { pos: point.clone(), label: recogClass || nm, name: nm, ko: nm, entity: null, number: route.length + 1,
+      // label=인식 클래스·name/ko=표시명·entity=연결 학습 개념 → 스캐너 핫스팟과 동일 구조(객체·클래스·좌표·개념)
+      const h = { pos: point.clone(), label: recogClass || nm, name: nm, ko: nm, entity: entity || null, number: route.length + 1,
         eye: point.clone().setY(Math.min(point.y + 0.18, bounds.max.y - 0.12)) };
       route.push(h);
       const sp = numberSprite(h.number, false);
       sp.position.copy(h.eye); sp.renderOrder = 999; sp.userData.idx = route.length - 1;
       scene.add(sp); h.marker = sp;
       renderDots(activeIdx); $("listCount").textContent = route.length; buildObjectList();
+      if (entity) { try { buildRelations(); } catch(_){} }   // 개념 연결선 갱신
       saveOverrideFromRoute();
-      recognizeAndNotify(h, recogClass);   // 챗봇이 새 노드를 인식 + 의미 연결하도록 알림
-      setStatus(`+ <b>${nm}</b> 인식·추가(${route.length}번) — 챗봇이 의미를 연결합니다. 평면도에서 위치 미세조정 가능`);
+      recognizeAndNotify(h, recogClass);   // 챗봇이 새 노드를 인식 + 의미 연결
+      setStatus(`+ <b>${nm}</b> 정의·추가(${route.length}번)${entity ? ` · '${entity.title}' 연결` : ""} — 저장됨`);
     }
-    // 새 핫스팟 → 챗봇에 "객체 인식 + 좌표 + (어거지로) 의미 연결" 통지. 다른 핫스팟처럼 챗봇이 인식하게 함.
+    // 새 핫스팟 → 챗봇에 "객체 인식 + 좌표 + 의미 연결" 통지(연결 개념이 있으면 그걸로, 없으면 추천).
     function recognizeAndNotify(h, recogClass) {
       const objName = dispName(h);
       const pos = [ +h.pos.x.toFixed(2), +h.pos.y.toFixed(2), +h.pos.z.toFixed(2) ];
-      const concepts = (window.__mwConcepts || route.filter(r => r.entity).map(r => r.entity.title));
-      const concept = concepts && concepts.length ? concepts[h.number % concepts.length] : null;   // 방의 학습 개념 중 하나에 강제 연결
+      const bound = !!h.entity;
+      let concept = bound ? h.entity.title : null;
+      if (!concept) { const cs = window.__mwConcepts || route.filter(r => r.entity).map(r => r.entity.title);
+        concept = cs && cs.length ? cs[h.number % cs.length] : null; }
       const mnemonic = concept ? mnemonicFor(objName, concept) : null;
       updateRoomState();
       try { window.dispatchEvent(new CustomEvent("mp-hotspot-added", {
-        detail: { object: objName, klass: recogClass || "", pos, concept, mnemonic } })); } catch (_) {}
+        detail: { object: objName, klass: recogClass || "", pos, concept, mnemonic, bound } })); } catch (_) {}
     }
     function mnemonicFor(obj, concept) {
       const T = [

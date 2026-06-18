@@ -197,9 +197,9 @@
     window.addEventListener("mp-hotspot-added", function (e) {
       var d = (e && e.detail) || {};
       toggle(true);
-      addMsg("🔍 새 핫스팟 인식: '" + (d.object || "지점") + "'  ·  좌표(" + ((d.pos || []).join(", ")) + ")", "bot");
-      if (d.concept) addMsg("'" + d.concept + "'과(와) 연결했어요 — " + (d.mnemonic || ""), "bot");
-      else addMsg("이 방에 학습 개념이 배치되면 이 자리에 의미를 연결해 드릴게요.", "bot");
+      addMsg("🔍 새 핫스팟 정의: '" + (d.object || "지점") + "'  ·  좌표(" + ((d.pos || []).join(", ")) + ")", "bot");
+      if (d.concept) addMsg((d.bound ? "📚 '" + d.concept + "' 학습 항목을 이 지점에 연결했어요 — " : "'" + d.concept + "'과(와) 이렇게 연결해 보세요 — ") + (d.mnemonic || ""), "bot");
+      else addMsg("학습 항목을 고르면 이 지점에 의미를 연결해 드릴게요.", "bot");
     });
   }
 
