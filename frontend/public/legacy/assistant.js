@@ -116,6 +116,16 @@
       if (c.act === "lite") return setLite(get(LS_LITE, "0") !== "1");
       if (c.act === "go"){ var url = c.v; if (/compose|glb-customizer|vworld_map/.test(url) && CITY) url += (url.indexOf("?") < 0 ? "?" : "&") + "city=" + encodeURIComponent(CITY); location.href = url; return; }
       if (c.act === "enterFirst"){ var b = document.getElementById("startBtn") || document.querySelector(".enter,.go,.start"); if (b && b.href) location.href = b.href; else addMsg("이 화면엔 입장할 방이 없어요. '구성 화면'에서 학습을 먼저 구성해 주세요.", "bot"); return; }
+      if (c.act === "hotspot"){   // 핫스팟 클릭 → 사물과 학습 개념 사이 '어거지' 의미 생성
+        var r = (typeof window.mpForceMeaning === "function") ? window.mpForceMeaning(c.v) : null;
+        if (r && r.concept){
+          addMsg("🔗 " + r.object + "  ↔  '" + r.concept + "'   ·   좌표(" + (r.pos || []).join(", ") + ")", "bot");
+          addMsg((r.bound ? "" : "(임시 연결) ") + (r.mnemonic || ""), "bot");
+          if (r.desc) addMsg("📖 " + r.concept + ": " + r.desc, "bot");
+        } else if (r){ addMsg(r.object + " — 아직 연결된 학습 개념이 없어요. 방에서 ➕ 지점으로 정의하면 연결됩니다.", "bot"); }
+        else { addMsg("방 안(memory-walk)에서 이용해 주세요.", "bot"); }
+        return;
+      }
       if (c.act === "intent") return ruleReply(c.v);
     }
 
@@ -149,9 +159,8 @@
       if (/핫스팟|hotspot|노드|마커|이 방|뭐가 있|뭐있|배치|지점|인식/.test(t)){
         var R = window.mpRoom;
         if (R && R.hotspots && R.hotspots.length){
-          addMsg((R.roomName||"이 방")+"에 인식된 핫스팟 "+R.hotspots.length+"개:", "bot");
-          addMsg(R.hotspots.slice(0,12).map(function(h){ return h.n+". "+h.object+(h.concept?(" → "+h.concept):""); }).join("   ·   "), "bot");
-          addMsg("➕ 지점으로 새 자리를 찍으면 객체를 인식하고 학습 개념과 연결해 드려요.", "bot");
+          addMsg((R.roomName||"이 방")+"에 "+R.hotspots.length+"개 노드 — 핫스팟을 누르면 사물과 학습 개념의 의미를 만들어 드려요:", "bot");
+          addChips(R.hotspots.slice(0,14).map(function(h){ return { label: h.n+". "+h.object+(h.concept?(" → "+h.concept):""), act:"hotspot", v:h.n, say:1 }; }));
           return;
         }
         addMsg("방에 들어가서 ➕ 지점으로 새 핫스팟을 찍으면, 객체를 인식하고 학습 개념과 연결해 드릴게요.", "bot");

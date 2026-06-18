@@ -1875,19 +1875,47 @@
       ];
       return T[(obj.length + concept.length) % T.length];
     }
-    // 챗봇(assistant.js)이 읽는 방 상태 — 핫스팟(객체·좌표·연결개념) + 개념 목록
+    // 챗봇(학습용)이 읽는 방 데이터셋 — 핫스팟별 [인식 객체·클래스·좌표 + 연결 학습 개념·설명].
+    //   이 데이터로 챗봇이 특정 핫스팟의 사물과 학습 노드 사이 의미를 만든다.
     function updateRoomState() {
       try {
         window.mpRoom = {
           roomName: ($("roomName").textContent || "").trim(),
           palace: ($("palaceTitle").textContent || "").trim(),
-          hotspots: route.map(h => ({ n: h.number, object: dispName(h),
-            pos: [ +h.pos.x.toFixed(2), +h.pos.y.toFixed(2), +h.pos.z.toFixed(2) ],
-            concept: h.entity ? h.entity.title : null })),
-          concepts: route.filter(h => h.entity).map(h => h.entity.title),
+          glb: ROOM_GLB,
+          hotspots: route.map(h => ({
+            n: h.number,
+            object: dispName(h),                                  // 표시 객체명(한글)
+            detectedClass: h.label || "",                         // 인식 클래스(chair/sofa…)
+            pos: [ +h.pos.x.toFixed(3), +h.pos.y.toFixed(3), +h.pos.z.toFixed(3) ],   // 좌표(x,y,z)
+            concept: h.entity ? h.entity.title : null,            // 연결된 학습 개념
+            conceptId: h.entity ? h.entity.id : null,
+            conceptDesc: h.entity ? (h.entity.description || h.entity.caption || "") : null,
+          })),
+          concepts: route.filter(h => h.entity).map(h => ({ id: h.entity.id, title: h.entity.title })),
         };
       } catch (_) {}
     }
+    // 방 데이터 추출(학습 챗봇 공급용). download=true면 JSON 파일로 저장. 반환=데이터셋.
+    window.mpExportRoom = (download) => {
+      updateRoomState(); const data = window.mpRoom || {};
+      if (download) { try {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+        a.download = (data.roomName || "room").replace(/[^\w가-힣]+/g, "_") + "-nodes.json"; a.click(); URL.revokeObjectURL(a.href);
+      } catch (_) {} }
+      return data;
+    };
+    // 특정 핫스팟(번호) → 사물과 학습 개념 사이 "어거지" 의미 생성. 개념 미연결이면 방 개념 풀에서 강제 매칭.
+    window.mpForceMeaning = (n) => {
+      const h = route.find(r => r.number === n); if (!h) return null;
+      const object = dispName(h);
+      let concept = h.entity ? h.entity.title : null, desc = h.entity ? (h.entity.description || h.entity.caption || "") : "";
+      if (!concept) { const cs = window.__mwConcepts || route.filter(r => r.entity).map(r => r.entity.title);
+        concept = cs && cs.length ? cs[n % cs.length] : null; }
+      return { n, object, pos: [ +h.pos.x.toFixed(2), +h.pos.y.toFixed(2), +h.pos.z.toFixed(2) ],
+        concept, desc, mnemonic: concept ? mnemonicFor(object, concept) : null, bound: !!h.entity };
+    };
 
     // 마커 클릭 → 그 지점 / 추가 모드면 클릭한 표면에 핫스팟 생성
     renderer.domElement.addEventListener("pointerup", (ev) => {
