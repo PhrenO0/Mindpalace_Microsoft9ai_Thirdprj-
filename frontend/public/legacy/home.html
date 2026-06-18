@@ -202,6 +202,61 @@ body {
   text-shadow: 0 2px 20px rgba(0,0,0,0.4);
 }
 
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 3vw, 36px);
+  flex-wrap: wrap;
+}
+.hero-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 30px 14px 32px;
+  border: 1px solid rgba(252, 164, 53, 0.55);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(252, 164, 53, 0.18), rgba(252, 164, 53, 0.06));
+  color: var(--c-paper);
+  font-family: var(--font-title-soft);
+  font-size: clamp(15px, 1.4vw, 18px);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(252, 164, 53, 0.16),
+              inset 0 1px 0 rgba(255, 240, 220, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: heroFadeIn 1.2s ease-out 1.1s both;
+  transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), border-color 0.25s, box-shadow 0.25s, background 0.25s;
+}
+.hero-enter:hover {
+  transform: translateY(-2px);
+  border-color: rgba(252, 164, 53, 0.85);
+  background: linear-gradient(135deg, rgba(252, 164, 53, 0.30), rgba(252, 164, 53, 0.10));
+  box-shadow: 0 14px 36px rgba(252, 164, 53, 0.28),
+              inset 0 1px 0 rgba(255, 240, 220, 0.28);
+}
+.hero-enter:active {
+  transform: translateY(0);
+}
+.hero-enter .hero-enter-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(252, 164, 53, 0.9);
+  color: #2a2520;
+  font-size: 13px;
+  line-height: 1;
+  transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+.hero-enter:hover .hero-enter-icon {
+  transform: translateX(3px);
+}
+.perf-lite .hero-enter { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
 .scroll-hint {
   position: absolute;
   bottom: 28px;
@@ -3599,7 +3654,10 @@ end of keeper CSS */
   <div class="hero-sticky">
     <div class="hero-title-block" id="heroTitle">
       <div class="hero-eyebrow">記憶 · MEMORY PALACE</div>
-      <h1 class="hero-title">기억의 궁전</h1>
+      <div class="hero-title-row">
+        <h1 class="hero-title">기억의 궁전</h1>
+        <a class="hero-enter" href="https://3d-mindpalace-ai-fxf8dyfqega3hvbp.canadacentral-01.azurewebsites.net/legacy/region-select.html" target="_blank" rel="noopener" aria-label="기억의 궁전 입장하기"><span>입장하기</span><span class="hero-enter-icon" aria-hidden="true">›</span></a>
+      </div>
       <p class="hero-sub">궁궐을 걷듯, 지식을 걷는다.</p>
     </div>
 
