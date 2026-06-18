@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import os
@@ -83,6 +84,12 @@ def health() -> dict:
     }
 
 
+# 무거운 다운로드·변환(import_model)이 서버 워커 스레드풀을 고갈시키지 않도록
+# 동시 import 수를 제한한다(기본 2, 환경변수로 조정 가능).
+_IMPORT_CONCURRENCY = max(1, int(os.getenv("SKETCHFAB_IMPORT_CONCURRENCY", "2")))
+_import_semaphore = asyncio.Semaphore(_IMPORT_CONCURRENCY)
+
+
 class SketchfabImportRequest(BaseModel):
     uid: str
 
@@ -107,12 +114,16 @@ def sketchfab_search(q: str, cursor: str | None = None) -> dict:
 
 
 @app.post("/api/sketchfab/import")
-def sketchfab_import(payload: SketchfabImportRequest) -> dict:
-    """모델을 받아 단일 GLB(텍스처 1k, 20MB 초과 시 압축)로 변환해 저장하고 상대 URL을 반환."""
+async def sketchfab_import(payload: SketchfabImportRequest) -> dict:
+    """모델을 받아 단일 GLB(텍스처 1k, 20MB 초과 시 압축)로 변환해 저장하고 상대 URL을 반환.
+
+    무거운 변환 작업은 별도 스레드로 오프로드하고(이벤트 루프 비차단), 세마포어로 동시
+    실행 수를 제한해 워커 스레드풀 고갈을 막는다."""
     if not sk.token():
         raise HTTPException(status_code=503, detail="SKETCHFAB_API_TOKEN이 설정되지 않아 다운로드할 수 없습니다.")
     try:
-        info = sk.import_model(payload.uid, IMPORTED_DIR)
+        async with _import_semaphore:
+            info = await asyncio.to_thread(sk.import_model, payload.uid, IMPORTED_DIR)
     except PermissionError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
