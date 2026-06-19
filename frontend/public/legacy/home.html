@@ -881,13 +881,12 @@ body {
   z-index: 100;
   width: 320px;
   height: min(620px, calc(100vh - 48px));
-  background: #1a1814;
+  background: var(--bg, #f5f1ea);
   border-radius: 28px;
-  border: 1px solid rgba(252,164,53,0.32);
+  border: 1px solid var(--line, rgba(51,46,40,0.12));
   box-shadow:
-    0 28px 72px rgba(0,0,0,0.6),
-    0 0 60px rgba(252,164,53,0.10),
-    inset 0 0 30px rgba(0,0,0,0.4);
+    0 28px 72px rgba(40,34,26,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.6);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -912,9 +911,9 @@ body {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 1px solid rgba(245,240,232,0.18);
-  background: rgba(26,22,18,0.85);
-  color: rgba(245,240,232,0.7);
+  border: 1px solid var(--line, rgba(51,46,40,0.12));
+  background: var(--panel2, #fff);
+  color: var(--muted, rgba(42,36,29,0.62));
   font-size: 17px;
   line-height: 1;
   cursor: pointer;
@@ -924,9 +923,9 @@ body {
   transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
 }
 .phone-chat-close:hover {
-  background: rgba(252,164,53,0.18);
-  color: var(--c-acc);
-  border-color: rgba(252,164,53,0.45);
+  background: var(--accent, #b5552f);
+  color: #fff;
+  border-color: var(--accent, #b5552f);
   transform: scale(1.06);
 }
 @media (max-width: 520px) {
@@ -943,7 +942,7 @@ body {
 .phone-chat-notch {
   width: 104px;
   height: 25px;
-  background: #111;
+  background: var(--ink, #2a241d);
   border-radius: 0 0 16px 16px;
   margin: 0 auto;
   flex-shrink: 0;
@@ -954,7 +953,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 10px 16px 8px;
-  border-bottom: 1px solid rgba(255,226,155,0.1);
+  border-bottom: 1px solid var(--line, rgba(51,46,40,0.12));
   flex-shrink: 0;
 }
 
@@ -962,25 +961,26 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(252,164,53,0.3), rgba(252,164,53,0.12));
-  border: 1px solid rgba(252,164,53,0.4);
+  background: var(--accent, #b5552f);
+  border: 1px solid var(--accent, #b5552f);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 17.5px;
-  color: var(--c-acc);
+  color: #fff;
 }
 
 .phone-chat-name {
   font-family: var(--font-body);
   font-size: 15px;
   font-weight: 600;
-  color: rgba(245,240,232,0.9);
+  color: var(--text, #2a241d);
 }
 
 .phone-chat-status {
   font-size: 12.5px;
-  color: rgba(126,214,184,0.8);
+  color: var(--accent, #b5552f);
+  font-weight: 700;
 }
 
 .phone-chat-body {
@@ -1007,24 +1007,24 @@ body {
 
 .phone-chat-bubble.bot {
   align-self: flex-start;
-  background: rgba(255,226,155,0.08);
-  border: 1px solid rgba(255,226,155,0.12);
-  color: rgba(245,240,232,0.85);
+  background: var(--panel2, #fff);
+  border: 1px solid var(--line, rgba(51,46,40,0.12));
+  color: var(--text, #2a241d);
   border-bottom-left-radius: 4px;
 }
 
 .phone-chat-bubble.user {
   align-self: flex-end;
-  background: rgba(252,164,53,0.2);
-  border: 1px solid rgba(252,164,53,0.3);
-  color: rgba(245,240,232,0.95);
+  background: var(--accent, #b5552f);
+  border: 1px solid var(--accent, #b5552f);
+  color: #fff;
   border-bottom-right-radius: 4px;
 }
 
 .phone-chat-bubble.action {
-  background: rgba(252,164,53,0.14);
-  border: 1px solid rgba(252,164,53,0.35);
-  color: var(--c-acc);
+  background: color-mix(in srgb, var(--accent, #b5552f) 12%, transparent);
+  border: 1px solid var(--accent, #b5552f);
+  color: var(--accent, #b5552f);
   font-weight: 600;
   cursor: pointer;
 }
@@ -1034,7 +1034,7 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-top: 1px solid rgba(255,226,155,0.1);
+  border-top: 1px solid var(--line, rgba(51,46,40,0.12));
   flex-shrink: 0;
 }
 
@@ -1047,15 +1047,15 @@ body {
   flex: 1;
   font-family: var(--font-body);
   font-size: 13px;
-  color: rgba(245,240,232,0.9);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,226,155,0.08);
+  color: var(--text, #2a241d);
+  background: var(--bg, #f5f1ea);
+  border: 1px solid var(--line, rgba(51,46,40,0.12));
   border-radius: 16px;
   padding: 6px 12px;
   outline: none;
 }
-.phone-chat-field::placeholder { color: rgba(245,240,232,0.35); }
-.phone-chat-field:focus { border-color: rgba(252,164,53,0.4); }
+.phone-chat-field::placeholder { color: var(--muted, rgba(42,36,29,0.5)); }
+.phone-chat-field:focus { border-color: var(--accent, #b5552f); }
 
 .phone-chat-clip,
 .phone-chat-send {
@@ -1065,8 +1065,8 @@ body {
 
 .phone-chat-send {
   font-size: 17.5px;
-  color: var(--c-acc);
-  opacity: 0.7;
+  color: var(--accent, #b5552f);
+  opacity: 0.85;
 }
 .phone-chat-clip:hover,
 .phone-chat-send:hover { opacity: 1; }
@@ -1080,9 +1080,9 @@ body {
 .phone-chat-quick button {
   padding: 5px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(252,164,53,0.3);
-  background: rgba(252,164,53,0.08);
-  color: rgba(245,240,232,0.85);
+  border: 1px solid var(--line, rgba(51,46,40,0.12));
+  background: var(--panel2, #fff);
+  color: var(--text, #2a241d);
   font-family: var(--font-body);
   font-size: 12px;
   cursor: pointer;
@@ -1090,18 +1090,72 @@ body {
   white-space: nowrap;
 }
 .phone-chat-quick button:hover {
-  border-color: rgba(252,164,53,0.7);
-  background: rgba(252,164,53,0.18);
+  border-color: var(--accent, #b5552f);
+  background: color-mix(in srgb, var(--accent, #b5552f) 10%, transparent);
+}
+
+/* 테마 전환 칩 — 도우미 기능 병합 */
+.phone-chat-themes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px 2px;
+  margin-top: 4px;
+  border-top: 1px dashed var(--line, rgba(51,46,40,0.14));
+}
+.phone-chat-themes .ptheme-label {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted, rgba(42,36,29,0.6));
+  margin-bottom: 1px;
+}
+.phone-chat-themes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line, rgba(51,46,40,0.12));
+  background: var(--panel2, #fff);
+  color: var(--text, #2a241d);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.phone-chat-themes button .swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.18);
+}
+.phone-chat-themes button:hover {
+  border-color: var(--accent, #b5552f);
+  background: color-mix(in srgb, var(--accent, #b5552f) 10%, transparent);
+}
+.phone-chat-themes button.is-active {
+  border-color: var(--accent, #b5552f);
+  background: color-mix(in srgb, var(--accent, #b5552f) 16%, transparent);
+  font-weight: 700;
 }
 
 .phone-chat-homebar {
   width: 80px;
   height: 4px;
-  background: rgba(245,240,232,0.2);
+  background: var(--line, rgba(51,46,40,0.18));
   border-radius: 2px;
   margin: 6px auto 10px;
   flex-shrink: 0;
 }
+
+/* 떠다니는 도우미(assistant.js 위젯)는 home.html에서만 숨김 — 기능은 스마트폰으로 병합됨.
+   (테마 엔진 window.mpTheme 은 그대로 동작) */
+#mp-asst { display: none !important; }
 
 @media (max-width: 900px) {
   .content-main > .section,
@@ -4299,114 +4353,194 @@ body {
   }
 }
 
-/* CTA · 두루마리 서책 */
-.footer-cta { text-align: center; padding: 8vh 6vw 10vh; }
+/* CTA · 기억의 궁전 대문 */
+.footer-cta { text-align: center; padding: 11vh 6vw 13vh; }
 
-/* 두루마리 전체 래퍼 */
-.scroll-wrap {
+/* ───────── 기억의 궁전 대문 (입장 CTA) ───────── */
+.gate-wrap {
   display: inline-block;
-  max-width: clamp(480px, 50vw, 680px);
   width: 100%;
+  max-width: 560px;
   margin: 0 auto;
 }
 
-/* 나무 봉 (상·하) */
-.scroll-rod {
-  height: 18px;
-  background: linear-gradient(180deg, #c9a35a 0%, #8b6914 40%, #a07820 60%, #c9a35a 100%);
-  border-radius: 9px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,220,140,0.35);
+.gate-title {
+  font-family: "Nanum Myeongjo", serif;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 400;
+  color: #2a2118;
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+  text-shadow: 0 0 2px rgba(42,33,24,0.4);
+}
+.gate-sub {
+  font-family: "Nanum Myeongjo", serif;
+  font-size: clamp(15px, 1.7vw, 18px);
+  font-weight: 400;
+  line-height: 1.95;
+  color: #6a5d49;
+  margin-bottom: 42px;
+}
+
+/* 문 전체 (클릭 가능한 입장 영역) */
+.gate {
+  display: block;
+  text-decoration: none;
+  width: clamp(230px, 58vw, 310px);
+  margin: 0 auto;
+  perspective: 1500px;
+}
+
+/* 문틀 (석재/목재 프레임) */
+.gate-frame {
   position: relative;
+  aspect-ratio: 3 / 4;
+  padding: 14px;
+  border-radius: 152px 152px 12px 12px;
+  background:
+    linear-gradient(180deg, #6a4a14 0%, #4a3208 50%, #3a2706 100%);
+  box-shadow:
+    0 32px 64px rgba(40,28,6,0.42),
+    0 4px 10px rgba(40,28,6,0.3),
+    inset 0 2px 3px rgba(255,214,128,0.28),
+    inset 0 -3px 6px rgba(0,0,0,0.4);
+}
+
+/* 문이 열리는 개구부 */
+.gate-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 142px 142px 5px 5px;
+  overflow: hidden;
+  background: #160f06;
+  transform-style: preserve-3d;
+}
+
+/* 안쪽에서 새어 나오는 궁전의 빛 */
+.gate-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 62%,
+    rgba(252,200,120,0.95) 0%,
+    rgba(252,164,53,0.55) 32%,
+    rgba(252,164,53,0.12) 55%,
+    transparent 72%);
+  opacity: 0.42;
+  transition: opacity 0.7s ease;
+}
+
+/* 두 짝의 문 */
+.gate-door {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.16) 0 1px, transparent 1px 24px),
+    linear-gradient(180deg, #7a571a 0%, #5a3e0e 55%, #44300a 100%);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.35);
+  transition: transform 0.85s cubic-bezier(0.22, 0.61, 0.36, 1);
+  backface-visibility: hidden;
   z-index: 2;
 }
-.scroll-rod::before,
-.scroll-rod::after {
-  content: "";
+.gate-door--left {
+  left: 0;
+  transform-origin: left center;
+  border-right: 1px solid rgba(20,12,4,0.55);
+}
+.gate-door--right {
+  right: 0;
+  transform-origin: right center;
+}
+
+/* 문고리 */
+.gate-ring {
   position: absolute;
-  top: -4px;
-  width: 26px;
-  height: 26px;
+  top: 50%;
+  width: clamp(22px, 7vw, 30px);
+  height: clamp(22px, 7vw, 30px);
+  transform: translateY(-50%);
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 36%, #d4ad5e, #7a5a10);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-}
-.scroll-rod::before { left: -10px; }
-.scroll-rod::after  { right: -10px; }
-
-/* 서책 본체 (양피지) */
-.scroll-body {
-  position: relative;
-  background: linear-gradient(
-    180deg,
-    #f5e6c8 0%, #efe0c0 6%, #f2e4c2 50%, #efe0c0 94%, #f5e6c8 100%
-  );
-  border-left:  3px solid #c9a35a;
-  border-right: 3px solid #c9a35a;
-  padding: clamp(36px, 5vw, 56px) clamp(28px, 4vw, 48px);
+  border: 3px solid #d0a85c;
+  background: radial-gradient(circle at 50% 30%, rgba(255,224,150,0.35), transparent 60%);
   box-shadow:
-    inset 4px 0 12px rgba(139,105,20,0.12),
-    inset -4px 0 12px rgba(139,105,20,0.12),
-    0 8px 32px rgba(0,0,0,0.25);
+    0 2px 5px rgba(0,0,0,0.55),
+    inset 0 1px 2px rgba(255,224,150,0.5);
 }
-.scroll-body::before {
-  content: "";
+.gate-door--left  .gate-ring { right: 14px; }
+.gate-door--right .gate-ring { left: 14px; }
+
+/* 문틈으로 빛나는 가운데 선 */
+.gate-seam {
   position: absolute;
-  inset: 8px 12px;
-  border: 1px solid rgba(139,105,20,0.18);
-  border-radius: 2px;
-  pointer-events: none;
+  top: 6%;
+  bottom: 4%;
+  left: 50%;
+  width: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(252,164,53,0.85) 18%,
+    rgba(255,214,140,1) 50%,
+    rgba(252,164,53,0.85) 82%,
+    transparent 100%);
+  filter: blur(1.4px);
+  z-index: 3;
+  animation: gate-breathe 3.8s ease-in-out infinite;
+  transition: opacity 0.6s ease;
+}
+@keyframes gate-breathe {
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 1; }
 }
 
-/* 텍스트 · 의열 아리체 제목 + 나눔명조 본문 + 잉크 번짐 */
-.scroll-text {
-  text-align: center;
+/* hover/focus → 문이 열리고 빛이 번진다 */
+.gate:hover .gate-door--left,
+.gate:focus-visible .gate-door--left  { transform: rotateY(62deg); }
+.gate:hover .gate-door--right,
+.gate:focus-visible .gate-door--right { transform: rotateY(-62deg); }
+.gate:hover .gate-glow,
+.gate:focus-visible .gate-glow { opacity: 1; }
+.gate:hover .gate-seam,
+.gate:focus-visible .gate-seam { opacity: 0; }
+
+/* 입장 버튼 */
+.gate-cta {
+  display: inline-block;
+  margin-top: 36px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: #f5e6c8;
+  background: #5a3e0a;
+  padding: 14px 38px;
+  border-radius: 30px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
-.scroll-line {
-  font-family: "Nanum Myeongjo", serif;
-  color: #424242;
-  font-size: clamp(17px, 2vw, 22px);
-  font-weight: 400;
-  line-height: 2;
-  margin: 0 0 10px;
-  letter-spacing: 0.03em;
-  text-shadow:
-    0 0 1px rgba(66,66,66,0.4),
-    0 0 3px rgba(66,66,66,0.08),
-    1px 1px 2px rgba(66,66,66,0.06);
-}
-.scroll-line--title {
-  font-family: "Nanum Myeongjo", serif;
-  font-size: clamp(28px, 3.2vw, 42px);
-  font-weight: 400;
-  color: #1A1A1A;
-  margin-bottom: 22px;
-  text-shadow:
-    0 0 2px rgba(26,26,26,0.55),
-    0 0 5px rgba(26,26,26,0.10),
-    1px 2px 3px rgba(26,26,26,0.08);
+.gate:hover .gate-cta,
+.gate:focus-visible .gate-cta {
+  background: #7a5a10;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(90,62,10,0.4);
 }
 
-.scroll-body .cta-reassure {
+.gate-reassure {
   margin-top: 24px;
   font-family: var(--font-accent);
   font-size: 12.5px;
   letter-spacing: 0.04em;
   color: rgba(74, 53, 23, 0.72);
 }
-.scroll-body .cta-btn {
-  margin-top: 12px;
-  background: #5a3e0a;
-  color: #f5e6c8;
-  font-size: 14px;
-  padding: 12px 32px;
-}
-.scroll-body .cta-btn:hover {
-  background: #7a5a10;
-  box-shadow: 0 6px 20px rgba(90,62,10,0.35);
+
+.gate-wrap .footer-note {
+  margin-top: 30px;
 }
 
-.scroll-wrap .footer-note {
-  margin-top: 28px;
+@media (prefers-reduced-motion: reduce) {
+  .gate-door, .gate-glow, .gate-seam, .gate-cta { transition: none; }
+  .gate-seam { animation: none; }
 }
 
 .cta-btn {
@@ -5039,7 +5173,7 @@ end of keeper CSS */
           <span class="phone-chat-avatar">宮</span>
           <div>
             <div class="phone-chat-name" id="phoneChatName">기억의 궁전</div>
-            <div class="phone-chat-status">안내 도우미 · 미리보기</div>
+            <div class="phone-chat-status">● 온라인 · 테마 도우미</div>
           </div>
         </div>
         <div class="phone-chat-body" id="phoneChatBody">
@@ -5057,6 +5191,16 @@ end of keeper CSS */
           <button type="button" data-phone-quick="how">사용법</button>
           <button type="button" data-phone-quick="explore">3D 둘러보기</button>
           <button type="button" data-phone-quick="spaces">공간 프리셋</button>
+        </div>
+        <div class="phone-chat-themes" id="phoneThemes">
+          <span class="ptheme-label">테마 · 글씨 · 모든 화면에 적용·유지</span>
+          <button type="button" data-phone-theme="sage"><span class="swatch" style="background:#2c7a63"></span>묵향 세이지</button>
+          <button type="button" data-phone-theme="indigo"><span class="swatch" style="background:#4f56d3"></span>학예 인디고</button>
+          <button type="button" data-phone-theme="clay"><span class="swatch" style="background:#b5552f"></span>박물관 클레이</button>
+          <button type="button" data-phone-zoom="1.12">글씨 크게</button>
+          <button type="button" data-phone-zoom="0.92">글씨 작게</button>
+          <button type="button" data-phone-zoom="">기본 크기</button>
+          <button type="button" data-phone-lite="toggle" id="phoneLiteBtn">가벼운 모드</button>
         </div>
         <div class="phone-chat-input">
           <input type="file" id="phonePdfInput" accept="application/pdf" hidden>
@@ -5921,21 +6065,26 @@ end of keeper CSS */
   </filter>
 </svg>
 
-<!-- CTA · 두루마리 서책 -->
+<!-- CTA · 기억의 궁전 대문 (입장) -->
 <section class="footer-cta" id="enter">
-  <div class="scroll-wrap reveal">
-    <div class="scroll-rod scroll-rod--top"></div>
-    <div class="scroll-body">
-      <div class="scroll-text">
-        <p class="scroll-line scroll-line--title">환영합니다.</p>
-        <p class="scroll-line">이 궁전의 모든 방은<br>당신의 지식으로 채워질 준비가 되었습니다.</p>
-        <p class="scroll-line">지금 첫 방을 열어보세요.</p>
+  <div class="gate-wrap reveal">
+    <h2 class="gate-title">환영합니다.</h2>
+    <p class="gate-sub">이 궁전의 모든 방은 당신의 지식으로 채워질 준비가 되었습니다.<br>지금, 첫 번째 문을 여세요.</p>
+
+    <a class="gate" href="#upload" aria-label="기억의 궁전 입장하기">
+      <div class="gate-frame">
+        <div class="gate-inner">
+          <div class="gate-glow" aria-hidden="true"></div>
+          <div class="gate-door gate-door--left" aria-hidden="true"><span class="gate-ring"></span></div>
+          <div class="gate-door gate-door--right" aria-hidden="true"><span class="gate-ring"></span></div>
+          <div class="gate-seam" aria-hidden="true"></div>
+        </div>
       </div>
-      <p class="cta-reassure">PDF 1장이면 충분 · 회원가입 없이 1분 · 분석에만 사용</p>
-      <a class="cta-btn" href="#upload">시작하기 →</a>
-    </div>
-    <div class="scroll-rod scroll-rod--bottom"></div>
-    <div class="footer-note">記憶宮殿 · Memory Palace, Seoul</div>
+      <span class="gate-cta">시작하기 →</span>
+    </a>
+
+    <p class="gate-reassure">PDF 1장이면 충분 · 회원가입 없이 1분 · 분석에만 사용</p>
+    <p class="footer-note">記憶宮殿 · Memory Palace, Seoul</p>
   </div>
 </section>
 
@@ -7413,6 +7562,42 @@ end of keeper CSS */
       else if (kind === 'explore') { phoneSay('3D 둘러보기', 'user'); window.setTimeout(() => phoneRespond('3d'), 200); }
       else if (kind === 'spaces') { phoneSay('공간 프리셋', 'user'); window.setTimeout(() => phoneRespond('프리셋'), 200); }
     });
+  }
+
+  /* ── 테마·글씨·가벼운모드 칩 (도우미 기능 병합 → assistant.js의 window.mpTheme 호출) ── */
+  const phoneThemes = document.getElementById('phoneThemes');
+  if (phoneThemes) {
+    const themeLabels = { sage: '묵향 세이지', indigo: '학예 인디고', clay: '박물관 클레이' };
+    const markActiveTheme = () => {
+      const mp = window.mpTheme;
+      const cur = (mp && mp.current && mp.current()) || 'clay';
+      phoneThemes.querySelectorAll('[data-phone-theme]').forEach((b) => {
+        b.classList.toggle('is-active', b.dataset.phoneTheme === cur);
+      });
+      const liteBtn = document.getElementById('phoneLiteBtn');
+      if (liteBtn) liteBtn.classList.toggle('is-active', !!(mp && mp.isLite && mp.isLite()));
+    };
+    phoneThemes.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      if (!window.mpTheme) { phoneSay('테마 기능을 불러오는 중이에요. 잠시 후 다시 눌러 주세요.'); return; }
+      if (btn.dataset.phoneTheme != null) {
+        const n = btn.dataset.phoneTheme;
+        window.mpTheme.set(n);
+        phoneSay(`테마를 '${themeLabels[n] || n}'(으)로 바꿨어요. 다른 화면에서도 유지돼요.`);
+      } else if (btn.dataset.phoneZoom != null) {
+        const z = btn.dataset.phoneZoom;
+        window.mpTheme.zoom(z);
+        phoneSay(z ? `글씨 크기를 ${Math.round(parseFloat(z) * 100)}%로 맞췄어요.` : '글씨 크기를 기본으로 되돌렸어요.');
+      } else if (btn.dataset.phoneLite != null) {
+        const on = window.mpTheme.toggleLite();
+        phoneSay(on ? '가벼운 모드를 켰어요(효과 최소화).' : '가벼운 모드를 껐어요.');
+      }
+      markActiveTheme();
+    });
+    // assistant.js(defer)가 늦게 로드될 수 있어 살짝 지연 후 활성 표시
+    markActiveTheme();
+    window.setTimeout(markActiveTheme, 400);
   }
 
   /* 기억의 책 인터랙션은 initMemoryBook()에서 처리됩니다. */

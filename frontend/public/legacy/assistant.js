@@ -46,6 +46,17 @@
   applyZoom(get(LS_ZOOM, ""));
   applyLite(get(LS_LITE, "0") === "1");
 
+  // ── 외부(home.html 스마트폰 등)에서 테마를 제어할 수 있는 공개 API ──
+  //   위젯(도우미)을 숨겨도 테마 엔진은 살아 있으므로, 스마트폰의 테마 칩이 이걸 호출한다.
+  window.mpTheme = {
+    set:  function (n) { if (!PRESETS[n]) return; set(LS_THEME, n); applyVars(n); },
+    zoom: function (z) { set(LS_ZOOM, z); applyZoom(z); },
+    toggleLite: function () { var on = get(LS_LITE, "0") !== "1"; set(LS_LITE, on ? "1" : "0"); applyLite(on); return on; },
+    current: function () { return get(LS_THEME, "clay"); },
+    isLite: function () { return get(LS_LITE, "0") === "1"; },
+    presets: PRESETS
+  };
+
   // ── 위젯 ──
   function build(){
     if (document.getElementById("mp-asst")) return;
