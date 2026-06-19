@@ -7,19 +7,19 @@
     if (P.get("dash") === "1" || window.self !== window.top) return; // 임베드(대시보드 iframe)·dash 모드에선 미주입
     const CITY = (P.get("city") || "").trim();
     const file = (location.pathname.split("/").pop() || "").toLowerCase().replace(".html", "");
-    // 현재 페이지 → 활성 키(스튜디오·워크는 4개 메인에 없으므로 비활성)
-    const CUR = { "region-select": "region", "compose": "compose", "vworld_map": "map",
-                  "glb-customizer": "", "memory-walk": "" }[file];
-    if (CUR === undefined) return; // 등록 안 된 페이지엔 주입 안 함
+    // 상단 목차 = 3구획. 현재 페이지가 어느 구획인지(활성). home은 자체 네비가 있어 미주입.
+    //   2.공간 둘러보기=region-select / 3.나만의 공간 만들기=구성·방디자인·3D지도·방안
+    const CUR = { "region-select": "browse",
+                  "compose": "create", "glb-customizer": "create", "vworld_map": "create", "memory-walk": "create" }[file];
+    if (CUR === undefined) return; // 등록 안 된 페이지(home 포함)엔 주입 안 함
 
     const withCity = (href, key) =>
-      (CITY && key !== "home") ? href + (href.indexOf("?") < 0 ? "?" : "&") + "city=" + encodeURIComponent(CITY) : href;
+      (CITY && key !== "explain") ? href + (href.indexOf("?") < 0 ? "?" : "&") + "city=" + encodeURIComponent(CITY) : href;
 
     const ITEMS = [
-      { key: "home",    label: "처음",    icon: "🏠", href: "home.html" },
-      { key: "region",  label: "둘러보기", icon: "🗺", href: "region-select.html" },
-      { key: "compose", label: "구성",    icon: "🛍", href: "compose.html" },
-      { key: "map",     label: "3D 지도",  icon: "🌐", href: "vworld_map.html" },
+      { key: "explain", label: "기술 설명",         icon: "📖", href: "home.html" },
+      { key: "browse",  label: "공간 둘러보기",      icon: "🗺", href: "region-select.html" },
+      { key: "create",  label: "나만의 공간 만들기", icon: "🏗", href: "compose.html" },
     ];
 
     const css = `
