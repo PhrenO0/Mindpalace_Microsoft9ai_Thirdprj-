@@ -148,6 +148,9 @@ def llm_chat_config() -> dict | None:
             "url": f"{az_ep}/openai/deployments/{az_dep}/chat/completions?api-version={ver}",
             "headers": {"api-key": az_key, "Content-Type": "application/json"},
             "model": None,
+            "provider": "azure",
+            "deployment": az_dep,
+            "apiVersion": ver,
         }
     o_key = (os.getenv("OPENAI_API_KEY") or "").strip()
     if o_key:
@@ -155,6 +158,7 @@ def llm_chat_config() -> dict | None:
             "url": "https://api.openai.com/v1/chat/completions",
             "headers": {"Authorization": f"Bearer {o_key}", "Content-Type": "application/json"},
             "model": (os.getenv("OPENAI_MODEL") or "gpt-4o-mini").strip(),
+            "provider": "openai",
         }
     return None
 
@@ -318,7 +322,13 @@ def recommend_city(payload: RecommendCityRequest) -> dict:
         log.warning("recommend-city LLM 요청 실패", exc_info=True)   # 내부 URL 등은 로그에만, 응답엔 미노출
         return {"configured": True, "slug": None, "error": "request"}
     if not resp.ok:
-        return {"configured": True, "slug": None, "error": f"llm {resp.status_code}"}
+        # 진단용: 어떤 provider/배포에서 어떤 응답인지(설정 점검용). 본문 일부만.
+        return {
+            "configured": True, "slug": None, "error": f"llm {resp.status_code}",
+            "provider": cfg.get("provider"), "deployment": cfg.get("deployment"),
+            "apiVersion": cfg.get("apiVersion"), "model": cfg.get("model"),
+            "detail": (resp.text or "")[:300],
+        }
     try:
         content = resp.json()["choices"][0]["message"]["content"]
         parsed = json.loads(content)
