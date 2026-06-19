@@ -551,8 +551,9 @@
       const k = lmCategory(theme);
       return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[k]||ICON_PATHS.pin}</svg>`;
     }
-    scene.add(new THREE.HemisphereLight(THEME ? THEME.hemi : 0xffffff, 0x444444, 0.4));  // 랜드마크 톤 조명
-    const sun = new THREE.DirectionalLight(0xfff4e6, 1.9); sun.castShadow = !LITE;
+    scene.add(new THREE.HemisphereLight(THEME ? THEME.hemi : 0xffffff, 0x555555, 0.62));  // 랜드마크 톤 조명(상↔하)
+    scene.add(new THREE.AmbientLight(0xffffff, 0.42));   // 실내 전역광 — 조명 안 구운 GLB(아파트 등)가 검게 안 죽도록 바닥 채움
+    const sun = new THREE.DirectionalLight(0xfff4e6, 1.7); sun.castShadow = !LITE;
     sun.shadow.mapSize.set(LITE ? 0 : 1024, LITE ? 0 : 1024);   // 2048→1024(라이트는 그림자 자체 꺼짐)
     sun.shadow.bias = -0.0004; scene.add(sun, sun.target);
 
@@ -1371,29 +1372,38 @@
       const camPos = clearViewPos(h.eye);
       flyTo(camPos, h.eye.clone(), instant ? 0 : 750);
     }
-    // 마커(eye)를 다른 가구가 막지 않는 카메라 위치 선택.
-    //   정면(방 중심 쪽) 우선 → 막히면 가구를 중심으로 회전·거리 조합을 훑어 시야가 트인 첫 지점.
-    //   가려짐 = camPos→eye 직선 위(타깃 직전까지) 다른 메쉬가 있음. 전부 막히면 기본 정면으로 폴백.
+    // 마커(eye)가 다른 가구·벽에 안 가리는 카메라 위치 — 삼각측량(가시성 샘플링).
+    //   눈높이 평면에서 마커를 중심으로 N방향으로 레이를 쏴 "열린 거리"를 잰다(어디가 트였나).
+    //   각 방향에 카메라를 (열린거리, 원하는거리) 내로 배치 → 그 방향은 정의상 카메라→마커 시야가 트임.
+    //   점수 = 열린거리 + 방 중심 향함(벽 바깥서 보지 않게) + 거리 확보. 최고점 채택, 전부 막히면 폴백.
     function clearViewPos(eye) {
       const center = bounds.getCenter(new THREE.Vector3());
-      const base = new THREE.Vector3(center.x - eye.x, 0, center.z - eye.z);
-      if (base.lengthSq() < 0.04) base.set(0, 0, 1); base.normalize();
       const eyeY = Math.min(bounds.min.y + 1.55, bounds.max.y - 0.15);
-      const m = 0.35;                                  // 벽에서 띄울 여유
-      const angles = [0, 22, -22, 45, -45, 70, -70, 110, -110, 150, -150, 180];
-      const dists = [1.7, 2.15, 1.35, 2.6];
-      const place = (a, dist) => {
-        const dir = base.clone().applyAxisAngle(UP, THREE.MathUtils.degToRad(a));
-        const p = new THREE.Vector3(eye.x + dir.x * dist, eyeY, eye.z + dir.z * dist);
-        p.x = Math.min(Math.max(p.x, bounds.min.x + m), bounds.max.x - m);
-        p.z = Math.min(Math.max(p.z, bounds.min.z + m), bounds.max.z - m);
-        return p;
-      };
-      for (const dist of dists) for (const a of angles) {
-        const p = place(a, dist);
-        if (losClear(p, eye)) return p;                // 시야 트인 첫 지점
+      const from = new THREE.Vector3(eye.x, eyeY, eye.z);   // 측정·배치는 눈높이 수평면에서
+      const toC = new THREE.Vector3(center.x - eye.x, 0, center.z - eye.z);
+      const facingRef = toC.lengthSq() > 0.04 ? toC.clone().normalize() : new THREE.Vector3(0, 0, 1);
+      const want = 1.9, minD = 0.85, margin = 0.34, clampM = 0.32;
+      const clampIn = p => { p.x = Math.min(Math.max(p.x, bounds.min.x + clampM), bounds.max.x - clampM);
+                             p.z = Math.min(Math.max(p.z, bounds.min.z + clampM), bounds.max.z - clampM); return p; };
+      const N = 28; let best = null;
+      for (let k = 0; k < N; k++) {
+        const ang = (k / N) * Math.PI * 2;
+        const dir = new THREE.Vector3(Math.cos(ang), 0, Math.sin(ang));
+        _viewRay.set(from, dir); _viewRay.far = want + 0.8;
+        const hit = occluders.length ? _viewRay.intersectObjects(occluders, false)[0] : null;
+        const open = hit ? hit.distance : (want + 0.8);     // 이 방향으로 트인 거리
+        if (open < minD + margin) continue;                 // 너무 막힘 → 이 방향 불가
+        const dist = Math.min(want, open - margin);
+        const facing = dir.dot(facingRef);                  // +1=방 중심 향함, -1=벽 쪽
+        const score = open * 1.0 + facing * 1.1 + dist * 0.4;
+        if (!best || score > best.score) best = { dir, dist, score };
       }
-      return place(0, 1.7);                            // 전부 막히면 기본 정면
+      if (best) {
+        const p = clampIn(new THREE.Vector3(eye.x + best.dir.x * best.dist, eyeY, eye.z + best.dir.z * best.dist));
+        if (losClear(p, eye)) return p;                     // 클램프 후 최종 가시성 확인
+      }
+      // 폴백: 방 중심 쪽 1.7m(전부 막혔을 때)
+      return clampIn(new THREE.Vector3(eye.x + facingRef.x * 1.7, eyeY, eye.z + facingRef.z * 1.7));
     }
     // camPos→target 직선이 타깃 직전(−0.35m)까지 다른 메쉬에 안 막히면 true.
     function losClear(from, to) {
