@@ -143,7 +143,8 @@ def llm_chat_config() -> dict | None:
     az_key = (os.getenv("AZURE_OPENAI_KEY") or os.getenv("AZURE_OPENAI_API_KEY") or "").strip()
     az_dep = (os.getenv("AZURE_OPENAI_DEPLOYMENT") or os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME") or "").strip()
     if az_ep and az_key and az_dep:
-        ver = (os.getenv("AZURE_OPENAI_API_VERSION") or "2024-08-01-preview").strip()
+        # 기본값을 gpt-4.1 계열까지 지원하는 최신 프리뷰로(구버전은 404 'Resource not found'). 필요시 env로 override.
+        ver = (os.getenv("AZURE_OPENAI_API_VERSION") or "2025-01-01-preview").strip()
         return {
             "url": f"{az_ep}/openai/deployments/{az_dep}/chat/completions?api-version={ver}",
             "headers": {"api-key": az_key, "Content-Type": "application/json"},
