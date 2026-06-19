@@ -1309,7 +1309,28 @@
 
       function startMap() {
         setStatus((CITY.name || "") + " 3D 지도를 생성하는 중...");
-        const initCam = GWANGHWAMUN;   // 시작 = 전체 오버뷰
+        let initCam = GWANGHWAMUN;   // 기본 = 전체 오버뷰
+        // ?focus=<랜드마크> 입장이면 VWorld '초기 위치'를 그 랜드마크로 잡는다. 안 그러면 VWorld 엔진이
+        //   로드 후 자기 초기 위치(GWANGHWAMUN=전체조망)로 늦게 애니메이션하며 우리 flyToAnchor(랜드마크)를
+        //   덮어써 '경복궁 줌인 → 전체조망 줌아웃'처럼 튕긴다. 초기 위치 자체를 랜드마크로 두면 둘이 일치.
+        try {
+          const _fx = (new URLSearchParams(location.search).get("focus") || "").trim();
+          if (_fx && Array.isArray(LANDMARKS) && LANDMARKS.length) {
+            let _i = LANDMARKS.findIndex((m) => m.name === _fx);
+            if (_i < 0) _i = LANDMARKS.findIndex((m) => m.name && (m.name.includes(_fx) || _fx.includes(m.name)));
+            if (_i >= 0) {
+              const _m = LANDMARKS[_i], _o = _m.cam || {};
+              const _num = (v, d) => (Number.isFinite(Number(v)) ? Number(v) : d);
+              initCam = {
+                lon: _m.lon + _num(_o.lonOff, 0),
+                lat: _m.lat + _num(_o.latOff, -0.0045),
+                height: _num(_o.height, 500),
+                heading: _num(_o.heading, 0),
+                pitch: _num(_o.pitch, -35),
+              };
+            }
+          }
+        } catch (_) {}
         const initPosition = new vw.CameraPosition(
           new vw.CoordZ(initCam.lon, initCam.lat, initCam.height),
           new vw.Direction(initCam.heading, initCam.pitch, 0),
