@@ -394,10 +394,13 @@ body {
 .hero-value {
   margin-top: 14px;
   max-width: 540px;
-  font-size: clamp(13px, 1.15vw, 15.5px);
-  line-height: 1.6;
-  color: rgba(245, 240, 232, 0.74);
-  text-shadow: 0 2px 18px rgba(0,0,0,0.45);
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.65;
+  color: rgba(250, 247, 240, 0.96);
+  word-break: keep-all;
+  text-shadow:
+    0 1px 3px rgba(0,0,0,0.7),
+    0 2px 12px rgba(0,0,0,0.55);
   animation: heroFadeIn 1.2s ease-out 0.95s both;
 }
 
@@ -521,138 +524,7 @@ body {
   background: linear-gradient(to bottom, var(--c-acc), transparent);
 }
 
-.hero-journey {
-  --journey-opacity: 0.95;
-  --journey-depth: 0;
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  opacity: var(--journey-opacity);
-  transform: translateY(calc(var(--journey-depth) * -10px)) scale(calc(1 + var(--journey-depth) * 0.018));
-  transform-origin: 50% 64%;
-  transition: opacity 0.25s ease;
-  will-change: opacity, transform;
-}
-
-.hero-journey-path {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 12px rgba(252,164,53,0.32));
-}
-
-.hero-journey-path path {
-  fill: none;
-  stroke: rgba(255,226,155,0.48);
-  stroke-width: 0.2;
-  stroke-linecap: round;
-  stroke-dasharray: 1.15 1.4;
-}
-
-.journey-point {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  width: 24px;
-  height: 24px;
-  transform: translate(-50%, -50%);
-  border-radius: 999px;
-  border: 1px solid rgba(126,214,184,0.72);
-  background:
-    radial-gradient(circle, rgba(255,246,219,0.98) 0 13%, rgba(252,164,53,0.92) 14% 36%, rgba(126,214,184,0.44) 37% 58%, rgba(252,164,53,0.1) 59% 100%);
-  box-shadow:
-    inset 0 0 0 4px rgba(38,34,29,0.42),
-    0 0 0 0 rgba(252,164,53,0),
-    0 0 20px rgba(126,214,184,0.34),
-    0 0 34px rgba(252,164,53,0.42);
-  pointer-events: auto;
-  text-decoration: none;
-  opacity: 0.82;
-  transition: transform 0.24s ease, opacity 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
-}
-
-.journey-point::before {
-  content: "";
-  position: absolute;
-  inset: -11px;
-  border-radius: inherit;
-  border: 1px solid rgba(126,214,184,0.24);
-  transform: scale(0.78);
-  opacity: 0;
-  transition: transform 0.28s ease, opacity 0.28s ease;
-}
-
-.journey-point::after {
-  content: attr(data-label);
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 10px);
-  transform: translateX(-50%) translateY(4px);
-  min-width: max-content;
-  padding: 6px 10px;
-  border: 1px solid rgba(252,164,53,0.28);
-  border-radius: 999px;
-  background: rgba(38,34,29,0.76);
-  color: rgba(245,240,232,0.9);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  opacity: 0;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  pointer-events: none;
-  transition: opacity 0.24s ease, transform 0.24s ease;
-}
-
-.journey-point:hover,
-.journey-point:focus-visible,
-.journey-point.is-current {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.32);
-  border-color: rgba(255,246,219,0.96);
-  box-shadow:
-    inset 0 0 0 4px rgba(38,34,29,0.36),
-    0 0 0 12px rgba(126,214,184,0.12),
-    0 0 28px rgba(126,214,184,0.52),
-    0 0 42px rgba(252,164,53,0.78);
-  outline: none;
-}
-
-.journey-point:hover::before,
-.journey-point:focus-visible::before,
-.journey-point.is-current::before,
-.journey-point.is-jumping::before {
-  opacity: 1;
-  transform: scale(1.24);
-}
-
-.journey-point:hover::after,
-.journey-point:focus-visible::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.journey-point.is-passed {
-  opacity: 0.95;
-  box-shadow:
-    inset 0 0 0 4px rgba(38,34,29,0.38),
-    0 0 0 8px rgba(126,214,184,0.08),
-    0 0 24px rgba(126,214,184,0.34),
-    0 0 34px rgba(252,164,53,0.56);
-}
-
-.journey-point.is-jumping {
-  animation: journeyJump 0.72s ease;
-}
-
-@keyframes journeyJump {
-  0% { box-shadow: 0 0 0 0 rgba(252,164,53,0.24), 0 0 20px rgba(252,164,53,0.44); }
-  55% { box-shadow: 0 0 0 20px rgba(252,164,53,0), 0 0 42px rgba(255,226,155,0.74); }
-  100% { box-shadow: 0 0 0 8px rgba(252,164,53,0.08), 0 0 28px rgba(252,164,53,0.5); }
-}
+/* (앵커포인트 동선 hero-journey — 제거됨) */
 
 
 
@@ -1977,6 +1849,22 @@ body {
   color: rgba(245, 240, 232, 0.66);
   max-width: 640px;
   word-break: keep-all;
+}
+
+/* 공간 프리셋 미리보기 영상 (스크롤 진입 시 무한 루프 재생) */
+.spaces-video-wrap {
+  margin-top: 30px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #0d0b08;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 26px 64px rgba(40, 28, 6, 0.30);
+  line-height: 0;
+}
+.spaces-video {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* 패널 내부 디테일 그리드 · '세세한 정보' 영역 */
@@ -4248,23 +4136,6 @@ body {
   .nav-links a:not(.nav-cta) { display: none; }
   .section { padding: 8vh 5vw; }
   .panel { border-radius: 18px; padding: 26px 18px; }
-  .hero-journey {
-    transform-origin: 58% 66%;
-  }
-  .journey-point {
-    width: 19px;
-    height: 19px;
-  }
-  .journey-point::after {
-    font-size: 10px;
-    padding: 5px 8px;
-  }
-  .journey-point:nth-of-type(1) { left: 60% !important; top: 86% !important; }
-  .journey-point:nth-of-type(2) { left: 55% !important; top: 77% !important; }
-  .journey-point:nth-of-type(3) { left: 58% !important; top: 69% !important; }
-  .journey-point:nth-of-type(4) { left: 55% !important; top: 62% !important; }
-  .journey-point:nth-of-type(5) { left: 50% !important; top: 56% !important; }
-  .journey-point:nth-of-type(6) { left: 46% !important; top: 49% !important; }
   #spaces .panel { padding: 34px 18px; }
   #spaces .detail-grid { /* carousel: no grid override needed */ }
   #philosophy { padding-top: 0; padding-bottom: 0; }
@@ -5025,7 +4896,7 @@ end of keeper CSS */
       <div class="hero-eyebrow">記憶 · MEMORY PALACE</div>
       <h1 class="hero-title">기억의 궁전</h1>
       <p class="hero-sub">궁궐을 걷듯, 지식을 걷는다.</p>
-      <p class="hero-value">PDF 한 장을 올리면 AI가 핵심을 뽑아 궁전 곳곳에 걸어 드립니다. 걸으며 외우고, 오래 기억하세요.</p>
+      <p class="hero-value">PDF를 올리면 AI가 핵심을 뽑아 궁전 곳곳에 걸어 드립니다.<br>걸으며 외우고, 오래 기억하세요.</p>
       <div class="hero-tags" aria-label="대상">
         <span class="hero-tag">수험생</span>
         <span class="hero-tag">자격증 준비</span>
@@ -5040,18 +4911,6 @@ end of keeper CSS */
     <div class="hero-statement" id="heroStatement">
       <p>지식과 공간의 경험을 이어주는<br>
       <span class="acc">기억의 궁전</span>.</p>
-    </div>
-
-    <div class="hero-journey" id="heroJourney" aria-label="기억의 궁전 동선">
-      <svg class="hero-journey-path" viewBox="0 0 100 100" aria-hidden="true" preserveAspectRatio="none">
-        <path d="M33 91 C40 84 47 79 55 73 C58 70 54 67 49 64 C45 61 44 58 46 55" />
-      </svg>
-      <a class="journey-point" href="#about" style="--x:33%;--y:91%;" data-label="소개" aria-label="소개로 이동"></a>
-      <a class="journey-point" href="#upload" style="--x:48%;--y:81%;" data-label="PDF 업로드" aria-label="PDF 업로드로 이동"></a>
-      <a class="journey-point" href="#objects" style="--x:56%;--y:73%;" data-label="기억의 책" aria-label="기억의 책으로 이동"></a>
-      <a class="journey-point" href="#spaces" style="--x:54%;--y:67%;" data-label="전각" aria-label="전각으로 이동"></a>
-      <a class="journey-point" href="#philosophy" style="--x:49%;--y:63%;" data-label="궁전 내부" aria-label="궁전 내부로 이동"></a>
-      <a class="journey-point" href="#enter" style="--x:46%;--y:55%;" data-label="시작" aria-label="시작 영역으로 이동"></a>
     </div>
 
     <div class="scroll-hint" id="scrollHint">
@@ -5585,329 +5444,11 @@ end of keeper CSS */
     <h2 class="sec-title">구역별로 준비된 다채로운 공간 프리셋을 둘러보세요</h2>
     <p class="sec-body">
       내 문서와 가장 어울리는 기억의 공간은 어디일까요?<br>
-      다양한 콘셉트로 나누어진 랜드마크 프리셋들을 가볍게 살펴보세요.
-      '이런 공간도 있구나' 하고 편하게 둘러보신 후,
-      당신만의 기억 지도를 그려나갈 마음에 드는 테마를 자유롭게 골라보세요.
+      다양한 콘셉트로 나누어진 랜드마크 프리셋들을 둘러보세요.
     </p>
-
-    <div class="spaces-layout">
-      <div class="spaces-cards">
-    <div class="region-carousel" id="regionCarousel">
-      <div class="region-carousel-inner">
-        <button type="button" class="carousel-arrow carousel-prev" aria-label="이전 시/도 보기">‹</button>
-        <button type="button" class="carousel-arrow carousel-next" aria-label="다음 시/도 보기">›</button>
-        <div class="carousel-track-wrap" id="regionTrackWrap">
-          <div class="carousel-track" id="regionTrack">
-          <button type="button" class="region-tab" data-region="seoul"><span class="tab-icon">🏯</span><span class="tab-name">서울특별시</span><span class="tab-count">1곳</span></button>
-          <button type="button" class="region-tab" data-region="busan"><span class="tab-icon">🌊</span><span class="tab-name">부산광역시</span><span class="tab-count">1곳</span></button>
-          <button type="button" class="region-tab" data-region="daegu"><span class="tab-icon">🎵</span><span class="tab-name">대구광역시</span><span class="tab-count">1곳</span></button>
-          <button type="button" class="region-tab" data-region="incheon"><span class="tab-icon">⚓</span><span class="tab-name">인천광역시</span><span class="tab-count">1곳</span></button>
-          <button type="button" class="region-tab" data-region="gwangju"><span class="tab-icon">🎨</span><span class="tab-name">광주광역시</span><span class="tab-count">1곳</span></button>
-          <button type="button" class="region-tab" data-region="daejeon"><span class="tab-icon">🔬</span><span class="tab-name">대전광역시</span><span class="tab-count">1곳</span></button>
-          <button type="button" class="region-tab" data-region="ulsan"><span class="tab-icon">🐋</span><span class="tab-name">울산광역시</span><span class="tab-count">1곳</span></button>
-          <button type="button" class="region-tab" data-region="sejong"><span class="tab-icon">🏛</span><span class="tab-name">세종특별자치시</span><span class="tab-count">1곳</span></button>
-          <button type="button" class="region-tab" data-region="gyeonggi"><span class="tab-icon">🏙</span><span class="tab-name">경기도</span><span class="tab-count">27곳</span></button>
-          <button type="button" class="region-tab" data-region="gangwon"><span class="tab-icon">⛰</span><span class="tab-name">강원특별자치도</span><span class="tab-count">7곳</span></button>
-          <button type="button" class="region-tab" data-region="chungbuk"><span class="tab-icon">🌾</span><span class="tab-name">충청북도</span><span class="tab-count">3곳</span></button>
-          <button type="button" class="region-tab" data-region="chungnam"><span class="tab-icon">🌅</span><span class="tab-name">충청남도</span><span class="tab-count">8곳</span></button>
-          <button type="button" class="region-tab" data-region="jeonbuk"><span class="tab-icon">🍚</span><span class="tab-name">전북특별자치도</span><span class="tab-count">6곳</span></button>
-          <button type="button" class="region-tab" data-region="jeonnam"><span class="tab-icon">🌿</span><span class="tab-name">전라남도</span><span class="tab-count">5곳</span></button>
-          <button type="button" class="region-tab" data-region="gyeongbuk"><span class="tab-icon">🛕</span><span class="tab-name">경상북도</span><span class="tab-count">10곳</span></button>
-          <button type="button" class="region-tab" data-region="gyeongnam"><span class="tab-icon">🚢</span><span class="tab-name">경상남도</span><span class="tab-count">8곳</span></button>
-          <button type="button" class="region-tab" data-region="jeju"><span class="tab-icon">🌋</span><span class="tab-name">제주특별자치도</span><span class="tab-count">2곳</span></button>
-          </div>
-        </div>
-        <div class="region-scrollbar" id="regionScrollbar"><div class="region-scrollbar-thumb"></div></div>
-      </div>
-
-      <div class="region-panels" id="regionPanels">
-        <!-- 서울특별시 (1) -->
-        <div class="region-panel" data-region="seoul">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">종로구</div><div class="city-lm">경복궁</div><div class="city-desc">조선의 법궁(1395). 종로구의 대표 궁궐.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 부산광역시 (1) -->
-        <div class="region-panel" data-region="busan">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">해운대구</div><div class="city-lm">해운대해수욕장</div><div class="city-desc">고운 백사장과 고층 스카이라인이 어우러진 대표 해변.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 대구광역시 (1) -->
-        <div class="region-panel" data-region="daegu">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">중구</div><div class="city-lm">김광석 다시그리기길</div><div class="city-desc">가수 김광석을 추모하는 벽화와 음악의 골목.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 인천광역시 (1) -->
-        <div class="region-panel" data-region="incheon">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">중구</div><div class="city-lm">차이나타운</div><div class="city-desc">개항기에 형성된 국내 최대 화교 거리.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 광주광역시 (1) -->
-        <div class="region-panel" data-region="gwangju">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">동구</div><div class="city-lm">국립아시아문화전당</div><div class="city-desc">옛 전남도청 자리에 들어선 복합 문화예술 공간.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 대전광역시 (1) -->
-        <div class="region-panel" data-region="daejeon">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">유성구</div><div class="city-lm">엑스포과학공원</div><div class="city-desc">1993 대전엑스포를 상징하는 탑과 과학 공원.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 울산광역시 (1) -->
-        <div class="region-panel" data-region="ulsan">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">동구</div><div class="city-lm">대왕암공원</div><div class="city-desc">기암괴석과 해송림이 어우러진 해안 절경 공원.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 세종특별자치시 (1) -->
-        <div class="region-panel" data-region="sejong">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">어진동</div><div class="city-lm">정부세종청사</div><div class="city-desc">중앙행정기관이 모여 있는 행정도시의 중심.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 경기도 (27) -->
-        <div class="region-panel" data-region="gyeonggi">
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">경기 북부</div><div class="subgroup-count">8곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">고양시</div><div class="city-lm">일산호수공원</div><div class="city-desc">도심 속 국내 최대급 인공 호수공원.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">남양주시</div><div class="city-lm">다산유적지</div><div class="city-desc">실학자 정약용의 생가와 묘가 있는 유적지.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">파주시</div><div class="city-lm">임진각·평화누리공원</div><div class="city-desc">분단의 상징과 평화 공원.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">김포시</div><div class="city-lm">애기봉평화생태공원</div><div class="city-desc">한강 하구 너머 북녘이 보이는 전망 공원.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">의정부시</div><div class="city-lm">부대찌개거리</div><div class="city-desc">의정부의 명물 부대찌개 원조 골목.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">양주시</div><div class="city-lm">회암사지</div><div class="city-desc">고려 말 최대 규모를 자랑하던 절터 유적.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">포천시</div><div class="city-lm">산정호수</div><div class="city-desc">명성산 자락을 비추는 그림 같은 호수.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">동두천시</div><div class="city-lm">소요산</div><div class="city-desc">경기의 소금강이라 불리는 산.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">경기 남부</div><div class="subgroup-count">19곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">수원시</div><div class="city-lm">수원화성</div><div class="city-desc">정조가 축조한 유네스코 세계유산 성곽.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">용인시</div><div class="city-lm">에버랜드</div><div class="city-desc">국내 최대 규모의 종합 테마파크.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">성남시</div><div class="city-lm">판교테크노밸리</div><div class="city-desc">국내 IT 기업이 밀집한 첨단산업 단지.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">부천시</div><div class="city-lm">아인스월드</div><div class="city-desc">세계 유명 건축물을 미니어처로 재현.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">화성시</div><div class="city-lm">궁평항</div><div class="city-desc">낙조가 아름다운 서해의 항구.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">안산시</div><div class="city-lm">대부도</div><div class="city-desc">갯벌·포도·해솔길로 유명한 서해의 큰 섬.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">평택시</div><div class="city-lm">평택호 관광단지</div><div class="city-desc">넓은 호수를 낀 산책로의 관광지.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">안양시</div><div class="city-lm">안양예술공원</div><div class="city-desc">계곡을 따라 현대 미술 조형물이 놓인 공원.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">시흥시</div><div class="city-lm">오이도</div><div class="city-desc">빨간 등대와 조개구이로 유명한 서해 관광지.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">광주시</div><div class="city-lm">남한산성</div><div class="city-desc">유네스코 세계유산 산성.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">하남시</div><div class="city-lm">미사경정공원</div><div class="city-desc">한강 변 조정 경기장을 낀 시민 공원.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">광명시</div><div class="city-lm">광명동굴</div><div class="city-desc">폐광을 빛과 예술로 단장한 동굴 테마파크.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">군포시</div><div class="city-lm">수리산 철쭉동산</div><div class="city-desc">봄이면 철쭉이 산자락을 물들이는 명소.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">오산시</div><div class="city-lm">물향기수목원</div><div class="city-desc">주제별 정원과 습지를 갖춘 도립 수목원.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">이천시</div><div class="city-lm">이천예스파크</div><div class="city-desc">도자 공방과 갤러리가 모인 도예 예술 마을.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">안성시</div><div class="city-lm">안성팜랜드</div><div class="city-desc">드넓은 초지와 목장 체험의 농촌 테마파크.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">의왕시</div><div class="city-lm">왕송호수</div><div class="city-desc">레일바이크와 조류생태원을 낀 큰 호수.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">여주시</div><div class="city-lm">신륵사</div><div class="city-desc">남한강 변에 자리한 천년 고찰.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">과천시</div><div class="city-lm">서울대공원</div><div class="city-desc">동물원과 식물원을 갖춘 대규모 가족 공원.</div></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 강원특별자치도 (7) -->
-        <div class="region-panel" data-region="gangwon">
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">영서</div><div class="subgroup-count">3곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">춘천시</div><div class="city-lm">남이섬</div><div class="city-desc">메타세쿼이아 길과 강변 풍경으로 사랑받는 섬.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">원주시</div><div class="city-lm">소금산 출렁다리</div><div class="city-desc">협곡을 가로지르는 출렁다리와 잔도 명소.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">태백시</div><div class="city-lm">태백산·천제단</div><div class="city-desc">주목 군락과 영봉 일출로 유명한 명산.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">영동</div><div class="subgroup-count">4곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">강릉시</div><div class="city-lm">경포대·경포해변</div><div class="city-desc">동해를 대표하는 호수와 백사장 명소.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">동해시</div><div class="city-lm">추암 촛대바위</div><div class="city-desc">애국가 일출 영상의 배경으로 유명한 기암.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">속초시</div><div class="city-lm">설악산·권금성</div><div class="city-desc">동해를 굽어보는 명산과 케이블카.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">삼척시</div><div class="city-lm">환선굴·대금굴</div><div class="city-desc">대이리 일대의 대규모 석회 동굴.</div></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 충청북도 (3) -->
-        <div class="region-panel" data-region="chungbuk">
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">청주시</div><div class="city-lm">고인쇄박물관</div><div class="city-desc">세계 最古 금속활자본 '직지'의 인쇄 유산.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">충주시</div><div class="city-lm">충주호</div><div class="city-desc">유람선이 오가는 거대한 인공 호수.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">제천시</div><div class="city-lm">청풍호·청풍문화재단지</div><div class="city-desc">수몰을 피해 옮겨 복원한 문화재와 호반.</div></div></div>
-            </div>
-        </div>
-
-        <!-- 충청남도 (8) -->
-        <div class="region-panel" data-region="chungnam">
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">천안·아산권</div><div class="subgroup-count">2곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">천안시</div><div class="city-lm">독립기념관</div><div class="city-desc">민족의 독립운동사를 집대성한 기념관.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">아산시</div><div class="city-lm">온양온천</div><div class="city-desc">국내에서 가장 오래된 온천으로 전한다.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">내륙권</div><div class="subgroup-count">3곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">공주시</div><div class="city-lm">공산성</div><div class="city-desc">백제 웅진 도읍기의 유네스코 세계유산 성곽.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">논산시</div><div class="city-lm">관촉사 은진미륵</div><div class="city-desc">국내 최대급 석조 미륵불이 있는 사찰.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">계룡시</div><div class="city-lm">계룡산 신도안</div><div class="city-desc">조선 천도 후보지로 거론되던 옛 도읍 터.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">서해안권</div><div class="subgroup-count">3곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">보령시</div><div class="city-lm">대천해수욕장</div><div class="city-desc">머드 축제로 세계에 알려진 서해 대표 해변.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">서산시</div><div class="city-lm">마애여래삼존상</div><div class="city-desc">'백제의 미소'로 불리는 국보 마애불.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">당진시</div><div class="city-lm">왜목마을</div><div class="city-desc">일출과 일몰을 함께 볼 수 있는 해안 명소.</div></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 전북특별자치도 (6) -->
-        <div class="region-panel" data-region="jeonbuk">
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">도심·서부권</div><div class="subgroup-count">4곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">전주시</div><div class="city-lm">전주한옥마을</div><div class="city-desc">수백 채의 한옥이 모인 국내 대표 한옥 군락.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">군산시</div><div class="city-lm">경암동 철길마을</div><div class="city-desc">옛 철길을 따라 집이 늘어선 추억의 마을.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">익산시</div><div class="city-lm">미륵사지·석탑</div><div class="city-desc">국내 최대·最古 석탑이 있는 유네스코 백제 유적.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">김제시</div><div class="city-lm">벽골제</div><div class="city-desc">국내에서 가장 오래된 저수지 유적.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">남부권</div><div class="subgroup-count">2곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">정읍시</div><div class="city-lm">내장산</div><div class="city-desc">가을 단풍으로 전국에 이름난 명산.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">남원시</div><div class="city-lm">광한루원</div><div class="city-desc">춘향전의 배경이 된 누각과 정원.</div></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 전라남도 (5) -->
-        <div class="region-panel" data-region="jeonnam">
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">서남권</div><div class="subgroup-count">2곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">목포시</div><div class="city-lm">유달산</div><div class="city-desc">노적봉과 함께 목포를 상징하는 진산.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">나주시</div><div class="city-lm">나주읍성·금학헌</div><div class="city-desc">조선 목사가 집무하던 관아와 내아.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">동남·남해안권</div><div class="subgroup-count">3곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">여수시</div><div class="city-lm">여수 밤바다</div><div class="city-desc">노래로 유명해진 항구의 야경.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">순천시</div><div class="city-lm">순천만 습지</div><div class="city-desc">세계적으로 손꼽히는 연안 갈대 습지.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">광양시</div><div class="city-lm">매화마을</div><div class="city-desc">봄이면 매화가 산자락을 뒤덮는 명소.</div></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 경상북도 (10) -->
-        <div class="region-panel" data-region="gyeongbuk">
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">도심·동해안권</div><div class="subgroup-count">3곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">포항시</div><div class="city-lm">호미곶 상생의 손</div><div class="city-desc">한반도 동쪽 끝에서 일출을 맞는 명소.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">경주시</div><div class="city-lm">불국사</div><div class="city-desc">유네스코 세계문화유산. 신라 불교예술의 정수.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">구미시</div><div class="city-lm">금오산·케이블카</div><div class="city-desc">구미의 진산으로 케이블카가 오른다.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">내륙권</div><div class="subgroup-count">7곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">김천시</div><div class="city-lm">직지사</div><div class="city-desc">황악산 자락에 자리한 천년 대찰.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">안동시</div><div class="city-lm">하회마을</div><div class="city-desc">유네스코에 등재된 전통 씨족 마을.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">영주시</div><div class="city-lm">부석사</div><div class="city-desc">무량수전으로 유명한 유네스코 등재 산사.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">영천시</div><div class="city-lm">은해사</div><div class="city-desc">팔공산 자락에 자리한 큰 사찰.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">상주시</div><div class="city-lm">경천대</div><div class="city-desc">낙동강 절경을 굽어보는 전망대.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">문경시</div><div class="city-lm">문경새재</div><div class="city-desc">영남대로의 옛 관문이 남은 고갯길.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">경산시</div><div class="city-lm">갓바위</div><div class="city-desc">소원을 들어준다는 영험한 기도처.</div></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 경상남도 (8) -->
-        <div class="region-panel" data-region="gyeongnam">
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">내륙권</div><div class="subgroup-count">5곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">창원시</div><div class="city-lm">진해 군항제</div><div class="city-desc">여좌천과 경화역을 물들이는 국내 최대 벚꽃 축제.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">진주시</div><div class="city-lm">진주성·촉석루</div><div class="city-desc">임진왜란 진주대첩의 현장과 남강변 누각.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">김해시</div><div class="city-lm">수로왕릉</div><div class="city-desc">가락국 시조 김수로왕이 잠든 무덤.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">밀양시</div><div class="city-lm">영남루</div><div class="city-desc">밀양강을 굽어보는 국보급 누각.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">양산시</div><div class="city-lm">통도사</div><div class="city-desc">부처의 진신사리를 모신 유네스코 등재 산사.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">남해안권</div><div class="subgroup-count">3곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">통영시</div><div class="city-lm">동피랑 벽화마을</div><div class="city-desc">언덕 골목을 수놓은 벽화 마을.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">사천시</div><div class="city-lm">바다케이블카</div><div class="city-desc">바다와 산을 함께 잇는 케이블카.</div></div></div>
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">거제시</div><div class="city-lm">외도 보타니아</div><div class="city-desc">바다 위 식물 정원으로 꾸민 섬.</div></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 제주특별자치도 (2) -->
-        <div class="region-panel" data-region="jeju">
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">제주시</div><div class="subgroup-count">1곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">제주시</div><div class="city-lm">한라산(백록담)</div><div class="city-desc">남한 최고봉이자 유네스코 세계자연유산.</div></div></div>
-            </div>
-          </div>
-
-          <div class="region-subgroup">
-            <div class="subgroup-header"><div class="subgroup-title">서귀포시</div><div class="subgroup-count">1곳</div></div>
-            <div class="city-grid">
-              <div class="city-card"><div class="city-image" data-img=""></div><div class="city-body"><div class="city-name">서귀포시</div><div class="city-lm">천지연폭포</div><div class="city-desc">도심 가까이서 만나는 빼어난 폭포.</div></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="region-total">총 84개 랜드마크 · 17개 시·도</div>
-    </div>
-      </div><!-- /.spaces-cards -->
-
-      <aside class="spaces-map" id="spacesMap" aria-label="선택한 랜드마크 지도">
-        <div class="spaces-map-sticky">
-          <div class="spaces-map-header">
-            <span class="spaces-map-title">내 궁전</span>
-            <span class="spaces-map-count"><strong id="palaceCount">0</strong> / 10</span>
-          </div>
-          <div class="spaces-map-canvas" id="spacesMapCanvas">
-            <img class="spaces-map-img" src="assets/map-korea.png" alt="대한민국 시·도 지도" loading="lazy">
-            <div class="spaces-map-pins" id="spacesMapPins" aria-hidden="true"></div>
-          </div>
-          <p class="spaces-map-hint" id="spacesMapHint">카드의 <strong>+ 담기</strong>를 눌러 핀을 떨어뜨려 보세요</p>
-        </div>
-      </aside>
-    </div><!-- /.spaces-layout -->
-
-    <div class="spaces-cta" id="spacesCta" role="region" aria-live="polite">
-      <span class="spaces-cta-text"><strong id="spacesCtaCount">0</strong>곳을 골랐어요. 이 공간들에 PDF 내용을 배치해드릴게요</span>
-      <button type="button" class="spaces-cta-btn" id="spacesCtaBtn">PDF로 시작하기 →</button>
+    <div class="spaces-video-wrap reveal">
+      <video id="spacesVideo" class="spaces-video" muted loop playsinline preload="metadata"
+             src="public/assets/space-preset.mov" aria-label="공간 프리셋 미리보기 영상"></video>
     </div>
   </div>
 </section>
@@ -6167,24 +5708,11 @@ end of keeper CSS */
   const hint = document.getElementById('scrollHint');
   const boundary = document.getElementById('heroBoundary');
   const canvas = document.getElementById('windCanvas');
-  const journey = document.getElementById('heroJourney');
-  const journeyPoints = journey ? Array.from(journey.querySelectorAll('.journey-point')) : [];
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
   function range(p, s, e) { return clamp((p - s) / (e - s), 0, 1); }
-
-  function setJourneyState(progress, opacity, depth) {
-    if (!journey || !journeyPoints.length) return;
-    journey.style.setProperty('--journey-opacity', String(opacity));
-    journey.style.setProperty('--journey-depth', String(depth));
-    const active = clamp(Math.floor(progress * journeyPoints.length), 0, journeyPoints.length - 1);
-    journeyPoints.forEach((point, index) => {
-      point.classList.toggle('is-passed', index < active);
-      point.classList.toggle('is-current', index === active);
-    });
-  }
 
   /* ═══════ 스크롤 연출 ═══════
      히어로 구간 (hero-track 내부 진행률 p: 0~1)
@@ -6238,11 +5766,6 @@ end of keeper CSS */
       const particleFade = range(p, 0.48, 0.88);
       canvas.style.opacity = String(Math.max(0, 1 - particleFade - after * 0.75));
 
-      // 앵커포인트: 항상 표시, 중앙 문장 전에 퇴장 (겹침 방지)
-      const journeyOut = range(p, 0.38, 0.52);
-      const journeyOpacity = 0.95 * (1 - journeyOut) * (1 - after);
-      setJourneyState(range(p, 0, 0.45), journeyOpacity, zoom + after * 0.7);
-
     } else {
       title.style.opacity = '1';
       statement.style.opacity = p > 0.58 ? '1' : '0';
@@ -6250,7 +5773,6 @@ end of keeper CSS */
       if (boundary) boundary.style.opacity = p > 0.78 ? '1' : '0';
       const particleFade = range(p, 0.48, 0.88);
       canvas.style.opacity = String(Math.max(0, 1 - particleFade - after * 0.75));
-      setJourneyState(range(p, 0, 0.45), p < 0.52 ? 0.92 : 0, 0);
     }
 
     nav.classList.toggle('scrolled', window.scrollY > 60);
@@ -6295,15 +5817,6 @@ end of keeper CSS */
     }, { passive: true });
     onDividerScroll();
   })();
-
-  journeyPoints.forEach((point) => {
-    point.addEventListener('click', () => {
-      point.classList.remove('is-jumping');
-      void point.offsetWidth;
-      point.classList.add('is-jumping');
-      window.setTimeout(() => point.classList.remove('is-jumping'), 760);
-    });
-  });
 
   /* ═══════ 바람 입자 (golden dust / 낙엽 조각) ═══════ */
   if (canvas) {
@@ -7496,7 +7009,7 @@ end of keeper CSS */
     { test: /(뭐하는|소개|기억의 궁전이란|궁전이 뭐|설명)/i, reply: '정보를 익숙한 공간에 배치해 기억하는 암기법입니다.\nAI가 PDF를 분석하고 3D 공간에 자동 배치해 줍니다.\n직접 준비할 필요 없이 걸어다니며 기억할 수 있습니다.' },
     { test: /(이점|장점|효과|왜 좋|뭐가 좋)/i, reply: '공간 암기법으로 기억력이 2배 이상 향상됩니다.\nAI가 분류·배치를 대신해 준비 부담이 없습니다.\n간격 복습으로 장기 기억 전환까지 도와줍니다.' },
     { test: /(3d|둘러보|탐험|구경)/i, reply: '"3D 둘러보기" 섹션으로 안내할게요.', action: 'goExplore' },
-    { test: /(프리셋|전각|공간|테마|분위기)/i, reply: '6가지 공간 프리셋이 준비되어 있어요.\n"전각" 섹션에서 확인할 수 있습니다.', action: 'goSpaces' },
+    { test: /(프리셋|전각|공간 프리셋|랜드마크)/i, reply: '공간 프리셋 미리보기를 보여드릴게요.', action: 'goSpaces' },
     { test: /(안녕|하이|hello|hi)/i, reply: '어서 오세요, 기억 여행자님.\n무엇을 도와드릴까요?' },
     { test: /(고마워|감사)/i, reply: '천만에요. 맡기신 기억은 잘 보관하겠습니다.' }
   ];
@@ -7617,6 +7130,23 @@ end of keeper CSS */
       e.preventDefault();
       window.scrollBy({ top: dir * STEP, behavior: 'smooth' });
     });
+  })();
+
+  /* ── 공간 프리셋 영상: 화면에 보일 때 무한 루프 재생, 벗어나면 일시정지 ── */
+  (function initSpacesVideo() {
+    const v = document.getElementById('spacesVideo');
+    if (!v) return;
+    if (!('IntersectionObserver' in window)) { v.play().catch(() => {}); return; }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          v.play().catch(() => {});
+        } else {
+          v.pause();
+        }
+      });
+    }, { threshold: 0.25 });
+    io.observe(v);
   })();
 
 })();
