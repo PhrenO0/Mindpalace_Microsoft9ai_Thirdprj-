@@ -2194,18 +2194,24 @@
         const cvs = renderer.domElement, W = cvs.width, H = cvs.height;
         const v = point.clone().project(camera);
         const sx = (v.x + 1) / 2, sy = (1 - v.y) / 2;            // 마커의 화면 위치(0~1)
-        // ① 마커 주변 크롭(대상 사물 중심) — 정사각, 짧은 변의 ~60%
+        // 마커 주변 크롭(대상 사물 중심) — 정사각, 짧은 변의 ~60%
         const half = Math.round(Math.min(W, H) * 0.30);
         const cw = Math.min(2 * half, W), ch = Math.min(2 * half, H);
         const x0 = Math.max(0, Math.min(W - cw, Math.round(sx * W - half)));
         const y0 = Math.max(0, Math.min(H - ch, Math.round(sy * H - half)));
         const crop = document.createElement("canvas"); crop.width = cw; crop.height = ch;
         crop.getContext("2d").drawImage(cvs, x0, y0, cw, ch, 0, 0, cw, ch);
-        const mx = (sx * W - x0) / cw, my = (sy * H - y0) / ch;  // 크롭 내 마커 위치(≈0.5)
+        // ① gpt-4.1 비전 라벨링(크롭 대상을 멀티모달 LLM이 직접 한국어로 명명) — 우선
+        try {
+          const vr = await fetch("/api/vision-label", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageBase64: crop.toDataURL("image/png") }) });
+          if (vr.ok) { const vj = await vr.json(); if (vj.configured && vj.label) return { ok: true, label: vj.label, ko: vj.label, score: null }; }
+        } catch (_) {}
+        // ② 폴백: Azure Computer Vision(/api/detect) — 크롭 박스 매칭, 없으면 전체화면
+        const mx = (sx * W - x0) / cw, my = (sy * H - y0) / ch;
         let res = await detectOn(crop, cw, ch, mx, my);
         if (res.err) return { ok: false, reason: res.err };
         if (res.best) return { ok: true, label: res.best.label, ko: furnKO(res.best.label), score: res.best.score };
-        // ② 크롭서 검출 0 → 전체화면 폴백(마커 위치 기준)
         res = await detectOn(cvs, W, H, sx, sy);
         if (res.err) return { ok: false, reason: res.err };
         if (res.best) return { ok: true, label: res.best.label, ko: furnKO(res.best.label), score: res.best.score };

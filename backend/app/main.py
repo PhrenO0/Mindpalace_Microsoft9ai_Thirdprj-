@@ -345,6 +345,60 @@ def recommend_city(payload: RecommendCityRequest) -> dict:
 
 
 @app.post(
+    "/api/vision-label",
+    dependencies=[Depends(rate_limit("vision-label", limit=30, window_sec=60))],
+)
+def vision_label(payload: DetectRequest) -> dict:
+    """크롭한 사물 이미지를 멀티모달 LLM(gpt-4.1/4o 비전)에 보내 한국어 사물명을 받는다.
+    핫스팟 '정밀' 인식용 — Azure Computer Vision의 고정 어휘보다 풍부·정확. 미설정/오류면 label=None."""
+    cfg = llm_chat_config()
+    if not cfg:
+        return {"configured": False}
+    img = (payload.imageBase64 or "").strip()
+    if not img:
+        return {"configured": True, "label": None}
+    if not img.startswith("data:"):
+        img = "data:image/png;base64," + img
+    system = (
+        "너는 실내 3D 장면 사진 속 사물을 인식하는 도우미다. 사진 중앙(또는 가장 크고 두드러진)"
+        " 가구·사물의 종류를 한국어 한 단어(일반 명사)로만 답한다. 사람·텍스트·UI가 아니라 가구/소품을 본다."
+    )
+    user_text = (
+        "이 사진에서 가장 두드러진 가구/사물의 종류는 무엇입니까? 한국어 한 단어로만"
+        " (예: 의자, 소파, 식탁, 책상, 침대, 책장, 수납장, 화분, 조명, 그림, 러그, 창문, TV, 냉장고, 꽃병)."
+        ' JSON으로만 답하라: {"label":"<종류>"}'
+    )
+    body: dict[str, Any] = {
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": [
+                {"type": "text", "text": user_text},
+                {"type": "image_url", "image_url": {"url": img}},
+            ]},
+        ],
+        "temperature": 0.0,
+        "max_tokens": 60,
+        "response_format": {"type": "json_object"},
+    }
+    if cfg.get("model"):
+        body["model"] = cfg["model"]
+    try:
+        resp = requests.post(cfg["url"], headers=cfg["headers"], json=body, timeout=(5, 22))
+    except requests.RequestException:
+        log.warning("vision-label LLM 요청 실패", exc_info=True)
+        return {"configured": True, "label": None, "error": "request"}
+    if not resp.ok:
+        return {"configured": True, "label": None, "error": f"llm {resp.status_code}", "detail": (resp.text or "")[:200]}
+    try:
+        content = resp.json()["choices"][0]["message"]["content"]
+        parsed = json.loads(content)
+        label = str(parsed.get("label") or "").strip()[:40] if isinstance(parsed, dict) else ""
+    except (KeyError, IndexError, ValueError, TypeError, AttributeError):
+        return {"configured": True, "label": None, "error": "parse"}
+    return {"configured": True, "label": label or None}
+
+
+@app.post(
     "/api/detect",
     dependencies=[Depends(rate_limit("detect", limit=20, window_sec=60))],
 )
