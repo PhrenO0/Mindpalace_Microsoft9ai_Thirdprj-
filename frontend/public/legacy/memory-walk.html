@@ -410,6 +410,7 @@
     }
     const P = new URLSearchParams(location.search);
     const DASH = P.get("dash") === "1";                 // 스튜디오 임베드: 2D 대시보드만 표시
+    const CAPTURE = P.get("capture") === "1";           // ?capture=1: 방 내부 4컷 캡처 후 부모로 postMessage(②c 방 미리보기)
     if (DASH) document.body.classList.add("dash");
     const ROOM_GLB = P.get("glb") || "public/assets/rooms/3dfront-livingroom.glb";
     const ENV = P.get("env");
@@ -592,6 +593,33 @@
       return set;
     }
 
+    // ②c 방 미리보기: 방 중심·눈높이에서 90°씩 4방향 정규화 캡처 → 부모로 전송(어느 GLB든 일관).
+    function captureFourViews() {
+      try {
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));   // 내부 4컷이 너무 어둡지 않게 밝기 보정
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x99918a, 0.55));
+        const center = bounds.getCenter(new THREE.Vector3());
+        const sz = bounds.getSize(new THREE.Vector3());
+        const eyeY = bounds.min.y + Math.min(Math.max(sz.y * 0.5, 1.4), 1.9);
+        const eye = new THREE.Vector3(center.x, eyeY, center.z);
+        const yaws = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+        camera.aspect = renderer.domElement.width / renderer.domElement.height; camera.updateProjectionMatrix();
+        const grab = () => {
+          const shots = [];
+          yaws.forEach((yaw) => {
+            const dir = new THREE.Vector3(Math.sin(yaw), -0.14, Math.cos(yaw)).normalize();
+            camera.position.copy(eye);
+            controls.target.copy(eye.clone().add(dir)); controls.update();
+            renderer.render(scene, camera);
+            shots.push(renderer.domElement.toDataURL("image/jpeg", 0.82));
+          });
+          try { parent.postMessage({ type: "mw-room-shots", glb: ROOM_GLB, shots: shots }, "*"); } catch (_) {}
+          try { setStatus("미리보기 4컷 캡처 완료"); } catch (_) {}
+        };
+        setTimeout(grab, 650);   // 텍스처·그림자 안정화 후 캡처
+      } catch (e) { try { parent.postMessage({ type: "mw-room-shots", shots: [], error: String(e) }, "*"); } catch (_) {} }
+    }
+
     loader.load(ROOM_GLB, (gltf) => {
       const model = gltf.scene;
       model.updateMatrixWorld(true);
@@ -657,6 +685,7 @@
       // 자체 방(바닥/벽)이 있으면 shell 생략(겹쳐서 z-fighting "이상함" 방지). 가구만 있는 GLB만 shell.
       if (!hasOwnRoom) buildShell(bounds, CEIL);
       renderer.shadowMap.needsUpdate = true;   // 방·조명·shell 준비 끝 → 그림자맵 1회 굽기(이후 정적 유지).
+      if (CAPTURE) { captureFourViews(); return; }   // ?capture=1: 방 내부 4컷만 찍어 부모로 전송(팰리스 불필요)
       resolveAnchorsThenPalace();
     }, e => { if (e.total){ const p = Math.round(e.loaded/e.total*100);   // 로딩 진행률 — 좌상단 카드에도 표시(상단 nav에 가려지지 않게)
         setStatus(`방 로드… ${p}%`); const rn = $("roomName"); if (rn) rn.textContent = `방 로드 중… ${p}%`; } },
