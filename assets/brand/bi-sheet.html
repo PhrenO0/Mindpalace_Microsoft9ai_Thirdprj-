@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT/fonts/static/woff2/SUIT.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#332E28; --amber:#FCA435; --cream:#F7F3EC; --sand:#E6D3B4;
+    --grey:#635B51; --rust:#B05B3E; --drust:#8A3F25; --paper:#F7F3EC; --text:#2A1D08;
+    --suit:"SUIT","Pretendard",sans-serif; --body:"Pretendard",sans-serif; --serif:"Gowun Batang",serif; --soft:"Gowun Dodum",sans-serif;
+  }
+  @page{ size:1240px 1760px; margin:0; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  html,body{width:1240px;}
+  body{
+    width:1240px; min-height:1754px;
+    background:
+      radial-gradient(60% 38% at 82% -4%, rgba(252,164,53,.13), transparent 60%),
+      radial-gradient(46% 30% at 6% 102%, rgba(176,91,62,.10), transparent 60%),
+      var(--cream);
+    color:var(--text); font-family:var(--body); padding:72px 76px 64px;
+  }
+  .eyebrow{font-family:var(--serif);font-weight:700;font-size:14px;letter-spacing:.34em;color:var(--drust);text-transform:uppercase;}
+  /* ── 헤더 / 로고 락업 ── */
+  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;border-bottom:2px solid rgba(51,46,40,.14);padding-bottom:30px;}
+  .lock{display:flex;align-items:center;gap:22px;}
+  .symbol{width:104px;height:104px;flex:none;}
+  .word h1{font-family:var(--suit);font-weight:800;font-size:52px;letter-spacing:-2px;color:var(--text);line-height:1;}
+  .word .han{font-family:var(--serif);font-weight:700;font-size:16px;letter-spacing:3px;color:var(--drust);margin-top:10px;}
+  .head-right{text-align:right;}
+  .head-right .doc{font-family:var(--serif);font-size:13px;letter-spacing:.06em;color:var(--grey);}
+  .head-right .tag{font-family:var(--suit);font-weight:800;font-size:22px;color:var(--ink);margin-top:8px;line-height:1.25;}
+  .head-right .tag b{color:var(--rust);}
+  /* ── 섹션 그리드 ── */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:30px 34px;margin-top:34px;}
+  .card{background:rgba(255,255,255,.66);border:1px solid rgba(51,46,40,.12);border-radius:18px;padding:26px 28px;box-shadow:0 14px 34px rgba(40,34,26,.07);}
+  .card.full{grid-column:1/-1;}
+  .card h2{font-family:var(--suit);font-weight:800;font-size:19px;color:var(--ink);display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .card h2 .no{font-family:var(--serif);font-weight:700;font-size:13px;color:#fff;background:var(--amber);width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;letter-spacing:0;}
+  .lead{font-size:14.5px;line-height:1.7;color:rgba(42,29,8,.8);}
+  .lead b{color:var(--drust);}
+  /* 본질 */
+  .essence dt{font-family:var(--serif);font-size:12px;letter-spacing:.12em;color:var(--grey);margin-top:14px;}
+  .essence dt:first-child{margin-top:0;}
+  .essence dd{font-size:15px;color:var(--text);font-weight:600;margin-top:3px;line-height:1.5;}
+  .essence dd .em{color:var(--rust);}
+  /* 컬러 */
+  .swatches{display:flex;flex-direction:column;gap:11px;}
+  .sw{display:flex;align-items:center;gap:14px;}
+  .chip{width:54px;height:40px;border-radius:10px;flex:none;border:1px solid rgba(51,46,40,.12);}
+  .sw .nm{font-weight:700;font-size:13.5px;color:var(--text);}
+  .sw .hex{font-family:var(--serif);font-size:12.5px;color:var(--grey);letter-spacing:.04em;}
+  .sw .use{margin-left:auto;font-size:11.5px;color:var(--grey);text-align:right;max-width:150px;line-height:1.35;}
+  .ratio{margin-top:18px;display:flex;height:30px;border-radius:8px;overflow:hidden;font-family:var(--suit);font-weight:800;font-size:12px;}
+  .ratio span{display:flex;align-items:center;justify-content:center;color:#fff;}
+  .ratio .r6{flex:6;background:var(--ink);} .ratio .r3{flex:3;background:var(--grey);} .ratio .r1{flex:1;background:var(--amber);color:var(--ink);}
+  .ratio-cap{font-size:11.5px;color:var(--grey);margin-top:7px;}
+  /* 타이포 */
+  .type-row{padding:11px 0;border-top:1px dashed rgba(51,46,40,.15);}
+  .type-row:first-child{border-top:none;padding-top:0;}
+  .type-row .role{font-size:11px;letter-spacing:.1em;color:var(--grey);text-transform:uppercase;}
+  .spec-suit{font-family:var(--suit);font-weight:800;font-size:30px;color:var(--text);letter-spacing:-1px;line-height:1.1;}
+  .spec-body{font-family:var(--body);font-size:17px;color:var(--text);line-height:1.4;margin-top:2px;}
+  .spec-serif{font-family:var(--serif);font-weight:700;font-size:21px;color:var(--drust);letter-spacing:1px;}
+  .spec-soft{font-family:var(--soft);font-size:19px;color:var(--ink);}
+  /* 로고 사용 */
+  .usage-grid{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center;}
+  .usage-box{background:var(--ink);border-radius:14px;height:128px;display:flex;align-items:center;justify-content:center;}
+  .usage-box.light{background:var(--sand);}
+  .mini{width:120px;}
+  ul.rules{list-style:none;display:flex;flex-direction:column;gap:9px;}
+  ul.rules li{font-size:13px;line-height:1.45;color:rgba(42,29,8,.82);padding-left:20px;position:relative;}
+  ul.rules li::before{content:"";position:absolute;left:0;top:7px;width:8px;height:8px;border-radius:50%;background:var(--amber);}
+  ul.rules li.no::before{background:var(--rust);border-radius:2px;}
+  ul.rules li b{color:var(--drust);}
+  /* 키워드 / 톤 푸터 */
+  .keywords{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+  .kw{font-family:var(--suit);font-weight:800;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--rust),var(--drust));padding:9px 18px;border-radius:999px;}
+  .kw.amber{background:var(--amber);color:var(--ink);}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:30px;padding-top:18px;border-top:2px solid rgba(51,46,40,.14);font-size:11.5px;color:var(--grey);font-family:var(--serif);letter-spacing:.05em;}
+</style>
+</head>
+<body>
+
+  <div class="head">
+    <div class="lock">
+      <svg class="symbol" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-label="기억의 궁전 심볼">
+        <g fill="none" stroke="#FCA435" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 34 Q48 16 82 34"/>
+          <path d="M42 22 L48 15 L54 22"/>
+          <path d="M20 36 L76 36"/>
+          <path d="M28 38 L28 76"/>
+          <path d="M68 38 L68 76"/>
+          <path d="M37 76 L37 52 Q48 42 59 52 L59 76"/>
+          <path d="M16 78 L80 78"/>
+        </g>
+        <circle cx="48" cy="58" r="5" fill="#FCA435"/>
+        <circle cx="48" cy="58" r="10" fill="none" stroke="#FCA435" stroke-width="1.4" opacity="0.45"/>
+      </svg>
+      <div class="word">
+        <h1>기억의 궁전</h1>
+        <div class="han">記憶宮殿 · MEMORY PALACE</div>
+      </div>
+    </div>
+    <div class="head-right">
+      <div class="doc">Brand Identity · 2026</div>
+      <div class="tag">궁궐을 걷듯,<br><b>지식을 걷는다</b></div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <h2><span class="no">01</span> 브랜드 본질</h2>
+      <dl class="essence">
+        <dt>한 줄 정의</dt>
+        <dd>궁궐을 걷듯, 지식을 걷는다</dd>
+        <dt>무엇을</dt>
+        <dd>PDF를 올리면 AI가 핵심을 뽑아 <span class="em">3D 공간(궁전)</span> 곳곳에 걸어 주는 공간 기억술 학습 서비스</dd>
+        <dt>누구에게</dt>
+        <dd>수험생 · 자격증 준비 · 전공 시험</dd>
+        <dt>성격</dt>
+        <dd>품격 있는 · 따뜻한 · 명료한</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h2><span class="no">02</span> 심볼</h2>
+      <p class="lead"><b>궁전의 문(門)</b> 안에 <b>기억의 빛(점)</b>이 놓인 형태.
+      지붕·기둥·아치는 익숙한 <b>공간</b>, 중앙의 앰버 점은 그 공간에 <b>걸어 둔 기억</b>입니다.
+      "공간에 기억을 놓는다"는 장소법의 핵심을 한 기호로 압축했습니다.</p>
+      <div style="display:flex;gap:18px;align-items:center;margin-top:18px;">
+        <div class="usage-box" style="width:140px;height:96px;">
+          <svg class="mini" style="width:88px" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" stroke="#FCA435" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 34 Q48 16 82 34"/><path d="M42 22 L48 15 L54 22"/><path d="M20 36 L76 36"/>
+              <path d="M28 38 L28 76"/><path d="M68 38 L68 76"/><path d="M37 76 L37 52 Q48 42 59 52 L59 76"/><path d="M16 78 L80 78"/>
+            </g><circle cx="48" cy="58" r="5" fill="#FCA435"/>
+            <circle cx="48" cy="58" r="10" fill="none" stroke="#FCA435" stroke-width="1.4" opacity="0.45"/>
+          </svg>
+        </div>
+        <p class="lead" style="font-size:12.5px;">다크 배경 위 앰버 심볼이 기본형.<br>최소 크기 심볼 단독 <b>24px</b> 이상.</p>
+      </div>
+    </div>
+
+    <div class="card full">
+      <h2><span class="no">03</span> 컬러 시스템</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px 40px;">
+        <div class="swatches">
+          <div class="sw"><span class="chip" style="background:#332E28"></span><div><div class="nm">먹 브라운 Ink</div><div class="hex">#332E28</div></div><div class="use">다크 베이스·본문</div></div>
+          <div class="sw"><span class="chip" style="background:#FCA435"></span><div><div class="nm">앰버 Amber</div><div class="hex">#FCA435</div></div><div class="use">강조·동선·CTA·심볼</div></div>
+          <div class="sw"><span class="chip" style="background:#F7F3EC"></span><div><div class="nm">한지 크림 Cream</div><div class="hex">#F7F3EC</div></div><div class="use">라이트 베이스</div></div>
+          <div class="sw"><span class="chip" style="background:#E6D3B4"></span><div><div class="nm">모래 테라코타 Sand</div><div class="hex">#E6D3B4</div></div><div class="use">체험 구간 베이스</div></div>
+        </div>
+        <div class="swatches">
+          <div class="sw"><span class="chip" style="background:#635B51"></span><div><div class="nm">웜 그레이 Grey</div><div class="hex">#635B51</div></div><div class="use">구분선·보조 영역</div></div>
+          <div class="sw"><span class="chip" style="background:#B05B3E"></span><div><div class="nm">러스트 Rust</div><div class="hex">#B05B3E</div></div><div class="use">라이트 위 액센트</div></div>
+          <div class="sw"><span class="chip" style="background:#8A3F25"></span><div><div class="nm">딥 러스트 Deep Rust</div><div class="hex">#8A3F25</div></div><div class="use">명조 라벨·강조 텍스트</div></div>
+          <div class="sw"><span class="chip" style="background:#2A1D08"></span><div><div class="nm">다크 브라운 Text</div><div class="hex">#2A1D08</div></div><div class="use">라이트 위 본문</div></div>
+        </div>
+      </div>
+      <div class="ratio"><span class="r6">60 · 베이스</span><span class="r3">30 · 보조</span><span class="r1">10 · 앰버</span></div>
+      <div class="ratio-cap">사용 비율 <b>6 : 3 : 1</b> — 먹 브라운/크림/모래(베이스) : 웜 그레이/카드(보조) : 앰버(핵심 강조에만). 흰색은 카드·가독성용 중립색.</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="no">04</span> 타이포그래피</h2>
+      <div class="type-row"><div class="role">Display · Title — SUIT 800/700</div><div class="spec-suit">기억의 궁전 ABC 123</div></div>
+      <div class="type-row"><div class="role">Body — Pretendard</div><div class="spec-body">궁궐을 걷듯, 지식을 걷는다. 공간이 기억을 만듭니다.</div></div>
+      <div class="type-row"><div class="role">Accent · Serif — Gowun Batang 700</div><div class="spec-serif">記憶宮殿 · 장소법 Method of Loci</div></div>
+      <div class="type-row"><div class="role">Soft Title — Gowun Dodum</div><div class="spec-soft">부드러운 소제목과 안내 문구</div></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="no">05</span> 로고 사용 규칙</h2>
+      <ul class="rules">
+        <li><b>여백</b> — 심볼 높이의 0.5배 이상을 사방에 확보</li>
+        <li><b>최소 크기</b> — 가로 락업 120px / 심볼 단독 24px 이상</li>
+        <li>다크 배경: 앰버 심볼 + 페이퍼 워드마크</li>
+        <li>라이트 배경: 앰버 심볼 + 다크 브라운 워드마크</li>
+        <li class="no">금지 — 비율 왜곡, 임의 색 변경, 그림자·외곽선 추가, 회전</li>
+      </ul>
+    </div>
+
+    <div class="card full">
+      <h2><span class="no">06</span> 핵심어 · 톤 &amp; 보이스</h2>
+      <div class="keywords">
+        <span class="kw amber">공간기억</span><span class="kw">동선 순서</span><span class="kw">생생한 이미지</span>
+      </div>
+      <p class="lead" style="margin-top:16px;">명령보다 <b>경험형</b> 문장: "공간을 고릅니다 → 길을 만듭니다 → 기억을 겁니다 → 다시 걸으며 꺼내 봅니다."
+      과장 없이 짧고 정돈된 2~3줄, 핵심 수치만 형광펜으로 강조. 장소법(Method of Loci)은 2,500년 전통과 현대 신경과학으로 검증된 기억술입니다.</p>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <span>記憶宮殿 · Memory Palace</span>
+    <span>궁궐을 걷듯, 지식을 걷는다</span>
+  </div>
+
+</body>
+</html>

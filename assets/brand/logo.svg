@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" width="360" height="96" role="img" aria-label="기억의 궁전 Memory Palace">
+  <title>기억의 궁전 · Memory Palace</title>
+
+  <!-- ── 심볼: 궁전의 문 + 기억의 빛 ── -->
+  <g fill="none" stroke="#FCA435" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 처마(지붕) -->
+    <path d="M14 34 Q48 16 82 34"/>
+    <!-- 용마루 -->
+    <path d="M42 22 L48 15 L54 22"/>
+    <!-- 지붕 하단선 -->
+    <path d="M20 36 L76 36"/>
+    <!-- 기둥 -->
+    <path d="M28 38 L28 76"/>
+    <path d="M68 38 L68 76"/>
+    <!-- 아치 문 -->
+    <path d="M37 76 L37 52 Q48 42 59 52 L59 76"/>
+    <!-- 기단 -->
+    <path d="M16 78 L80 78"/>
+  </g>
+  <!-- 기억의 빛(공간에 걸어 둔 기억) -->
+  <circle cx="48" cy="58" r="5" fill="#FCA435"/>
+  <circle cx="48" cy="58" r="10" fill="none" stroke="#FCA435" stroke-width="1.4" opacity="0.45"/>
+
+  <!-- ── 워드마크 ── -->
+  <text x="104" y="46" font-family="'SUIT','Pretendard',sans-serif" font-weight="800" font-size="34" letter-spacing="-1" fill="#2A1D08">기억의 궁전</text>
+  <text x="105" y="70" font-family="'Gowun Batang',serif" font-weight="700" font-size="14" letter-spacing="3" fill="#8A3F25">記憶宮殿 · MEMORY PALACE</text>
+</svg>
