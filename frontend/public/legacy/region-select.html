@@ -464,7 +464,8 @@
       clearTimeout(to);
       if (!r.ok) return null;
       const j = await r.json();
-      if (j && j.configured && j.slug && SLUG2CITY[j.slug]) return j.slug;   // LLM 성공
+      if (j && j.configured && j.slug && SLUG2CITY[j.slug])
+        return { slug: j.slug, reason: (j.reason || "").toString().slice(0, 500) };   // LLM 성공(이유 포함)
     } catch(_){}
     return null;   // 폴백 신호
   }
@@ -474,9 +475,13 @@
     btn.disabled = true;
     if (!corpus.trim()){ btn.textContent = "✨ 추천(기본: 종로)…"; setTimeout(() => { location.href = composeHref("jongno"); }, 250); return; }
     btn.textContent = "✨ 분석 중…";
-    let slug = await llmRecommend(corpus), viaLLM = !!slug;   // ① LLM
+    const rec = await llmRecommend(corpus);                   // ① LLM {slug, reason}
+    let slug = rec && rec.slug, viaLLM = !!slug;
     if (!slug){ slug = recommendCity(corpus).slug; }          // ② 규칙기반 폴백(느리거나 미설정)
     const nm = (SLUG2CITY[slug] && SLUG2CITY[slug].name) || (INDEX[slug] && INDEX[slug].name) || slug;
+    // AI 추천 이유를 구성 페이지로 전달(LLM 성공 시) — compose에서 배너로 인출.
+    try { if (viaLLM && rec && rec.reason) sessionStorage.setItem("mp_ai_reason", JSON.stringify({ slug, name: nm, reason: rec.reason }));
+          else sessionStorage.removeItem("mp_ai_reason"); } catch(_){}
     btn.textContent = `✨ ${viaLLM ? "AI 추천" : "맞춤 추천"}: ${nm} 이동…`;
     setTimeout(() => { location.href = composeHref(slug); }, 500);
   });

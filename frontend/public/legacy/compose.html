@@ -148,8 +148,16 @@
     return "pin";
   }
   const placeIcon = lm => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[lmCategory(lm)]||ICON_PATHS.pin}</svg>`;
-  // 실사 사진(위키미디어, 저작권 프리)이 있으면 사진 썸네일, 없으면 장소 아이콘
-  const placeThumb = lm => { const key = lm && (lm.id || lm._lmId); const p = key && PHOTOS[key]; const src = p && (p.thumb || p.full);
+  // 실사 사진(위키미디어, 저작권 프리)이 있으면 사진 썸네일, 없으면 장소 아이콘.
+  //   대부분 도시 랜드마크는 id가 없으므로 이름(title)으로도 매칭(landmark-photos는 slug 키 + title 필드).
+  let PHOTOS_BY_NAME = {};
+  const photoFor = lm => {
+    if (!lm) return null;
+    const k = lm.id || lm._lmId; let p = (k && PHOTOS[k]) || null;
+    if (!p && lm.name) p = PHOTOS_BY_NAME[lm.name] || null;
+    return p;
+  };
+  const placeThumb = lm => { const p = photoFor(lm); const src = p && (p.thumb || p.full);
     return src ? `<img src="${esc(src)}" alt="${esc(lm.name||"")}" loading="lazy" referrerpolicy="no-referrer">` : placeIcon(lm); };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const $ = id => document.getElementById(id);
@@ -285,7 +293,7 @@
 
   function updateStart(){
     const has = PAL.rooms && PAL.rooms.length;
-    $("startBtn").href = has ? (mapUrl(0) + "&enter=1") : `vworld_map.html?city=${encodeURIComponent(CITY)}`;   // 바로 3D 지도로(디자인 커스텀 스킵) + 자동 다이브 입장
+    $("startBtn").href = `vworld_map.html?city=${encodeURIComponent(CITY)}`;   // 3D 지도 = 전체 랜드마크 조망으로 진입(특정 방 자동 입장 금지 — 사용자가 직접 골라 들어감)
     $("studioLink").href = has ? studioUrl(0) : "glb-customizer.html";                            // 선택: 방 디자인 스튜디오에서 다듬기
     $("mapLink").href = `vworld_map.html?city=${encodeURIComponent(CITY)}`;
   }
@@ -321,6 +329,7 @@
       fetch("public/data/landmark-photos.json").then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
     DESIGNS=rd.designs||[]; DESIGN_BLOB=rd.blobBase||""; THEMES=themes; PHOTOS=(photos&&photos.photos)||{};
+    PHOTOS_BY_NAME = {}; Object.keys(PHOTOS).forEach(k => { const v = PHOTOS[k]; if (v && v.title) PHOTOS_BY_NAME[v.title] = v; });   // 이름(title)→사진 인덱스
     populateCity(cities);
     if(CITY==="jongno") LIB=await fetch("public/data/landmarks.json").then(r=>r.json());
     else { const cd=await fetch(`public/data/cities/${encodeURIComponent(CITY)}.json`).then(r=>r.ok?r.json():null).catch(()=>null); LIB=buildLibFromCity(cd); }
@@ -334,8 +343,20 @@
       // PDF 미업로드 시 korean_history 데모를 끌어오지 않음 — 빈 팰리스(잠금 오버레이가 "아직 내용 없음" 안내).
       if (!PAL) PAL = PALACE_EXPLICIT ? await fetch(PALACE_URL).then(r=>r.json()) : { palace:{ title:"" }, rooms:[] };
     }
-    computeAssign(); restoreStudioDesigns(); render();
+    computeAssign(); restoreStudioDesigns(); render(); showAiReason();
     if(palaceFile) $("msg").textContent="학습자료 교체됨 — 구성 갱신.";
+  }
+  // ✨ region-select의 'AI 추천 자동선택'이 넘긴 LLM 추천 이유를 이 도시에서 인출해 배너로 표시.
+  function showAiReason(){
+    let rec=null; try { rec=JSON.parse(sessionStorage.getItem("mp_ai_reason")||"null"); } catch(_){}
+    if (!rec || !rec.reason || rec.slug !== CITY) return;
+    if (document.getElementById("aiReason")) return;
+    const sub = $("sub");
+    const b = document.createElement("div"); b.id="aiReason";
+    b.innerHTML = `<b>✨ AI가 «${esc(rec.name||CITY)}»를 추천한 이유</b><br>${esc(rec.reason)}`;
+    b.style.cssText = "margin:10px 0 4px;padding:11px 14px;border-radius:11px;line-height:1.55;font-size:13px;"+
+      "background:color-mix(in srgb,var(--accent,#b5552f) 9%,transparent);border:1px solid color-mix(in srgb,var(--accent,#b5552f) 30%,transparent);color:var(--ink,#2a241d);";
+    if (sub && sub.parentNode) sub.parentNode.insertBefore(b, sub.nextSibling); else document.body.insertBefore(b, document.body.firstChild);
   }
 
   $("palaceFile").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) loadAll(f).catch(err=>$("msg").textContent="읽기 실패: "+err.message); });

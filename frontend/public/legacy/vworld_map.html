@@ -1372,14 +1372,12 @@
           //   ?enter=1 이면(=구성 '바로 입장') 전체 조망 → 그 명소 → 다이브 → 방까지 자동 시네마틱으로 이어간다.
           (function(){ const Q = new URLSearchParams(location.search);
             const f = (Q.get("focus") || "").trim(); if (!f) return;
-            const autoEnter = Q.get("enter") === "1";
+            // 명시적 '3D로 보기' 링크(?focus=)만 그 명소로 비행. 방으로의 자동 다이브(?enter=1)는 폐지 —
+            //   3D 지도 진입은 항상 전체 조망/특정 명소까지만, 방 입장은 사용자가 건물을 직접 클릭해야 함.
             let idx = LANDMARKS.findIndex(m => m.name === f);
             if (idx < 0) idx = LANDMARKS.findIndex(m => m.name && (m.name.includes(f) || f.includes(m.name)));
             if (idx < 0) return;
-            window.setTimeout(() => { initLock = 0; stopTour(false); flyToAnchor(idx);
-              if (autoEnter) { const stop = STOPS[idx];
-                if (stop && stop.page) window.setTimeout(() => diveAndEnter(stop), 1500); }
-            }, 900);
+            window.setTimeout(() => { initLock = 0; stopTour(false); flyToAnchor(idx); }, 900);
           })();
           window.setTimeout(hideMapLoader, 500);
         }, 1800);
