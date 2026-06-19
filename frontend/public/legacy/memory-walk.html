@@ -631,16 +631,18 @@
         camera.fov = 62; camera.updateProjectionMatrix();   // 살짝 넓은 화각으로 방을 더 담음(캡처 후 페이지 폐기)
         const grab = () => {
           const shots = [];
-          yaws.forEach((yaw) => {
-            const dir = new THREE.Vector3(Math.sin(yaw), -0.16, Math.cos(yaw)).normalize();
-            const eye = new THREE.Vector3(clampX(center.x - dir.x*back), eyeY, clampZ(center.z - dir.z*back));
-            camera.position.copy(eye);
-            controls.target.copy(eye.clone().add(dir)); controls.update();
-            renderer.render(scene, camera);
-            shots.push(renderer.domElement.toDataURL("image/jpeg", 0.85));
-          });
+          try {
+            yaws.forEach((yaw) => {
+              const dir = new THREE.Vector3(Math.sin(yaw), -0.16, Math.cos(yaw)).normalize();
+              const eye = new THREE.Vector3(clampX(center.x - dir.x*back), eyeY, clampZ(center.z - dir.z*back));
+              camera.position.copy(eye);
+              controls.target.copy(eye.clone().add(dir)); controls.update();
+              renderer.render(scene, camera);
+              shots.push(renderer.domElement.toDataURL("image/jpeg", 0.85));
+            });
+          } catch (e) { /* 렌더 실패해도 아래에서 가진 만큼(혹은 빈) shots 전송 — 부모 무한 대기 방지 */ }
           try { parent.postMessage({ type: "mw-room-shots", glb: ROOM_GLB, shots: shots }, "*"); } catch (_) {}
-          try { setStatus("미리보기 4컷 캡처 완료"); } catch (_) {}
+          try { setStatus(shots.length ? "미리보기 4컷 캡처 완료" : "미리보기 캡처 실패"); } catch (_) {}
         };
         setTimeout(grab, 650);   // 텍스처·그림자 안정화 후 캡처
       } catch (e) { try { parent.postMessage({ type: "mw-room-shots", shots: [], error: String(e) }, "*"); } catch (_) {} }
@@ -720,7 +722,8 @@
       resolveAnchorsThenPalace();
     }, e => { if (e.total){ const p = Math.round(e.loaded/e.total*100);   // 로딩 진행률 — 좌상단 카드에도 표시(상단 nav에 가려지지 않게)
         setStatus(`방 로드… ${p}%`); const rn = $("roomName"); if (rn) rn.textContent = `방 로드 중… ${p}%`; } },
-       err => { setStatus("GLB 로드 실패: " + (err?.message||err)); const rn = $("roomName"); if (rn) rn.textContent = "⚠ 방 로드 실패 — 새로고침 해보세요"; });
+       err => { setStatus("GLB 로드 실패: " + (err?.message||err)); const rn = $("roomName"); if (rn) rn.textContent = "⚠ 방 로드 실패 — 새로고침 해보세요";
+         if (CAPTURE) { try { parent.postMessage({ type: "mw-room-shots", glb: ROOM_GLB, shots: [], error: "load-failed" }, "*"); } catch(_){} } });   // 캡처 모드에선 부모(미리보기 팝업)에 실패를 알려 무한 대기 방지
 
     function mergeAnchors(list, d) {       // 같은 라벨이 가까우면 병합(수납장 패널 여러 개 → 하나)
       const out = [];
