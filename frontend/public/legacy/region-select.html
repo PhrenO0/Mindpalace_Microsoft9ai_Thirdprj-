@@ -132,6 +132,36 @@
   .box.ready .pill{color:var(--accent2); border-color:rgba(52,138,114,.4);}
   .foot{margin-top:18px; color:var(--muted); font-size:12px; text-align:center;}
   .empty{color:var(--muted); text-align:center; padding:30px 0; display:none;}
+  /* 랜드마크 둘러보기 패널 */
+  .lmbrowse{margin-top:22px; border:1px solid var(--line); border-radius:18px; background:var(--panel);
+    box-shadow:var(--shadow); padding:20px 20px 22px; scroll-margin-top:80px;}
+  .lmb-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px;}
+  .lmb-kick{font-size:11px; font-weight:800; letter-spacing:.06em; color:var(--accent);}
+  .lmb-head h2{margin:5px 0 4px; font-size:22px; font-weight:800; letter-spacing:-.01em;}
+  .lmb-head p{margin:0; color:var(--muted); font-size:13px; line-height:1.55; max-width:640px;}
+  .lmb-close{flex:none; width:34px; height:34px; border-radius:10px; border:1px solid var(--line);
+    background:rgba(51,46,40,.04); color:var(--muted); font-size:15px; cursor:pointer;}
+  .lmb-close:hover{border-color:var(--accent); color:var(--accent);}
+  .lmb-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(248px, 1fr)); gap:12px;}
+  .lmcard{display:flex; gap:11px; border:1px solid var(--line); border-radius:13px; background:var(--panel2);
+    padding:13px 14px; transition:border-color .14s, transform .14s;}
+  .lmcard:hover{border-color:var(--accent); transform:translateY(-2px);}
+  .lmc-num{flex:none; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent); font-weight:800; font-size:13px;}
+  .lmc-body{min-width:0;}
+  .lmc-body h4{margin:1px 0 5px; font-size:14.5px; font-weight:800; letter-spacing:-.01em;}
+  .lmc-body p{margin:0 0 8px; color:var(--muted); font-size:12px; line-height:1.5;}
+  .lmc-see{font-size:11.5px; font-weight:700; color:var(--accent); text-decoration:none; border:1px solid var(--line);
+    border-radius:8px; padding:4px 9px; display:inline-block;}
+  .lmc-see:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
+  .lmb-loading{grid-column:1/-1; color:var(--muted); text-align:center; padding:24px 0; font-size:13px;}
+  .lmb-cta{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .lmb-start{flex:1; min-width:240px; text-align:center; text-decoration:none; padding:13px 18px; border-radius:12px;
+    background:linear-gradient(180deg, var(--accent), var(--accent2)); color:#fff; font-weight:800; font-size:14.5px;}
+  .lmb-start:hover{filter:brightness(1.07);}
+  .lmb-map{text-align:center; text-decoration:none; padding:13px 18px; border-radius:12px; border:1px solid var(--line);
+    background:rgba(51,46,40,.04); color:var(--text); font-weight:700; font-size:13.5px;}
+  .lmb-map:hover{border-color:var(--accent); color:var(--accent);}
 </style>
 </head>
 <body>
@@ -186,7 +216,24 @@
       <div class="empty" id="empty">검색 결과가 없습니다.</div>
     </div>
 
-    <div class="foot">도시를 고르면 → <b>구성</b>에서 명소에 학습을 배치 → <b>방</b>을 꾸미고 → <b>3D 지도</b>에서 입장합니다.</div>
+    <!-- 랜드마크 둘러보기: 도시를 누르면 그 도시의 명소를 펼쳐 보고, 마음에 들면 구성 시작 -->
+    <div id="lmBrowse" class="lmbrowse" hidden>
+      <div class="lmb-head">
+        <div class="lmb-h-txt">
+          <div class="lmb-kick">🔭 랜드마크 둘러보기</div>
+          <h2 id="lmbTitle"></h2>
+          <p id="lmbIntro"></p>
+        </div>
+        <button id="lmbClose" class="lmb-close" aria-label="닫기">✕</button>
+      </div>
+      <div id="lmbGrid" class="lmb-grid"></div>
+      <div class="lmb-cta">
+        <a id="lmbStart" class="lmb-start" href="#">✓ 이 도시로 학습 구성 시작 →</a>
+        <a id="lmbMap" class="lmb-map" href="#">🌐 3D 지도에서 전체 보기</a>
+      </div>
+    </div>
+
+    <div class="foot">도시를 고르면 → <b>명소를 둘러보고</b> → <b>구성</b>에서 학습을 배치 → <b>방</b>을 꾸미고 → <b>3D 지도</b>에서 입장합니다.</div>
   </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -213,6 +260,43 @@
   let map = null, markers = [], mapReady = false;
 
   // ── 갤러리(주요 도시 슬라이더) ──
+  // ── 랜드마크 둘러보기: 도시 클릭 → 그 도시 명소를 펼쳐 보고 → 마음에 들면 구성 시작 ──
+  const _lmCache = {};
+  async function showLandmarks(slug){
+    const panel = document.getElementById("lmBrowse");
+    const city = SLUG2CITY[slug] || {};
+    const cityName = city.name || (INDEX[slug] && INDEX[slug].name) || (PHOTOS[slug] && PHOTOS[slug].name) || slug;
+    document.getElementById("lmbTitle").textContent = cityName + " 명소";
+    document.getElementById("lmbIntro").textContent = "";
+    document.getElementById("lmbStart").href = composeHref(slug);
+    document.getElementById("lmbMap").href = cityHref(slug);
+    const grid = document.getElementById("lmbGrid");
+    grid.innerHTML = '<p class="lmb-loading">명소를 불러오는 중…</p>';
+    panel.hidden = false;
+    panel.scrollIntoView({ behavior:"smooth", block:"start" });
+    let data = _lmCache[slug];
+    if (!data){
+      try { data = await (await fetch("public/data/cities/" + encodeURIComponent(slug) + ".json")).json(); _lmCache[slug] = data; }
+      catch(e){ grid.innerHTML = '<p class="lmb-loading">이 도시의 명소 데이터는 준비 중이에요. 바로 구성으로 진행할 수 있어요.</p>'; return; }
+    }
+    document.getElementById("lmbIntro").textContent = data.intro || data.headline || "";
+    const lms = data.landmarks || [];
+    if (!lms.length){ grid.innerHTML = '<p class="lmb-loading">등록된 명소가 없습니다.</p>'; return; }
+    grid.innerHTML = lms.map((lm, i) =>
+      `<div class="lmcard">
+         <div class="lmc-num">${i+1}</div>
+         <div class="lmc-body">
+           <h4>${esc(lm.name)}</h4>
+           <p>${esc(lm.desc || "")}</p>
+           <a class="lmc-see" href="${cityHref(slug)}&focus=${encodeURIComponent(lm.name)}">🌐 3D로 보기</a>
+         </div>
+       </div>`).join("");
+  }
+  document.getElementById("lmbClose").addEventListener("click", () => {
+    const p = document.getElementById("lmBrowse"); p.hidden = true;
+    window.scrollTo({ top: 0, behavior:"smooth" });
+  });
+
   function buildGallery(){
     const track = document.getElementById("gtrack");
     track.innerHTML = "";
@@ -236,7 +320,8 @@
         `<div class="${phClass}"${phStyle}><span class="reg">${esc(region)}</span>${ph.thumb ? "" : icon}</div>` +
         `<div class="body"><h3>${esc(name)}</h3>` +
         `<div class="meta">📍 명소 <span class="n">${n}</span>곳</div>` +
-        `<div class="go">이 도시로 학습 구성 →</div></div>`;
+        `<div class="go">명소 둘러보기 →</div></div>`;
+      card.addEventListener("click", e => { e.preventDefault(); showLandmarks(slug); });   // 바로 구성 대신 명소 먼저 둘러보기
       track.appendChild(card);
       shown++;
     });
@@ -301,7 +386,8 @@
       const m = L.marker([ctr.lat, ctr.lon], { icon: pinIcon(!!c.ready), title: c.name, riseOnHover:true });
       const body = c.ready
         ? `<b>${esc(c.name)}</b><br><span style="color:var(--muted)">${esc(c.region)}</span><br>`
-          + `<a href="${composeHref(c.slug)}">📚 이 도시로 학습 구성 →</a><br>`
+          + `<a href="#" onclick="showLandmarks('${c.slug}');return false;">🔭 명소 둘러보기 →</a><br>`
+          + `<a href="${composeHref(c.slug)}">📚 바로 학습 구성 →</a><br>`
           + `<a href="${studioHref(c.slug)}" style="color:var(--muted)">🧩 방 디자인 →</a> · `
           + `<a href="${cityHref(c.slug)}" style="color:var(--muted)">🗺 3D 지도</a>`
         : `<b>${esc(c.name)}</b><br><span style="color:var(--muted)">${esc(c.region)} · 준비 중</span>`;
@@ -326,7 +412,8 @@
       const a = document.createElement("a");
       a.className = "box ready"; a.href = composeHref(c.slug);
       const n = (INDEX[c.slug] && INDEX[c.slug].n) || 10;
-      a.innerHTML = `<h3>${esc(c.name)}</h3><span class="pill">${n}개 명소</span><span class="meta">학습 구성 →</span>`;
+      a.innerHTML = `<h3>${esc(c.name)}</h3><span class="pill">${n}개 명소</span><span class="meta">명소 둘러보기 →</span>`;
+      a.addEventListener("click", e => { e.preventDefault(); showLandmarks(c.slug); });
       return a;
     }
     const d = document.createElement("div");
