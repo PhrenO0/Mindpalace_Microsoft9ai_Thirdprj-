@@ -135,6 +135,30 @@ def azure_vision_config() -> tuple[str, str]:
     return endpoint.rstrip("/"), key
 
 
+def llm_chat_config() -> dict | None:
+    """LLM chat completions 설정 — Azure OpenAI(우선) 또는 OpenAI. 미설정이면 None.
+    Azure: AZURE_OPENAI_ENDPOINT / AZURE_OPENAI_KEY / AZURE_OPENAI_DEPLOYMENT [/ AZURE_OPENAI_API_VERSION]
+    OpenAI: OPENAI_API_KEY [/ OPENAI_MODEL]"""
+    az_ep = (os.getenv("AZURE_OPENAI_ENDPOINT") or "").strip().rstrip("/")
+    az_key = (os.getenv("AZURE_OPENAI_KEY") or os.getenv("AZURE_OPENAI_API_KEY") or "").strip()
+    az_dep = (os.getenv("AZURE_OPENAI_DEPLOYMENT") or os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME") or "").strip()
+    if az_ep and az_key and az_dep:
+        ver = (os.getenv("AZURE_OPENAI_API_VERSION") or "2024-08-01-preview").strip()
+        return {
+            "url": f"{az_ep}/openai/deployments/{az_dep}/chat/completions?api-version={ver}",
+            "headers": {"api-key": az_key, "Content-Type": "application/json"},
+            "model": None,
+        }
+    o_key = (os.getenv("OPENAI_API_KEY") or "").strip()
+    if o_key:
+        return {
+            "url": "https://api.openai.com/v1/chat/completions",
+            "headers": {"Authorization": f"Bearer {o_key}", "Content-Type": "application/json"},
+            "model": (os.getenv("OPENAI_MODEL") or "gpt-4o-mini").strip(),
+        }
+    return None
+
+
 @app.get("/api/health")
 def health() -> dict:
     azure_endpoint, azure_key = azure_vision_config()
@@ -146,6 +170,7 @@ def health() -> dict:
         "azureVisionConfigured": bool(azure_endpoint and azure_key),
         "sketchfabConfigured": bool(sk.token()),
         "blobStorageConfigured": bool(os.getenv("AZURE_STORAGE_CONNECTION_STRING")),
+        "openaiConfigured": bool(llm_chat_config()),
     }
 
 
@@ -242,6 +267,70 @@ def vision_config() -> dict:
     return {
         "azure": bool(endpoint and key),
     }
+
+
+class RecommendCityRequest(BaseModel):
+    corpus: str = Field(default="", max_length=20000)
+    cities: list[dict] = Field(default_factory=list)
+
+
+@app.post(
+    "/api/recommend-city",
+    dependencies=[Depends(rate_limit("recommend-city", limit=30, window_sec=60))],
+)
+def recommend_city(payload: RecommendCityRequest) -> dict:
+    """업로드 학습 자료(corpus)에 가장 잘 맞는 도시를 LLM으로 추천.
+    미설정/오류/모호하면 configured 또는 slug=None 으로 신호 → 클라이언트가 규칙기반으로 폴백한다."""
+    cfg = llm_chat_config()
+    if not cfg:
+        return {"configured": False}
+    cities = [
+        {"slug": str(c.get("slug")), "name": str(c.get("name") or ""), "region": str(c.get("region") or "")}
+        for c in (payload.cities or [])
+        if isinstance(c, dict) and c.get("slug")
+    ][:120]
+    corpus = (payload.corpus or "")[:6000].strip()
+    if not cities or not corpus:
+        return {"configured": True, "slug": None}
+    valid = {c["slug"] for c in cities}
+    city_lines = "\n".join(f"- {c['slug']}: {c['name']} ({c['region']})" for c in cities)
+    system = (
+        "너는 한국 도시 추천 도우미다. 사용자의 학습 자료 주제·인물·사건·장소와 가장 잘 어울리는"
+        "(연관 명소가 있는) 한국 도시 하나를 후보 목록에서 고른다. 반드시 후보의 slug 중 하나만 고르고 JSON으로만 답한다."
+    )
+    user = (
+        f"학습 자료 발췌:\n{corpus}\n\n"
+        f"후보 도시(slug: 이름(권역)):\n{city_lines}\n\n"
+        '가장 잘 어울리는 도시 하나를 골라 JSON으로만 답하라: {"slug":"<후보 slug>","reason":"한 문장 이유"}'
+    )
+    body: dict[str, Any] = {
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+        "temperature": 0.2,
+        "max_tokens": 200,
+        "response_format": {"type": "json_object"},
+    }
+    if cfg.get("model"):
+        body["model"] = cfg["model"]
+    try:
+        # 클라 타임아웃(8s)보다 약간 짧게 — 클라가 폴백한 뒤 워커가 헛돌지 않게.
+        resp = requests.post(cfg["url"], headers=cfg["headers"], json=body, timeout=(4, 7))
+    except requests.RequestException:
+        log.warning("recommend-city LLM 요청 실패", exc_info=True)   # 내부 URL 등은 로그에만, 응답엔 미노출
+        return {"configured": True, "slug": None, "error": "request"}
+    if not resp.ok:
+        return {"configured": True, "slug": None, "error": f"llm {resp.status_code}"}
+    try:
+        content = resp.json()["choices"][0]["message"]["content"]
+        parsed = json.loads(content)
+        if not isinstance(parsed, dict):   # JSON이지만 객체가 아니면(배열·문자열 등) 폴백 신호
+            return {"configured": True, "slug": None, "error": "parse"}
+        slug = parsed.get("slug")
+        reason = str(parsed.get("reason") or "")[:200]
+    except (KeyError, IndexError, ValueError, TypeError, AttributeError):
+        return {"configured": True, "slug": None, "error": "parse"}
+    if slug not in valid:  # LLM이 이름을 반환했을 때만, 정확히 일치하는 이름으로 재매칭(부분일치·빈이름 제외)
+        slug = next((c["slug"] for c in cities if slug and c["name"] and slug == c["name"]), None)
+    return {"configured": True, "slug": slug if slug in valid else None, "reason": reason}
 
 
 @app.post(

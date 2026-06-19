@@ -418,15 +418,33 @@
     }
     return { slug: best || "jongno", score: bestScore };
   }
-  document.getElementById("aiPick").addEventListener("click", () => {
+  // LLM 추천 시도(타임아웃 8s) → 실패/느림/미설정이면 규칙기반 폴백.
+  async function llmRecommend(corpus){
+    try {
+      const cities = Object.keys(SLUG2CITY)
+        .filter(s => SLUG2CITY[s] && SLUG2CITY[s].ready)
+        .map(s => ({ slug:s, name:SLUG2CITY[s].name||"", region:SLUG2CITY[s].region||"" }));
+      if (!cities.length) return null;
+      const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch("/api/recommend-city", { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ corpus: corpus.slice(0, 8000), cities }), signal: ctrl.signal });
+      clearTimeout(to);
+      if (!r.ok) return null;
+      const j = await r.json();
+      if (j && j.configured && j.slug && SLUG2CITY[j.slug]) return j.slug;   // LLM 성공
+    } catch(_){}
+    return null;   // 폴백 신호
+  }
+  document.getElementById("aiPick").addEventListener("click", async () => {
     const btn = document.getElementById("aiPick");
     const corpus = palaceCorpus();
     btn.disabled = true;
     if (!corpus.trim()){ btn.textContent = "✨ 추천(기본: 종로)…"; setTimeout(() => { location.href = composeHref("jongno"); }, 250); return; }
     btn.textContent = "✨ 분석 중…";
-    const { slug, score } = recommendCity(corpus);
+    let slug = await llmRecommend(corpus), viaLLM = !!slug;   // ① LLM
+    if (!slug){ slug = recommendCity(corpus).slug; }          // ② 규칙기반 폴백(느리거나 미설정)
     const nm = (SLUG2CITY[slug] && SLUG2CITY[slug].name) || (INDEX[slug] && INDEX[slug].name) || slug;
-    btn.textContent = `✨ ${nm} 추천! 이동…`;
+    btn.textContent = `✨ ${viaLLM ? "AI 추천" : "맞춤 추천"}: ${nm} 이동…`;
     setTimeout(() => { location.href = composeHref(slug); }, 500);
   });
 
