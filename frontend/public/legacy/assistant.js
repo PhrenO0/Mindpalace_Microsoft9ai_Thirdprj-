@@ -167,6 +167,11 @@
         else addMsg("방 안(memory-walk)에서 이용할 수 있어요.", "bot");
         return;
       }
+      if (c.act === "quiz"){   // 📝 퀴즈 — 이 방 학습내용으로 퀴즈 생성·채점
+        if (typeof window.mpOpenQuiz === "function") { window.mpOpenQuiz(); addMsg("📝 이 방의 학습 내용으로 퀴즈를 내드릴게요. 풀고 '채점하기'를 누르면 오답은 마커로 복습할 수 있어요.", "bot"); }
+        else addMsg("방 안(memory-walk)에서 이용할 수 있어요.", "bot");
+        return;
+      }
       if (c.act === "intent") return ruleReply(c.v);
     }
 
@@ -247,7 +252,7 @@
       region:"도시를 골라 시작하는 화면이에요." }[pg] || "안녕하세요, 기억의 궁전 도우미예요.";
     addMsg(hi + " 무엇을 도와드릴까요?", "bot");
     addMsg("테마(색·글씨)를 바꾸거나, 화면을 이동할 수 있어요.", "bot");
-    if (pg === "walk") addChips([{ label: "✨ 의미 매치", act: "mnemonic", say: 0 }]);   // 우상단 의미부여와 동일 — 사물↔개념 기억 장면
+    if (pg === "walk") addChips([{ label: "✨ 의미 매치", act: "mnemonic", say: 0 }, { label: "📝 퀴즈", act: "quiz", say: 0 }]);   // 의미부여 + 인룸 퀴즈
     themeChips();
 
     function toggle(open){ panel.classList.toggle("open", open); set(LS_OPEN, open ? "1" : "0"); if (open) input.focus(); }
