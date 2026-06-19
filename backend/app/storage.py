@@ -16,22 +16,14 @@ Blob 미설정(AZURE_STORAGE_CONNECTION_STRING 없음)이면 모든 함수가 No
 from __future__ import annotations
 
 import json
-import logging
 import os
 import re
-import threading
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-log = logging.getLogger("mindpalace.storage")
-
 CONTAINER = "models"  # sketchfab GLB 와 같은 컨테이너 재사용(이미 존재).
 PREFIX = "library/users"
-
-# BlobServiceClient 는 생성 비용이 있어 프로세스 1회 생성 후 재사용(스레드 안전).
-_blob_service_singleton = None
-_blob_service_lock = threading.Lock()
 
 
 def _now() -> str:
@@ -42,35 +34,17 @@ def configured() -> bool:
     return bool((os.getenv("AZURE_STORAGE_CONNECTION_STRING") or "").strip())
 
 
-def _blob_service():
-    """BlobServiceClient 를 프로세스 1회 생성·재사용. 미설정/오류 시 None."""
-    global _blob_service_singleton
+def _container_client():
+    """models 컨테이너 클라이언트. 미설정/오류 시 None."""
     conn = (os.getenv("AZURE_STORAGE_CONNECTION_STRING") or "").strip()
     if not conn:
         return None
-    if _blob_service_singleton is not None:
-        return _blob_service_singleton
-    with _blob_service_lock:
-        if _blob_service_singleton is None:
-            try:
-                from azure.storage.blob import BlobServiceClient
-
-                _blob_service_singleton = BlobServiceClient.from_connection_string(conn)
-            except Exception:
-                log.warning("BlobServiceClient 생성 실패", exc_info=True)
-                return None
-    return _blob_service_singleton
-
-
-def _container_client():
-    """models 컨테이너 클라이언트. 미설정/오류 시 None."""
-    svc = _blob_service()
-    if svc is None:
-        return None
     try:
+        from azure.storage.blob import BlobServiceClient
+
+        svc = BlobServiceClient.from_connection_string(conn)
         return svc.get_container_client(CONTAINER)
     except Exception:
-        log.warning("컨테이너 클라이언트 생성 실패", exc_info=True)
         return None
 
 
@@ -97,11 +71,8 @@ def _read_json(container, blob_name: str) -> Any | None:
     try:
         data = container.download_blob(blob_name).readall()
         return json.loads(data.decode("utf-8"))
-    except Exception as exc:
-        # 없는 blob 은 정상(첫 저장 전 등) → 조용히 None. 그 외(권한·손상 등)는 경고.
-        if exc.__class__.__name__ != "ResourceNotFoundError":
-            log.warning("blob 읽기 실패: %s", blob_name, exc_info=True)
-        return None
+    except Exception:
+        return None  # 없거나 깨졌으면 None.
 
 
 def _write_json(container, blob_name: str, obj: Any) -> None:
@@ -114,24 +85,6 @@ def _write_json(container, blob_name: str, obj: Any) -> None:
         overwrite=True,
         content_settings=ContentSettings(content_type="application/json"),
     )
-
-
-# 같은 사용자의 index.json 은 read-modify-write 라 동시 저장/삭제 시 한쪽 갱신이
-# 유실될 수 있다 → 사용자별 락으로 직렬화한다.
-# 주의: 프로세스 내 락이라 단일 인스턴스에서만 안전. 멀티 인스턴스로 확장하면
-#       blob ETag(If-Match) 기반 낙관적 동시성으로 바꿔야 한다.
-_index_locks: dict[str, threading.Lock] = {}
-_index_locks_guard = threading.Lock()
-
-
-def _index_lock(user_id: str) -> threading.Lock:
-    key = _safe_user(user_id)
-    with _index_locks_guard:
-        lock = _index_locks.get(key)
-        if lock is None:
-            lock = threading.Lock()
-            _index_locks[key] = lock
-        return lock
 
 
 def list_items(user_id: str) -> list[dict]:
@@ -177,15 +130,20 @@ def save_item(
         "palace": palace,
         "designs": designs,
     }
-    entry = {"id": iid, "title": safe_title, "savedAt": saved_at}
-    with _index_lock(user_id):
-        _write_json(container, _item_blob(user_id, iid), item)
+    _write_json(container, _item_blob(user_id, iid), item)
 
-        # index upsert(같은 id 있으면 교체).
-        index = _read_json(container, _index_blob(user_id)) or {"items": []}
-        index["items"] = [e for e in index.get("items", []) if e.get("id") != iid]
-        index["items"].append(entry)
-        _write_json(container, _index_blob(user_id), index)
+    # 목록 화면 통계용 방 개수(palace.rooms 길이). 못 읽으면 0.
+    try:
+        room_count = len((palace or {}).get("rooms") or [])
+    except Exception:
+        room_count = 0
+
+    # index upsert(같은 id 있으면 교체).
+    index = _read_json(container, _index_blob(user_id)) or {"items": []}
+    entry = {"id": iid, "title": safe_title, "savedAt": saved_at, "rooms": room_count}
+    index["items"] = [e for e in index.get("items", []) if e.get("id") != iid]
+    index["items"].append(entry)
+    _write_json(container, _index_blob(user_id), index)
     return entry
 
 
@@ -195,13 +153,12 @@ def delete_item(user_id: str, item_id: str) -> bool:
     if container is None:
         return False
     iid = _safe_id(item_id)
-    with _index_lock(user_id):
-        try:
-            container.delete_blob(_item_blob(user_id, iid))
-        except Exception:
-            log.warning("항목 blob 삭제 실패: %s", iid, exc_info=True)
-        index = _read_json(container, _index_blob(user_id)) or {"items": []}
-        before = len(index.get("items", []))
-        index["items"] = [e for e in index.get("items", []) if e.get("id") != iid]
-        _write_json(container, _index_blob(user_id), index)
-        return len(index["items"]) < before
+    try:
+        container.delete_blob(_item_blob(user_id, iid))
+    except Exception:
+        pass
+    index = _read_json(container, _index_blob(user_id)) or {"items": []}
+    before = len(index.get("items", []))
+    index["items"] = [e for e in index.get("items", []) if e.get("id") != iid]
+    _write_json(container, _index_blob(user_id), index)
+    return len(index["items"]) < before
