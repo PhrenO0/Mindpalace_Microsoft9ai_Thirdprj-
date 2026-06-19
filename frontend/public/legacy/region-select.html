@@ -142,13 +142,26 @@
   .lmb-close{flex:none; width:34px; height:34px; border-radius:10px; border:1px solid var(--line);
     background:rgba(51,46,40,.04); color:var(--muted); font-size:15px; cursor:pointer;}
   .lmb-close:hover{border-color:var(--accent); color:var(--accent);}
-  .lmb-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(248px, 1fr)); gap:12px;}
+  /* 지도(번호 핀) + 사진 카드 2열 */
+  .lmb-main{display:flex; gap:14px; align-items:stretch;}
+  .lmb-mini-map{flex:0 0 46%; align-self:stretch; min-height:400px; border-radius:14px; overflow:hidden;
+    border:1px solid var(--line); background:#e8eef0; z-index:0;}
+  .lmb-grid{flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; max-height:460px; overflow-y:auto; padding-right:4px;}
+  .lm-pin{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:var(--accent);
+    color:#fff; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 6px rgba(40,34,26,.35); border:2px solid #fff; cursor:pointer; transition:.12s;}
+  .lm-pin>*{transform:rotate(45deg);}
+  .lm-pin.on{background:var(--gold); transform:rotate(-45deg) scale(1.25); z-index:500;}
   .lmcard{display:flex; gap:11px; border:1px solid var(--line); border-radius:13px; background:var(--panel2);
-    padding:13px 14px; transition:border-color .14s, transform .14s;}
-  .lmcard:hover{border-color:var(--accent); transform:translateY(-2px);}
-  .lmc-num{flex:none; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent); font-weight:800; font-size:13px;}
-  .lmc-body{min-width:0;}
+    padding:11px 12px; transition:border-color .14s, transform .14s, box-shadow .14s; cursor:pointer;}
+  .lmcard:hover, .lmcard.hl{border-color:var(--accent); transform:translateY(-2px);
+    box-shadow:0 6px 18px color-mix(in srgb, var(--accent) 20%, transparent);}
+  .lmc-num{flex:none; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent); font-weight:800; font-size:12px;}
+  .lmc-thumb{flex:none; width:64px; height:64px; border-radius:10px; object-fit:cover; background:#e9e4da; border:1px solid var(--line);}
+  .lmc-thumb.lmc-noimg{display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--gold);}
+  .lmc-body{min-width:0; flex:1;}
+  @media(max-width:760px){ .lmb-main{flex-direction:column;} .lmb-mini-map{flex:none; min-height:260px;} .lmb-grid{max-height:none;} }
   .lmc-body h4{margin:1px 0 5px; font-size:14.5px; font-weight:800; letter-spacing:-.01em;}
   .lmc-body p{margin:0 0 8px; color:var(--muted); font-size:12px; line-height:1.5;}
   .lmc-see{font-size:11.5px; font-weight:700; color:var(--accent); text-decoration:none; border:1px solid var(--line);
@@ -226,7 +239,10 @@
         </div>
         <button id="lmbClose" class="lmb-close" aria-label="닫기">✕</button>
       </div>
-      <div id="lmbGrid" class="lmb-grid"></div>
+      <div class="lmb-main">
+        <div id="lmbMiniMap" class="lmb-mini-map"></div>
+        <div id="lmbGrid" class="lmb-grid"></div>
+      </div>
       <div class="lmb-cta">
         <a id="lmbStart" class="lmb-start" href="#">✓ 이 도시로 학습 구성 시작 →</a>
         <a id="lmbMap" class="lmb-map" href="#">🌐 3D 지도에서 전체 보기</a>
@@ -262,6 +278,22 @@
   // ── 갤러리(주요 도시 슬라이더) ──
   // ── 랜드마크 둘러보기: 도시 클릭 → 그 도시 명소를 펼쳐 보고 → 마음에 들면 구성 시작 ──
   const _lmCache = {};
+  let LMPHOTOS = null, _lmbMap = null, _lmbPins = [];
+  async function loadLmPhotos(){   // landmark-photos.json: photos[slug]={title,thumb,full} → 제목 매칭 룩업
+    if (LMPHOTOS) return LMPHOTOS;
+    LMPHOTOS = {};
+    try { const d = await (await fetch("public/data/landmark-photos.json")).json();
+      const ph = (d && d.photos) || {};
+      Object.keys(ph).forEach(k => { const v = ph[k]; if (v && v.title) LMPHOTOS[v.title] = v; });
+    } catch(_){}
+    return LMPHOTOS;
+  }
+  function lmHighlight(i, on){   // 핀 ↔ 카드 호버 연동
+    const card = document.querySelector('#lmbGrid .lmcard[data-i="' + i + '"]');
+    if (card){ card.classList.toggle("hl", on); if (on) card.scrollIntoView({ block:"nearest", behavior:"smooth" }); }
+    const pin = document.querySelector('.lm-pin[data-i="' + i + '"]');
+    if (pin) pin.classList.toggle("on", on);
+  }
   async function showLandmarks(slug){
     const panel = document.getElementById("lmBrowse");
     const city = SLUG2CITY[slug] || {};
@@ -274,6 +306,7 @@
     grid.innerHTML = '<p class="lmb-loading">명소를 불러오는 중…</p>';
     panel.hidden = false;
     panel.scrollIntoView({ behavior:"smooth", block:"start" });
+    await loadLmPhotos();
     let data = _lmCache[slug];
     if (!data){
       try { data = await (await fetch("public/data/cities/" + encodeURIComponent(slug) + ".json")).json(); _lmCache[slug] = data; }
@@ -282,15 +315,44 @@
     document.getElementById("lmbIntro").textContent = data.intro || data.headline || "";
     const lms = data.landmarks || [];
     if (!lms.length){ grid.innerHTML = '<p class="lmb-loading">등록된 명소가 없습니다.</p>'; return; }
-    grid.innerHTML = lms.map((lm, i) =>
-      `<div class="lmcard">
-         <div class="lmc-num">${i+1}</div>
-         <div class="lmc-body">
-           <h4>${esc(lm.name)}</h4>
-           <p>${esc(lm.desc || "")}</p>
-           <a class="lmc-see" href="${cityHref(slug)}&focus=${encodeURIComponent(lm.name)}">🌐 3D로 보기</a>
-         </div>
-       </div>`).join("");
+    // 사진 카드(실사 사진=landmark-photos 제목 매칭, 없으면 📍 폴백)
+    grid.innerHTML = lms.map((lm, i) => {
+      const p = LMPHOTOS[lm.name]; const thumb = p && (p.thumb || p.full);
+      return '<div class="lmcard" data-i="' + i + '">'
+        + '<div class="lmc-num">' + (i + 1) + '</div>'
+        + (thumb ? '<img class="lmc-thumb" src="' + esc(thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer">'
+                 : '<div class="lmc-thumb lmc-noimg">📍</div>')
+        + '<div class="lmc-body"><h4>' + esc(lm.name) + '</h4><p>' + esc(lm.desc || "") + '</p>'
+        + '<a class="lmc-see" href="' + cityHref(slug) + '&focus=' + encodeURIComponent(lm.name) + '">🌐 3D로 보기</a></div>'
+        + '</div>';
+    }).join("");
+    grid.querySelectorAll(".lmcard").forEach(c => { const i = +c.dataset.i;
+      c.addEventListener("mouseenter", () => lmHighlight(i, true));
+      c.addEventListener("mouseleave", () => lmHighlight(i, false));
+    });
+    // 간소 한국지도 + 번호 핀(도시 확대), 핀 호버 시 카드 강조
+    try {
+      const el = document.getElementById("lmbMiniMap");
+      if (!_lmbMap){
+        _lmbMap = L.map(el, { zoomControl:true, attributionControl:false, scrollWheelZoom:false });
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom:19, subdomains:"abcd" }).addTo(_lmbMap);
+      }
+      _lmbPins.forEach(m => _lmbMap.removeLayer(m)); _lmbPins = [];
+      const pts = [];
+      lms.forEach((lm, i) => {
+        if (!isFinite(lm.lat) || !isFinite(lm.lon)) return;
+        const icon = L.divIcon({ className:"", iconSize:[26,26], iconAnchor:[13,26],
+          html:'<div class="lm-pin" data-i="' + i + '"><span>' + (i + 1) + '</span></div>' });
+        const m = L.marker([lm.lat, lm.lon], { icon, riseOnHover:true }).addTo(_lmbMap);
+        m.on("mouseover", () => lmHighlight(i, true));
+        m.on("mouseout", () => lmHighlight(i, false));
+        m.on("click", () => { location.href = cityHref(slug) + "&focus=" + encodeURIComponent(lm.name); });
+        _lmbPins.push(m); pts.push([lm.lat, lm.lon]);
+      });
+      const fit = () => { if (pts.length) _lmbMap.fitBounds(pts, { padding:[44, 44], maxZoom:15 }); };
+      fit();
+      setTimeout(() => { try { _lmbMap.invalidateSize(); fit(); } catch(_){} }, 240);   // 패널 펼침 직후 크기 재계산
+    } catch(_){}
   }
   document.getElementById("lmbClose").addEventListener("click", () => {
     const p = document.getElementById("lmBrowse"); p.hidden = true;
