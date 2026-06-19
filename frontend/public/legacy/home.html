@@ -166,16 +166,31 @@ body {
 }
 .nav-login:hover { border-color: var(--c-acc); background: rgba(252, 164, 53, 0.12); }
 .nav-login svg { width: 14px; height: 14px; display: block; }
-.nav-user { display: inline-flex; align-items: center; gap: 10px; }
-.nav-user .nav-user-name { font-family: var(--font-body); font-size: 12px; color: rgba(245, 240, 232, 0.85); }
-.nav-user .nav-logout {
-  font-family: var(--font-body);
-  font-size: 12px;
-  color: rgba(245, 240, 232, 0.6);
-  background: none; border: none; cursor: pointer;
-  text-decoration: underline; padding: 0;
+.nav-user { position: relative; display: inline-flex; align-items: center; }
+.nav-user-name {
+  font-family: var(--font-body); font-size: 12px; font-weight: 600;
+  color: rgba(245, 240, 232, 0.9);
+  background: none; border: 1px solid rgba(245, 240, 232, 0.25);
+  padding: 6px 14px; border-radius: 20px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: border-color 0.2s, background 0.2s;
 }
-.nav-user .nav-logout:hover { color: var(--c-paper); }
+.nav-user-name:hover { border-color: var(--c-acc); background: rgba(252, 164, 53, 0.12); }
+.nav-menu {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  min-width: 152px; background: #2a211b;
+  border: 1px solid rgba(245, 240, 232, 0.15); border-radius: 12px;
+  padding: 6px; display: flex; flex-direction: column;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); z-index: 200;
+}
+.nav-menu[hidden] { display: none; }
+.nav-menu-item {
+  font-family: var(--font-body); font-size: 13px; text-align: left;
+  color: rgba(245, 240, 232, 0.85); background: none; border: none; cursor: pointer;
+  padding: 9px 12px; border-radius: 8px; text-decoration: none; display: block;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-menu-item:hover { background: rgba(245, 240, 232, 0.08); color: var(--c-paper); }
 
 /* ───────── HERO ───────── */
 .hero-track { height: 200vh; position: relative; }
@@ -5654,9 +5669,27 @@ end of keeper CSS */
   function renderLoggedIn(name) {
     const safe = String(name || '사용자').replace(/[<>&]/g, '');
     box.innerHTML =
-      '<span class="nav-user"><span class="nav-user-name">' + safe + '</span>' +
-      '<button type="button" class="nav-logout">로그아웃</button></span>';
-    box.querySelector('.nav-logout').addEventListener('click', function () {
+      '<div class="nav-user">' +
+        '<button type="button" class="nav-user-name" id="navUserBtn" aria-haspopup="true" aria-expanded="false">' +
+          safe + ' <span aria-hidden="true">▾</span></button>' +
+        '<div class="nav-menu" id="navMenu" hidden>' +
+          '<a class="nav-menu-item" href="/legacy/mypage.html">마이페이지</a>' +
+          '<button type="button" class="nav-menu-item" id="navLogout">로그아웃</button>' +
+        '</div>' +
+      '</div>';
+    const btn = box.querySelector('#navUserBtn');
+    const menu = box.querySelector('#navMenu');
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const willOpen = menu.hidden;
+      menu.hidden = !willOpen;
+      btn.setAttribute('aria-expanded', String(willOpen));
+    });
+    document.addEventListener('click', function () {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    box.querySelector('#navLogout').addEventListener('click', function () {
       location.href = '/.auth/logout?post_logout_redirect_uri=' + here;
     });
   }
