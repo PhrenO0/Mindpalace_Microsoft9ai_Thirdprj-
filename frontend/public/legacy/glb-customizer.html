@@ -83,7 +83,13 @@
   .btn.go{background:color-mix(in srgb, var(--accent) 18%, transparent); border-color:rgba(181, 85, 47,.4); font-weight:800;}
   .msg{font-size:12px; color:var(--gold); min-height:16px;}
   /* 학습 패널 */
-  .learn{border:1px solid var(--line); border-radius:12px; padding:13px 15px; background:var(--panel);}
+  .learn{border:1px solid var(--line); border-radius:12px; padding:13px 15px; background:var(--panel); position:relative;}
+  .node-lock{position:absolute; inset:0; background:rgba(245,241,234,.95); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+    border-radius:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; text-align:center; padding:22px; z-index:5;}
+  .node-lock .nl-spin{font-size:30px; animation:nlspin 1.6s linear infinite;}
+  @keyframes nlspin{to{transform:rotate(360deg);}}
+  .node-lock .nl-t{font-weight:800; font-size:15px; color:var(--accent);}
+  .node-lock .nl-s{font-size:12.5px; color:var(--muted); line-height:1.55;}
   .learn h3{margin:0 0 4px; font-size:13px; color:var(--accent);}
   .learn .chline{font-size:12px; color:var(--muted); margin-bottom:9px;}
   .learn .chline b{color:var(--text);}
@@ -249,6 +255,11 @@
         <h3>📖 이 방에 배정된 학습 내용 (자동 매칭)</h3>
         <div class="chline" id="learnChap">학습 콘텐츠를 불러오면 각 방에 어울리는 챕터가 자동 배정됩니다.</div>
         <div class="items" id="learnItems"></div>
+        <div class="node-lock" id="nodeLock" hidden>
+          <div class="nl-spin">📚</div>
+          <div class="nl-t">PDF 분석 중입니다…</div>
+          <div class="nl-s">개념 노드는 분석이 끝나면 여기에 표시됩니다.<br>그동안 방을 골라 둘러보세요.</div>
+        </div>
       </div>
 
       <div class="sect-h">③ 다음 단계</div>
@@ -795,5 +806,25 @@
 <script src="nav.js" defer></script>
 <script src="assistant.js" defer></script>
 <script src="rag-status.js" defer></script>
+<script>
+  /* ④ 노드 잠금/해금: PDF 추출 중이면 노드(학습 내용) 잠금, 완료(mp-rag-ready) 시 해금·재로드.
+     방 둘러보기·선택은 그대로 가능, 노드만 분석 완료 후 표시. */
+  (function () {
+    function ragPending(){
+      try { var j = JSON.parse(localStorage.getItem("mp_rag_job") || "null");
+        var hasPalace = !!(sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"));
+        return !!(j && j.jobId && !j.done && !hasPalace);
+      } catch (_) { return false; }
+    }
+    var lock = document.getElementById("nodeLock");
+    if (lock && ragPending()) lock.hidden = false;
+    window.addEventListener("mp-rag-ready", function () {
+      if (!lock || lock.hidden) return;
+      var s = lock.querySelector(".nl-spin"), t = lock.querySelector(".nl-t");
+      if (s) s.textContent = "✅"; if (t) t.textContent = "분석 완료! 노드를 불러옵니다…";
+      setTimeout(function () { location.reload(); }, 1300);   // 팰리스 도착 → 재로드로 챕터·노드 반영
+    });
+  })();
+</script>
 </body>
 </html>
