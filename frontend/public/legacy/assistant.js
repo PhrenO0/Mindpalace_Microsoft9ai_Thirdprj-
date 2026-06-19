@@ -161,6 +161,7 @@
         else { addMsg((ra && ra.reason) || "연결하지 못했어요.", "bot"); }
         return;
       }
+      if (c.act === "gotoHotspot"){ if (typeof window.mpGoToHotspot === "function") window.mpGoToHotspot(c.v); return; }   // 관련 개념 칩 → 그 학습 마커로 이동
       if (c.act === "intent") return ruleReply(c.v);
     }
 

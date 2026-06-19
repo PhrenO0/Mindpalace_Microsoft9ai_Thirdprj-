@@ -2279,6 +2279,32 @@
       return { ok: true, n: h.number, object, concept: ent.title,
         desc: ent.description || ent.summary || "", mnemonic: mnemonicFor(object, ent.title), demoted: (window.__mwDemoted || []).indexOf(ent) >= 0 };
     };
+    // 관련 개념 칩 → 그 학습 마커로 이동(도우미 답변의 '관련 방' 칩이 호출).
+    window.mpGoToHotspot = (i) => { try { goTo(+i); } catch(_){} };
+    // ── 인룸 RAG 챗봇: 도우미(assistant.js)의 자유 질문을 graphrag /query 로 라우팅 ──
+    //   업로드 PDF(라이브 잡)면 /jobs/{id}/query, 아니면 쇼케이스 /query(snapshot). 답변+관련 개념 칩 반환.
+    window.mpAssistantAsk = async (text, ctx) => {
+      const q = (text || "").trim(); if (!q) return null;
+      let job = null; try { job = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); } catch(_){}
+      let url, body;
+      if (job && job.base && job.jobId && job.done !== false) { url = job.base + "/jobs/" + encodeURIComponent(job.jobId) + "/query"; body = { question: q, method: "auto" }; }
+      else { url = MNEMO_BASE + "/query"; body = { question: q, snapshot: MW_PALACE_ID || "korean_history", method: "auto" }; }
+      try {
+        const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 25000);
+        const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal });
+        clearTimeout(to);
+        if (!r.ok) return { text: "학습 답변을 가져오지 못했어요 (" + r.status + "). 분석이 끝났는지 확인해 주세요." };
+        const j = await r.json();
+        const ans = (j.answer || "").replace(/\s*\[Data:[^\]]*\]/g, "").trim();   // GraphRAG 인용 토큰 정리
+        const chips = []; const seen = new Set();
+        for (const e of ((j.sources && j.sources.entities) || [])) {
+          const t = e && e.title; if (!t || seen.has(t)) continue; seen.add(t);
+          const idx = route.findIndex(h => h.entity && h.entity.title === t);
+          if (idx >= 0) { chips.push({ label: "📍 " + t, act: "gotoHotspot", v: idx }); if (chips.length >= 4) break; }
+        }
+        return { text: ans || "관련 내용을 찾지 못했어요.", chips };
+      } catch(_) { return { text: "요청이 지연됐어요. 잠시 후 다시 물어봐 주세요." }; }
+    };
 
     // 마커 클릭 → 그 지점 / 추가 모드면 클릭한 표면에 핫스팟 생성
     renderer.domElement.addEventListener("pointerup", (ev) => {
