@@ -95,6 +95,14 @@ def _designs_blob(user_id: str, item_id: str) -> str:
     return f"{PREFIX}/{_safe_user(user_id)}/items/{_safe_id(item_id)}.designs.json"
 
 
+def _mnemonics_blob(user_id: str, item_id: str) -> str:
+    return f"{PREFIX}/{_safe_user(user_id)}/items/{_safe_id(item_id)}.mnemonics.json"
+
+
+def _edits_blob(user_id: str, item_id: str) -> str:
+    return f"{PREFIX}/{_safe_user(user_id)}/items/{_safe_id(item_id)}.edits.json"
+
+
 def _read_json(container, blob_name: str) -> Any | None:
     try:
         data = container.download_blob(blob_name).readall()
@@ -146,6 +154,8 @@ def get_item(user_id: str, item_id: str) -> dict | None:
 
     palace = meta.get("palace")  # 인라인 폴백으로 저장된 경우.
     designs = meta.get("designs")
+    mnemonics = meta.get("mnemonics")
+    edits = meta.get("edits")
 
     container = _container_client()
     if container is not None:
@@ -153,6 +163,10 @@ def get_item(user_id: str, item_id: str) -> dict | None:
             palace = _read_json(container, meta["palaceBlobPath"])
         if designs is None and meta.get("designsBlobPath"):
             designs = _read_json(container, meta["designsBlobPath"])
+        if mnemonics is None and meta.get("mnemonicsBlobPath"):
+            mnemonics = _read_json(container, meta["mnemonicsBlobPath"])
+        if edits is None and meta.get("editsBlobPath"):
+            edits = _read_json(container, meta["editsBlobPath"])
 
     return {
         "id": meta.get("id"),
@@ -160,6 +174,8 @@ def get_item(user_id: str, item_id: str) -> dict | None:
         "savedAt": meta.get("savedAt", ""),
         "palace": palace,
         "designs": designs,
+        "mnemonics": mnemonics,
+        "edits": edits,
     }
 
 
@@ -169,8 +185,11 @@ def save_item(
     palace: Any,
     designs: Any = None,
     item_id: str | None = None,
+    mnemonics: Any = None,
+    edits: Any = None,
 ) -> dict | None:
     """항목을 저장(없으면 새로, 있으면 덮어씀). 무거운 payload 는 Blob, 메타는 Cosmos.
+    한 세션 = { palace + designs + mnemonics(의미부여) + edits(노드 순서/추가 오버레이) }.
     목록용 메타 항목을 반환. Cosmos 미설정이면 None."""
     if not cosmos.configured():
         return None
@@ -204,9 +223,19 @@ def save_item(
             designs_path = _designs_blob(user_id, iid)
             _write_json(container, designs_path, designs)
             meta["designsBlobPath"] = designs_path
+        if mnemonics is not None:
+            mnemonics_path = _mnemonics_blob(user_id, iid)
+            _write_json(container, mnemonics_path, mnemonics)
+            meta["mnemonicsBlobPath"] = mnemonics_path
+        if edits is not None:
+            edits_path = _edits_blob(user_id, iid)
+            _write_json(container, edits_path, edits)
+            meta["editsBlobPath"] = edits_path
     else:
         meta["palace"] = palace
         meta["designs"] = designs
+        meta["mnemonics"] = mnemonics
+        meta["edits"] = edits
 
     if cosmos.upsert_item_meta(meta) is None:
         return None
@@ -220,4 +249,6 @@ def delete_item(user_id: str, item_id: str) -> bool:
     if container is not None:
         _delete_blob(container, _palace_blob(user_id, iid))
         _delete_blob(container, _designs_blob(user_id, iid))
+        _delete_blob(container, _mnemonics_blob(user_id, iid))
+        _delete_blob(container, _edits_blob(user_id, iid))
     return cosmos.delete_item_meta(user_id, iid)
