@@ -878,6 +878,7 @@
       $("palaceTitle").textContent = (CONTENT_LOCKED && !THEME) ? "기억 궁전" : (palace.palace?.title || "기억 궁전");
       MW_PALACE_ID = (palace.palace && palace.palace.id) || "";   // PDF figure URL 스코프(/images/{id}/...)
       MW_LOADED_PALACE = palace;   // '내 서재에 저장' 버튼이 쓸 현재 로드된 궁전
+      loadServerMnemonics(MW_PALACE_ID);   // 서버 저장된 의미부여를 localStorage로 병합(기기 간 동기화)
       // 저장은 업로드한 진짜 학습자료(fromUpload)일 때만 — 데모·샘플은 저장 대상 아님. 버튼도 그때만 노출.
       MW_CAN_SAVE = fromUpload;
       { const _sb = document.getElementById("saveLibBtn"); if (_sb) _sb.hidden = !fromUpload; }
@@ -1536,9 +1537,7 @@
       if (!palace) { try { const sp=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace"); if(sp) palace=JSON.parse(sp); } catch(_){} }
       if(!palace){ alert("저장할 궁전이 없어요. 궁전(방)에 입장한 뒤 다시 시도해 주세요."); return; }
       try { const sd=localStorage.getItem("studio_designs"); if(sd) designs=JSON.parse(sd); } catch(_){}
-      // 의미부여: 이 궁전(palaceId) 것만 — 계정 prefix가 달라도 ':<palaceId>:' 포함으로 매칭
-      const needle=":"+(MW_PALACE_ID||"_")+":";
-      const mnemonics=_collectLS(k=>k.indexOf("mp_mnemo:")===0 && k.indexOf(needle)>0);
+      // 의미부여는 생성 즉시 /api/mnemonic 으로 저장되므로 이 번들엔 담지 않음.
       const edits=_collectLS(k=>k.indexOf("mw_edit:")===0);
       const defTitle=(palace.palace&&palace.palace.title)||"내 궁전";
       const title=(prompt("내 서재에 저장할 제목:", defTitle)||"").trim();
@@ -1547,7 +1546,7 @@
       if(btn){ btn.disabled=true; btn.textContent="저장 중…"; }
       try {
         const r=await fetch("/api/library/save",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({title,palace,designs,mnemonics,edits})});
+          body:JSON.stringify({title,palace,designs,edits})});
         if(r.status===401){ alert("로그인이 필요해요. 로그인 후 다시 저장해 주세요."); }
         else if(r.ok){ if(btn){ btn.textContent="✓ 저장됨"; setTimeout(()=>{ if(btn){ btn.textContent=old; btn.disabled=false; } },1500); } return; }
         else { const e=await r.json().catch(()=>({})); alert("저장 실패: "+(e.detail||("오류 "+r.status))); }
@@ -1555,6 +1554,18 @@
       if(btn){ btn.textContent=old; btn.disabled=false; }
     }
     (function(){ const b=document.getElementById("saveLibBtn"); if(b) b.addEventListener("click", saveToLibrary); })();
+    // 서버(mnemonics 컨테이너)에서 이 궁전 의미부여를 불러와 localStorage 병합 — 다른 기기서도 보이게.
+    async function loadServerMnemonics(palaceId){
+      if(!palaceId) return;
+      try {
+        let acct="guest"; try { acct = MW_ACCT || "guest"; } catch(_){}
+        if(acct==="guest"){ try { const d=await (await fetch("/.auth/me",{credentials:"include"})).json(); const cp=!d?null:(Array.isArray(d)?d[0]:(d.clientPrincipal||d)); if(cp&&(cp.userId||cp.user_id)) acct=String(cp.userId||cp.user_id).slice(0,40); } catch(_){} }
+        const r = await fetch("/api/mnemonic?palace="+encodeURIComponent(palaceId),{credentials:"include"});
+        if(!r.ok) return;
+        const items = (await r.json()).items || [];
+        for(const it of items){ if(!it.markdown) continue; const k="mp_mnemo:"+acct+":"+(it.palaceId||palaceId)+":"+(it.spot||"")+":"+(it.entity||""); try{ localStorage.setItem(k, it.markdown); }catch(_){} }
+      } catch(_){}
+    }
     function renderMnemo(md, key){
       $("mnemoBody").innerHTML = mdLite(md) +
         '<div style="margin-top:11px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">' +
@@ -1564,7 +1575,13 @@
       const rg = document.getElementById("mnemoRegen");
       if (rg) rg.onclick = () => { try { localStorage.removeItem(key); } catch(_){} document.getElementById("mnemoGen").click(); };
       const cl = document.getElementById("mnemoClear");
-      if (cl) cl.onclick = () => { try { localStorage.removeItem(key); } catch(_){} $("mnemoBody").innerHTML = '<div style="color:#9a8f82;font-size:12.5px">기억 장면을 비웠어요. 필요하면 ✨로 다시 만들 수 있어요.</div>'; };
+      if (cl) cl.onclick = () => {
+        try { localStorage.removeItem(key); } catch(_){}
+        // 서버에서도 삭제. key = mp_mnemo:<acct>:<palaceId>:<spot>:<entity>
+        try { const p=key.split(":"); const pid=p[2]||"", sp=p[3]||"", en=p.slice(4).join(":")||"";
+          fetch("/api/mnemonic?palace="+encodeURIComponent(pid)+"&spot="+encodeURIComponent(sp)+"&entity="+encodeURIComponent(en),{method:"DELETE",credentials:"include"}).catch(()=>{}); } catch(_){}
+        $("mnemoBody").innerHTML = '<div style="color:#9a8f82;font-size:12.5px">기억 장면을 비웠어요. 필요하면 ✨로 다시 만들 수 있어요.</div>';
+      };
     }
     async function genMnemo(h, node, force){
       const key = mnemoKey(h, node);
@@ -1582,7 +1599,7 @@
         if(!r.ok){ $("mnemoBody").innerHTML=`<div style="color:#b03636">생성 실패(${r.status}) — 백엔드 LLM 설정/네트워크를 확인하세요.</div>`; return; }
         const j = await r.json(); const md = j.markdown||"(빈 응답)";
         try { localStorage.setItem(key, md); } catch(_){}        // 저장(계정+기기) — 다시 눌러도 표시
-        try { fetch(MNEMO_BASE+"/api/mnemo-save",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({key,markdown:md})}).catch(()=>{}); } catch(_){}  // 계정별 클라우드 저장(백엔드 엔드포인트 있으면)
+        try { fetch("/api/mnemonic",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({palaceId:MW_PALACE_ID,spot:dispName(h),entity:(node.title||node.id||""),markdown:md})}).catch(()=>{}); } catch(_){}  // 생성 즉시 서버 저장(mnemonics 컨테이너) — 죽은 /api/mnemo-save 대체
         renderMnemo(md, key);
       } catch(_){ $("mnemoBody").innerHTML=`<div style="color:#b03636">요청 실패 — 잠시 후 다시 시도하세요.</div>`; }
     }

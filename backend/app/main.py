@@ -552,9 +552,9 @@ class LibrarySaveRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     palace: Any
     designs: Any | None = None
-    mnemonics: Any | None = None  # 의미부여 맵 { "mp_mnemo:...": "마크다운", ... }
     edits: Any | None = None  # 노드 순서/추가 오버레이 { "mw_edit:<room>": {...}, ... }
     id: str | None = Field(default=None, max_length=64)
+    # (의미부여는 별도 /api/mnemonic 으로 생성 즉시 저장 — 이 번들엔 없음)
 
 
 def _reject_oversized_payload(*objects: Any) -> None:
@@ -596,16 +596,13 @@ def me(request: Request, user_id: str = Depends(require_login)) -> dict:
 def library_save(payload: LibrarySaveRequest, user_id: str = Depends(require_login)) -> dict:
     if not storage.configured():
         raise HTTPException(status_code=503, detail="저장소(Blob)가 설정되지 않았습니다.")
-    _reject_oversized_payload(
-        payload.palace, payload.designs, payload.mnemonics, payload.edits
-    )
+    _reject_oversized_payload(payload.palace, payload.designs, payload.edits)
     entry = storage.save_item(
         user_id,
         payload.title,
         payload.palace,
         payload.designs,
         payload.id,
-        mnemonics=payload.mnemonics,
         edits=payload.edits,
     )
     if entry is None:
@@ -630,6 +627,42 @@ def library_get(item_id: str, user_id: str = Depends(require_login)) -> dict:
 def library_delete(item_id: str, user_id: str = Depends(require_login)) -> dict:
     ok = storage.delete_item(user_id, item_id)
     return {"ok": ok}
+
+
+# ── 의미부여(mnemonic): 생성 즉시 저장(번들 X, 전용 컨테이너). 죽은 /api/mnemo-save 대체. ──
+class MnemonicSaveRequest(BaseModel):
+    palaceId: str = Field(default="", max_length=200)
+    spot: str = Field(default="", max_length=200)
+    entity: str = Field(default="", max_length=200)
+    markdown: str = Field(min_length=1, max_length=50_000)
+
+
+@app.post("/api/mnemonic")
+def mnemonic_save(
+    payload: MnemonicSaveRequest, user_id: str = Depends(require_login)
+) -> dict:
+    """의미부여 1건 생성 즉시 저장(멱등 upsert)."""
+    doc = cosmos.upsert_mnemonic(
+        user_id, payload.palaceId, payload.spot, payload.entity, payload.markdown
+    )
+    if doc is None:
+        raise HTTPException(status_code=503, detail="저장에 실패했습니다(저장소 오류).")
+    return {"ok": True, "id": doc.get("id")}
+
+
+@app.get("/api/mnemonic")
+def mnemonic_list(
+    palace: str | None = None, user_id: str = Depends(require_login)
+) -> dict:
+    """이 사용자(+선택 palace)의 의미부여 목록 — 방 열 때 불러와 localStorage 병합."""
+    return {"items": cosmos.list_mnemonics(user_id, palace)}
+
+
+@app.delete("/api/mnemonic")
+def mnemonic_delete(
+    palace: str = "", spot: str = "", entity: str = "", user_id: str = Depends(require_login)
+) -> dict:
+    return {"ok": cosmos.delete_mnemonic(user_id, palace, spot, entity)}
 
 
 if LEGACY_DIR.exists():
