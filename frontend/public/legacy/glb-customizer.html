@@ -66,6 +66,7 @@
   /* ②c 방 미리보기 팝업(내부 4컷 캐러셀) */
   .rp-modal{position:fixed; inset:0; z-index:60; background:rgba(40,34,26,.5); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
     display:flex; align-items:center; justify-content:center; padding:20px;}
+  .rp-modal[hidden]{display:none;}  /* hidden 속성이 display:flex 에 덮이던 버그: 미리보기 모달('촬영 중')이 스튜디오 진입 시 항상 떠 무한로딩처럼 보이던 것 수정 */
   .rp-box{position:relative; width:min(860px, calc(100vw - 36px)); background:var(--panel2); border:1px solid var(--line);
     border-radius:18px; box-shadow:0 24px 60px rgba(40,34,26,.3); padding:18px 18px 18px 60px; display:flex; gap:16px;}
   .rp-x{position:absolute; top:12px; right:14px; background:none; border:0; font-size:18px; color:var(--muted); cursor:pointer; z-index:2;}
@@ -109,6 +110,7 @@
   .learn{border:1px solid var(--line); border-radius:12px; padding:13px 15px; background:var(--panel); position:relative;}
   .node-lock{position:absolute; inset:0; background:rgba(245,241,234,.95); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
     border-radius:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; text-align:center; padding:22px; z-index:5;}
+  .node-lock[hidden]{display:none;}  /* 같은 [hidden] 버그: palace 있어도 'PDF 분석 중' 잠금이 노드목록 위에 항상 떠 있던 것 수정 */
   .node-lock .nl-spin{font-size:30px; animation:nlspin 1.6s linear infinite;}
   @keyframes nlspin{to{transform:rotate(360deg);}}
   .node-lock .nl-t{font-weight:800; font-size:15px; color:var(--accent);}
@@ -639,6 +641,8 @@
   $("btnOut").onclick = () => setView("out");
   $("mv").addEventListener("progress", e => { const p=Math.round((e.detail.totalProgress||0)*100); if(p<100) $("loadProg").textContent=`불러오는 중… ${p}%`; });
   $("mv").addEventListener("load", () => { $("loadover").classList.add("hide"); $("viewtools").style.display="flex"; setView("out"); });
+  // GLB 로드 실패 — "불러오는 중… N%"이 영원히 남지 않게 에러 안내 + 재시도 버튼 노출.
+  $("mv").addEventListener("error", () => { $("loadover").classList.remove("hide"); $("mv").style.display="none"; $("loadProg").textContent="이 방을 불러오지 못했어요 — 다시 시도하거나 다른 방을 골라보세요."; $("loadBtn").style.display=""; });
 
   // 고급 로더
   $("glbUrlBtn").onclick = () => { const u=$("glbUrl").value.trim(); if(u){ showModelDirect(u); msg("직접 GLB 미리보기 — 이 방을 쓰려면 갤러리 대신 입장 링크에 반영하려면 알려주세요."); } };
@@ -786,14 +790,25 @@
   });
 
   // ── 부트 ──
+  // 데이터 fetch가 네트워크 지연으로 영원히 pending → "지역 불러오는 중…"이 무한히 남던 것 방지: 각 요청에 하드 타임아웃.
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("응답 지연(타임아웃)")), ms))]);
   Promise.all([
-    fetch(`public/data/cities/${CITY}.json`).then(r=>r.ok?r.json():null).catch(()=>null),
-    fetch("public/data/room-designs.json").then(r=>r.json()),
-    fetch("public/data/region-themes.json").then(r=>r.ok?r.json():null).catch(()=>null),
-    fetch("public/data/landmarks.json").then(r=>r.ok?r.json():null).catch(()=>null),
-    fetch("public/data/concept-photos.json").then(r=>r.ok?r.json():null).catch(()=>null)
+    withTimeout(fetch(`public/data/cities/${CITY}.json`).then(r=>r.ok?r.json():null), 12000).catch(()=>null),
+    withTimeout(fetch("public/data/room-designs.json").then(r=>r.ok?r.json():null), 15000),
+    withTimeout(fetch("public/data/region-themes.json").then(r=>r.ok?r.json():null), 10000).catch(()=>null),
+    withTimeout(fetch("public/data/landmarks.json").then(r=>r.ok?r.json():null), 10000).catch(()=>null),
+    withTimeout(fetch("public/data/concept-photos.json").then(r=>r.ok?r.json():null), 8000).catch(()=>null)
   ]).then(([city, rd, themes, lib, cphotos]) => {
-    if (!city){ $("lmlist").innerHTML = `<p style="color:#98917f;padding:10px">지역 데이터(${esc(CITY)})를 찾을 수 없습니다.</p>`; return; }
+    if (!rd) throw new Error("방 디자인 데이터를 불러오지 못했습니다");
+    if (!city){
+      // 도시 JSON 없음(404 등) — 로딩 표시를 명확한 안내로 바꾸고 탈출구 제공(무한 로딩처럼 보이지 않게).
+      $("lmlist").innerHTML = `<p style="color:#98917f;padding:10px">지역 데이터(${esc(CITY)})가 아직 준비되지 않았어요.<br><a href="region-select.html" style="color:var(--accent);font-weight:800">← 다른 도시 고르기</a></p>`;
+      $("regionName").textContent = `${esc(CITY)} · 준비 중`;
+      $("loadover").classList.remove("hide"); $("loadBtn").style.display="none"; $("mv").style.display="none"; $("sk").style.display="none";
+      $("loadName").textContent = "이 도시는 아직 준비되지 않았어요";
+      $("loadProg").innerHTML = `<a href="region-select.html" style="color:var(--accent);font-weight:800">← 지역 선택으로 돌아가기</a>`;
+      return;
+    }
     CITYDATA = city; DESIGN_BLOB = rd.blobBase||""; THEMES = themes; LIB = lib;
     DESIGNS = (rd.designs||[]).concat(Object.values(loadCustomRooms()));
     CONCEPT_PHOTOS = (cphotos && cphotos.concepts) || {};
@@ -812,7 +827,7 @@
     // 업로드한 학습자료(localStorage/세션)가 있으면 우선 사용 — 스튜디오(새 탭)에서도 같은 자료 유지
     let uploaded = null; try { const s = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); if (s) uploaded = JSON.parse(s); } catch(_){}
     const themeUrl = (themes && (themes[CITY]||themes._default)) || "public/data/korean_history.palace.json";
-    return (uploaded ? Promise.resolve(uploaded) : fetch(themeUrl).then(r=>r.ok?r.json():null).catch(()=>null)).then(pal => {
+    return (uploaded ? Promise.resolve(uploaded) : withTimeout(fetch(themeUrl).then(r=>r.ok?r.json():null), 12000).catch(()=>null)).then(pal => {
       PAL = pal; computeAssign();
       renderList(); renderGallery(); updateLinks();
       // 구성(compose) 드릴다운에서 넘어온 ?lm/?lmName 이 있으면 그 랜드마크를 미리 선택
@@ -825,7 +840,12 @@
         selectLm(pre);
       }
     });
-  }).catch(e => { $("lmlist").innerHTML = `<p style="color:#98917f;padding:10px">로드 실패: ${esc(e.message)}</p>`; });
+  }).catch(e => {
+    // 부트 실패(데이터 행/오류) — 로딩 표시를 명확한 안내로 바꾸고 탈출구 제공.
+    $("lmlist").innerHTML = `<p style="color:#98917f;padding:10px">데이터를 불러오지 못했어요: ${esc(e.message)}<br><a href="region-select.html" style="color:var(--accent);font-weight:800">← 다른 도시 고르기</a></p>`;
+    $("regionName").textContent = "불러오기 실패";
+    try { $("loadover").classList.remove("hide"); $("loadBtn").style.display="none"; $("loadName").textContent = "데이터를 불러오지 못했어요"; $("loadProg").textContent = "잠시 후 새로고침하거나 다른 도시를 골라주세요."; } catch(_){}
+  });
 </script>
 <script src="nav.js" defer></script>
 <script src="assistant.js" defer></script>
@@ -863,7 +883,7 @@
     <button class="rp-x" id="rpClose" aria-label="닫기">✕</button>
     <div class="rp-dots" id="rpDots"></div>
     <div class="rp-stage">
-      <div class="rp-imgwrap" id="rpImgWrap"><div class="rp-loading">📷 방 내부를 촬영하는 중…</div></div>
+      <div class="rp-imgwrap" id="rpImgWrap"><div class="rp-loading">방을 선택하면 미리보기가 여기에 표시됩니다.</div></div>
       <div class="rp-info"><h3 id="rpLabel"></h3><p id="rpBlurb"></p>
         <button class="rp-apply" id="rpApply" style="margin-top:10px;padding:9px 16px;border:0;border-radius:10px;background:var(--accent,#b5552f);color:#fff;font-weight:800;font-size:13px;cursor:pointer;">✓ 이 방으로 적용 →</button>
       </div>
