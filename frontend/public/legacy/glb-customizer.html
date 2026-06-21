@@ -882,30 +882,53 @@
       w.innerHTML = '<img src="' + shots[i] + '" alt="방 내부 ' + (i + 1) + '">';
       Array.prototype.forEach.call(document.querySelectorAll("#rpDots .rp-dot"), function (b, j) { b.classList.toggle("on", j === i); });
     }
+    var shotsCache = {};   // glb → 4컷(한 번 찍으면 재사용, 재오픈 시 즉시)
+    function thumbHtml(thumb0, badge) {
+      return '<img src="' + thumb0 + '" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover">' +
+        (badge ? '<div class="rp-loading" style="position:absolute;bottom:10px;right:10px;font-size:11.5px;background:rgba(42,36,29,.82);color:#fff;padding:5px 11px;border-radius:8px">' + badge + '</div>' : '');
+    }
+    function showShots(arr) {   // 4컷 캐러셀 렌더
+      shots = arr; idx = 0;
+      document.getElementById("rpDots").innerHTML = shots.map(function (_, i) { return '<button class="rp-dot' + (i === 0 ? " on" : "") + '" data-i="' + i + '" aria-label="' + (i + 1) + '번째"></button>'; }).join("");
+      Array.prototype.forEach.call(document.querySelectorAll("#rpDots .rp-dot"), function (b) { b.onclick = function () { show(+b.dataset.i); }; });
+      show(0);
+    }
+    // 4컷 내부 캡처는 '버튼을 눌렀을 때만' — 무거운 3D 캡처를 자동 실행하지 않아 "촬영 중" 멈춤이 없다.
+    function startCapture(glb, thumb0) {
+      if (shotsCache[glb] && shotsCache[glb].length) { showShots(shotsCache[glb]); return; }   // 캐시 즉시
+      var w = document.getElementById("rpImgWrap");
+      w.innerHTML = thumb0 ? thumbHtml(thumb0, "📷 내부 4컷 촬영 중… (수~십 초)") : '<div class="rp-loading">📷 방 내부를 촬영하는 중… (원격 모델 로드, 수~십 초)</div>';
+      document.getElementById("rpDots").innerHTML = "";
+      shots = []; idx = 0; expectGlb = glb;
+      document.getElementById("rpFrame").src = "memory-walk.html?capture=1&lite=1&glb=" + encodeURIComponent(glb);
+      if (captureTimer) clearTimeout(captureTimer);
+      captureTimer = setTimeout(function () {   // 지연 시 썸네일로 복귀(영구 "촬영 중" 방지)
+        if (shots.length) return;
+        document.getElementById("rpFrame").src = "about:blank";
+        w.innerHTML = thumb0 ? thumbHtml(thumb0, "내부 촬영 지연 — 썸네일 표시") : '<div class="rp-loading">미리보기 생성이 지연됩니다. 닫고 다른 방을 둘러보세요.</div>';
+      }, 15000);
+    }
     window.openRoomPreview = function (glb, label, blurb, designId) {
       if (!glb) return;
-      curDesignId = designId || "";
+      curDesignId = designId || ""; expectGlb = glb;
       document.getElementById("rpLabel").textContent = label || "방";
-      document.getElementById("rpBlurb").textContent = blurb || "이 방의 내부를 4방향에서 둘러봅니다.";
-      // 정적 썸네일을 즉시 표시(빈 "촬영 중" 박스 방지) — 내부 4컷 캡처는 뒤에서 채운다.
+      document.getElementById("rpBlurb").textContent = blurb || "이 방을 미리 봅니다.";
+      document.getElementById("rpDots").innerHTML = "";
+      shots = []; idx = 0;
       var d0 = (typeof designById === "function") ? designById(curDesignId) : null;
       var thumb0 = d0 && d0.thumb;
-      document.getElementById("rpImgWrap").innerHTML = thumb0
-        ? '<img src="' + thumb0 + '" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover">' +
-          '<div class="rp-loading" style="position:absolute;bottom:8px;right:10px;font-size:11px;background:rgba(0,0,0,.55);color:#fff;padding:3px 9px;border-radius:7px">📷 내부 4컷 촬영 중…</div>'
-        : '<div class="rp-loading">📷 방 내부를 촬영하는 중… (수 초)</div>';
-      document.getElementById("rpDots").innerHTML = "";
       var ap = document.getElementById("rpApply"); if (ap) ap.style.display = curDesignId ? "" : "none";
-      shots = []; idx = 0; expectGlb = glb;
       modal.hidden = false;
-      document.getElementById("rpFrame").src = "memory-walk.html?capture=1&lite=1&glb=" + encodeURIComponent(glb);
-      // 캡처가 안 끝나도(큰 GLB·로드 실패) 무한 "촬영 중"으로 막히지 않게 타임아웃 폴백.
-      if (captureTimer) clearTimeout(captureTimer);
-      captureTimer = setTimeout(function () {
-        if (shots.length) return;
-        document.getElementById("rpImgWrap").innerHTML =
-          '<div class="rp-loading">미리보기 생성이 지연됩니다.<br>아래 <b>이 방으로 적용</b>으로 바로 쓰거나, 닫고 다른 방을 둘러보세요.</div>';
-      }, 13000);
+      var w = document.getElementById("rpImgWrap");
+      if (shotsCache[glb] && shotsCache[glb].length) { showShots(shotsCache[glb]); return; }   // 이미 찍은 방
+      if (thumb0) {
+        // 썸네일 즉시(대기 0) + 4컷은 버튼 눌렀을 때만 — 더는 자동으로 안 돈다.
+        w.innerHTML = thumbHtml(thumb0, "") +
+          '<button id="rpCapBtn" style="position:absolute;bottom:10px;right:10px;border:0;border-radius:9px;background:rgba(42,36,29,.85);color:#fff;font-weight:700;font-size:12px;padding:7px 12px;cursor:pointer">🔄 내부 4컷 둘러보기</button>';
+        var cb = document.getElementById("rpCapBtn"); if (cb) cb.onclick = function () { startCapture(glb, thumb0); };
+      } else {
+        startCapture(glb, null);   // 썸네일 없으면(커스텀 방 등) 바로 캡처
+      }
     };
     function close(){ if (captureTimer) { clearTimeout(captureTimer); captureTimer = null; } modal.hidden = true; document.getElementById("rpFrame").src = "about:blank"; shots = []; }
     document.getElementById("rpClose").onclick = close;
@@ -928,11 +951,11 @@
     window.addEventListener("message", function (ev) {
       var d = ev.data; if (!d || d.type !== "mw-room-shots") return;
       if (captureTimer) { clearTimeout(captureTimer); captureTimer = null; }
-      shots = (d.shots || []).filter(Boolean);
-      if (!shots.length){ document.getElementById("rpImgWrap").innerHTML = '<div class="rp-loading">미리보기를 만들지 못했어요. 아래 <b>이 방으로 적용</b>으로 바로 쓰거나, 닫고 직접 들어가 볼 수 있어요.</div>'; return; }
-      document.getElementById("rpDots").innerHTML = shots.map(function (_, i) { return '<button class="rp-dot' + (i === 0 ? " on" : "") + '" data-i="' + i + '" aria-label="' + (i + 1) + '번째"></button>'; }).join("");
-      Array.prototype.forEach.call(document.querySelectorAll("#rpDots .rp-dot"), function (b) { b.onclick = function () { show(+b.dataset.i); }; });
-      show(0);
+      var arr = (d.shots || []).filter(Boolean);
+      document.getElementById("rpFrame").src = "about:blank";   // 캡처 끝 → 숨김 iframe 해제(메모리 절약)
+      if (!arr.length){ document.getElementById("rpImgWrap").innerHTML = '<div class="rp-loading">미리보기를 만들지 못했어요. 아래 <b>이 방으로 적용</b>으로 바로 쓰거나, 닫고 직접 들어가 볼 수 있어요.</div>'; return; }
+      if (d.glb) shotsCache[d.glb] = arr;   // 캐시(재오픈 시 즉시)
+      showShots(arr);
     });
   })();
 </script>
