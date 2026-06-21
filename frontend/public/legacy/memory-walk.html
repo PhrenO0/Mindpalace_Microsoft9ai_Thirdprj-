@@ -40,8 +40,15 @@
     .lmicon{width:46px;height:46px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:rgba(51,46,40,.05);color:var(--gold);margin:10px 0 4px;}
     .lmicon svg{width:28px;height:28px;}
     .lmicon[hidden]{display:none;}
-    .cimg{width:100%;max-height:172px;object-fit:cover;border-radius:10px;margin:8px 0 4px;display:block;border:1px solid var(--line);}
+    .cimg{max-width:100%;max-height:230px;width:auto;height:auto;margin:0 auto;border-radius:10px;display:block;border:1px solid var(--line);cursor:zoom-in;}
     .cimg[hidden]{display:none;}
+    .imgwrap{position:relative;width:fit-content;max-width:100%;margin:8px auto 4px;}
+    .imgwrap[hidden]{display:none;}
+    .imgzoom{position:absolute;top:8px;right:8px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:0;border-radius:7px;background:rgba(42,36,29,.35);color:#fff;font-size:13px;line-height:1;cursor:pointer;opacity:.4;transition:opacity .15s;}
+    .imgwrap:hover .imgzoom,.imgzoom:focus-visible{opacity:.92;}
+    .imglb{position:fixed;inset:0;z-index:99999;background:rgba(28,22,16,.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:24px;}
+    .imglb[hidden]{display:none;}
+    .imglb img{max-width:94vw;max-height:90vh;border-radius:10px;box-shadow:0 24px 70px rgba(0,0,0,.55);}
     .roommenu{position:fixed;top:58px;left:14px;z-index:60;width:min(330px,calc(100vw - 28px));max-height:78vh;overflow:auto;
       background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:13px;padding:6px;
       backdrop-filter:blur(10px);box-shadow:0 16px 40px rgba(40,34,26,.16);}
@@ -78,6 +85,8 @@
                 display:inline-block;border:1px solid rgba(138,129,112,.35);border-radius:8px;padding:4px 9px;}
     .card .cap{color:var(--accent);font-size:13px;font-weight:700;margin:9px 0 0;}
     .card .desc{color:var(--muted);font-size:13px;line-height:1.66;margin:10px 0 0;white-space:pre-line;}
+    .cmore{background:none;border:0;color:color-mix(in srgb,var(--accent) 62%,var(--gold) 38%);font-size:12px;font-weight:600;cursor:pointer;padding:8px 0 0;letter-spacing:.01em;}
+    .cmore:hover{text-decoration:underline;}
     .card .rel{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
     .card .rel .lab{font-size:11px;color:var(--muted);margin-right:2px;}
     .card .cardacts{margin-top:14px;display:flex;gap:8px;}
@@ -173,7 +182,7 @@
     .edetail .etype{font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--gold);border:1px solid rgba(138,129,112,.4);border-radius:999px;padding:2px 9px;}
     .edetail h3{margin:11px 0 0;font-size:18px;font-weight:800;letter-spacing:-.01em;}
     .edetail .efurn{margin:7px 0 0;font-size:11.5px;font-weight:700;color:var(--gold);display:inline-block;border:1px solid rgba(138,129,112,.35);border-radius:8px;padding:3px 8px;}
-    .edetail .eimg{width:100%;max-height:150px;object-fit:cover;border-radius:10px;margin:9px 0 2px;display:block;border:1px solid var(--line);}
+    .edetail .eimg{max-width:100%;max-height:200px;width:auto;height:auto;margin:0 auto;border-radius:10px;display:block;border:1px solid var(--line);cursor:zoom-in;}
     .edetail .eimg[hidden]{display:none;}
     .edetail .ecap{color:var(--accent);font-size:12.5px;font-weight:700;margin:8px 0 0;}
     .edetail .edesc{color:var(--muted);font-size:12.5px;line-height:1.65;margin:8px 0 0;white-space:pre-line;}
@@ -274,9 +283,10 @@
     <div class="body">
       <div class="head"><span class="num" id="cNum">1</span><span class="type" id="cType"></span></div>
       <h2 id="cTitle"></h2>
-      <img class="cimg" id="cImg" hidden alt="" />
+      <div class="imgwrap" id="cImgWrap" hidden><img class="cimg" id="cImg" alt="" /><button class="imgzoom" id="cImgZoom" type="button" title="크게 보기" aria-label="크게 보기">⤢</button></div>
       <div class="furn" id="cFurn"></div>
       <div class="cap" id="cCap"></div>
+      <button class="cmore" id="cMore" hidden></button>
       <div class="desc" id="cDesc"></div>
       <div class="rel" id="cRel"></div>
       <div class="cardacts">
@@ -382,8 +392,9 @@
           <div class="ehd"><span class="enum" id="eDetNum">1</span><span class="etype" id="eDetType"></span></div>
           <h3 id="eDetTitle"></h3>
           <span class="efurn" id="eDetFurn"></span>
-          <img class="eimg" id="eDetImg" hidden alt="" />
+          <div class="imgwrap" id="eDetImgWrap" hidden><img class="eimg" id="eDetImg" alt="" /><button class="imgzoom" id="eDetImgZoom" type="button" title="크게 보기" aria-label="크게 보기">⤢</button></div>
           <div class="ecap" id="eDetCap"></div>
+          <button class="cmore" id="eDetMore" hidden></button>
           <div class="edesc" id="eDetDesc"></div>
           <div class="eacts">
             <button class="ea" id="eDetRename">✎ 이름수정</button>
@@ -1381,7 +1392,7 @@
     $("modal").onclick = e => { if (e.target === $("modal")) $("modal").classList.remove("open"); };
 
     // ── 카드 표시 + 이동 ──
-    function setCardImage(src){ const im=$("cImg"); if(src){ im.src=src; im.hidden=false; } else { im.hidden=true; im.removeAttribute("src"); } }
+    function setCardImage(src){ const im=$("cImg"), w=$("cImgWrap"); if(src){ im.src=src; if(w)w.hidden=false; } else { if(w)w.hidden=true; im.removeAttribute("src"); } }
     function showCard(h) {
       const e = h.entity;
       $("cNum").textContent = h.number;
@@ -1392,7 +1403,7 @@
         $("cFurn").textContent = `📍 ${dispName(h)}에 배치`;
         setCardImage(entImage(e));   // PDF figure > concept-photos > e.image > 랜드마크 공통
         $("cCap").textContent = entCaption(e);   // e.caption > images[0].caption > summary
-        $("cDesc").textContent = paraBreak(e.description || "");
+        (function(){var cap=entCaption(e),desc=paraBreak(e.description||""),n=function(s){return String(s||"").replace(/\s/g,"");},cd=$("cDesc"),tg=$("cMore");if(!cap){cd.textContent=desc;cd.hidden=false;if(tg)tg.hidden=true;}else if(!desc||n(desc)===n(cap)||(n(desc).indexOf(n(cap))===0&&n(desc).length-n(cap).length<10)){cd.textContent="";cd.hidden=true;if(tg)tg.hidden=true;}else{cd.textContent=desc;cd.hidden=true;if(tg){tg.hidden=false;tg.textContent="더보기 ▾";tg.onclick=function(){cd.hidden=!cd.hidden;tg.textContent=cd.hidden?"더보기 ▾":"접기 ▴";};}}})();
         if ((e.related||[]).length) {
           const lab = document.createElement("span"); lab.className="lab"; lab.textContent = "연결:"; rel.appendChild(lab);
           e.related.forEach(rid => {
@@ -2057,7 +2068,7 @@
         $("eDetFurn").textContent = `📍 ${dispName(h)}에 배치`;
         setEImg(h.img);
         $("eDetCap").textContent = h.cap || "";
-        $("eDetDesc").textContent = paraBreak(h.desc || h.cap || "");
+        (function(){var cap=(h.cap||""),desc=paraBreak(h.desc||h.cap||""),n=function(s){return String(s||"").replace(/\s/g,"");},cd=$("eDetDesc"),tg=$("eDetMore");if(!cap){cd.textContent=desc;cd.hidden=false;if(tg)tg.hidden=true;}else if(!desc||n(desc)===n(cap)||(n(desc).indexOf(n(cap))===0&&n(desc).length-n(cap).length<10)){cd.textContent="";cd.hidden=true;if(tg)tg.hidden=true;}else{cd.textContent=desc;cd.hidden=true;if(tg){tg.hidden=false;tg.textContent="더보기 ▾";tg.onclick=function(){cd.hidden=!cd.hidden;tg.textContent=cd.hidden?"더보기 ▾":"접기 ▴";};}}})();
       } else {
         $("eDetType").textContent = "가구";
         $("eDetTitle").textContent = dispName(h);
@@ -2069,7 +2080,7 @@
       $("eDetail").classList.add("on");
       drawEditor();
     }
-    function setEImg(src) { const im = $("eDetImg"); if (src) { im.src = src; im.hidden = false; } else { im.hidden = true; im.removeAttribute("src"); } }
+    function setEImg(src) { const im = $("eDetImg"), w = $("eDetImgWrap"); if (src) { im.src = src; if(w)w.hidden=false; } else { if(w)w.hidden=true; im.removeAttribute("src"); } }
     function closeEDetail() { selENodeIdx = -1; $("eDetail").classList.remove("on"); drawEditor(); }
     $("eDetClose").onclick = closeEDetail;
     $("eDetRename").onclick = () => {
@@ -2598,6 +2609,23 @@ window.addEventListener('load', function(){
     ['prevBtn','homeBtn','tourBtn'].forEach(function(id){ var b=document.getElementById(id); if(b) b.addEventListener('click', clear, {once:true}); });
   }, 1500);
 });
+</script>
+<div class="imglb" id="imgLightbox" hidden><img id="imgLightboxImg" alt="" /></div>
+<script>
+(function(){
+  var lb=document.getElementById("imgLightbox"), lbi=document.getElementById("imgLightboxImg");
+  if(!lb) return;
+  function close(){ lb.hidden=true; lbi.removeAttribute("src"); }
+  function open(src){ if(!src) return; lbi.src=src; lb.hidden=false; }
+  lb.addEventListener("click", close);
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape" && !lb.hidden) close(); });
+  function wire(imgId, btnId){
+    var img=document.getElementById(imgId), btn=document.getElementById(btnId);
+    if(img) img.addEventListener("click", function(){ open(img.src); });
+    if(btn) btn.addEventListener("click", function(e){ e.stopPropagation(); var im=document.getElementById(imgId); open(im&&im.src); });
+  }
+  wire("cImg","cImgZoom"); wire("eDetImg","eDetImgZoom");
+})();
 </script>
 </body>
 </html>
