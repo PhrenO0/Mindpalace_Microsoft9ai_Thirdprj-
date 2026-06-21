@@ -689,7 +689,17 @@
       } catch (e) { try { parent.postMessage({ type: "mw-room-shots", shots: [], error: String(e) }, "*"); } catch (_) {} }
     }
 
+    // 워치독: 네트워크가 응답 없이 멈추면(onProgress 정지·onError 미발생) "① 내려받는 중 N%"가 영원히 남던 것 방지.
+    let glbLoaded = false;
+    const glbWatchdog = setTimeout(() => {
+      if (glbLoaded) return;
+      setStatus("방 로드가 지연됩니다 — 네트워크 확인 후 새로고침 해보세요.");
+      const rn = $("roomName"); if (rn) rn.textContent = "⚠ 로드 지연 — 새로고침";
+      if (CAPTURE) { try { parent.postMessage({ type: "mw-room-shots", glb: ROOM_GLB, shots: [], error: "timeout" }, "*"); } catch (_) {} }
+    }, 45000);
+
     loader.load(ROOM_GLB, (gltf) => {
+      glbLoaded = true; clearTimeout(glbWatchdog);
       if (!CAPTURE) setStatus("② 방 모델 분석 중…");          // 다운로드 끝 → 메쉬·구조 분석 시작
       const model = gltf.scene;
       model.updateMatrixWorld(true);
@@ -778,7 +788,7 @@
       resolveAnchorsThenPalace();
     }, e => { if (!CAPTURE && e.total){ const p = Math.round(e.loaded/e.total*100); const mb = (e.total/1048576).toFixed(1);   // 다운로드 진행률(용량 표시)
         setStatus(`① 방 모델 내려받는 중… ${p}% (${mb}MB)`); const rn = $("roomName"); if (rn) rn.textContent = `방 다운로드 ${p}%`; } },
-       err => { setStatus("GLB 로드 실패: " + (err?.message||err)); const rn = $("roomName"); if (rn) rn.textContent = "⚠ 방 로드 실패 — 새로고침 해보세요";
+       err => { clearTimeout(glbWatchdog); setStatus("GLB 로드 실패: " + (err?.message||err)); const rn = $("roomName"); if (rn) rn.textContent = "⚠ 방 로드 실패 — 새로고침 해보세요";
          if (CAPTURE) { try { parent.postMessage({ type: "mw-room-shots", glb: ROOM_GLB, shots: [], error: "load-failed" }, "*"); } catch(_){} } });   // 캡처 모드에선 부모(미리보기 팝업)에 실패를 알려 무한 대기 방지
 
     function mergeAnchors(list, d) {       // 같은 라벨이 가까우면 병합(수납장 패널 여러 개 → 하나)
