@@ -552,6 +552,8 @@ class LibrarySaveRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     palace: Any
     designs: Any | None = None
+    mnemonics: Any | None = None  # 의미부여 맵 { "mp_mnemo:...": "마크다운", ... }
+    edits: Any | None = None  # 노드 순서/추가 오버레이 { "mw_edit:<room>": {...}, ... }
     id: str | None = Field(default=None, max_length=64)
 
 
@@ -594,9 +596,17 @@ def me(request: Request, user_id: str = Depends(require_login)) -> dict:
 def library_save(payload: LibrarySaveRequest, user_id: str = Depends(require_login)) -> dict:
     if not storage.configured():
         raise HTTPException(status_code=503, detail="저장소(Blob)가 설정되지 않았습니다.")
-    _reject_oversized_payload(payload.palace, payload.designs)
+    _reject_oversized_payload(
+        payload.palace, payload.designs, payload.mnemonics, payload.edits
+    )
     entry = storage.save_item(
-        user_id, payload.title, payload.palace, payload.designs, payload.id
+        user_id,
+        payload.title,
+        payload.palace,
+        payload.designs,
+        payload.id,
+        mnemonics=payload.mnemonics,
+        edits=payload.edits,
     )
     if entry is None:
         raise HTTPException(status_code=503, detail="저장에 실패했습니다(저장소 오류).")

@@ -264,6 +264,7 @@
     <a class="backbtn" id="firstBtn" href="home.html" style="margin-left:6px;text-decoration:none" title="처음 화면(시작)으로">🏠 처음</a>
     <button class="backbtn" id="nextRoomBtn" style="display:none;margin-left:6px">다음 방 ⏭</button>
     <button class="backbtn" id="liteToggle" style="margin-left:6px" title="저사양 모드: 그림자 끔·픽셀비 1.0·마커 캔버스 축소">⚡</button>
+    <button class="backbtn" id="saveLibBtn" style="margin-left:6px" title="현재 궁전·노드편집·의미부여를 내 서재에 저장">💾 내 서재 저장</button>
     <script>
       (function(){ const b=document.getElementById("liteToggle"); if(!b) return;
         setTimeout(()=>{ b.textContent = window.LITE ? "⚡ 라이트 ON" : "⚡ 라이트 OFF"; }, 60);
@@ -1517,6 +1518,33 @@
     let MW_ACCT = "guest";
     try { fetch("/.auth/me",{credentials:"include"}).then(r=>r.ok?r.json():null).then(d=>{ const cp=!d?null:(Array.isArray(d)?d[0]:(d.clientPrincipal||d)); if(cp&&(cp.userId||cp.user_id)) MW_ACCT=String(cp.userId||cp.user_id).slice(0,40); }).catch(()=>{}); } catch(_){}
     function mnemoKey(h, node){ return "mp_mnemo:" + MW_ACCT + ":" + (MW_PALACE_ID||"_") + ":" + dispName(h) + ":" + ((node&&(node.title||node.id))||""); }
+
+    // ── 내 서재 저장: 현재 세션 스냅샷(궁전 + designs + 의미부여 + 노드편집)을 우리 DB(Cosmos+Blob)에 ──
+    function _collectLS(predicate){ const out={}; try { for (let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if (k && predicate(k)){ const v=localStorage.getItem(k); if (v!=null) out[k]=v; } } } catch(_){} return out; }
+    async function saveToLibrary(){
+      let palace=null, designs=null;
+      try { const sp=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace"); if(sp) palace=JSON.parse(sp); } catch(_){}
+      if(!palace){ alert("저장할 궁전이 없어요. 먼저 학습 자료(PDF)로 궁전을 만들어 주세요."); return; }
+      try { const sd=localStorage.getItem("studio_designs"); if(sd) designs=JSON.parse(sd); } catch(_){}
+      // 의미부여: 이 궁전(palaceId) 것만 — 계정 prefix가 달라도 ':<palaceId>:' 포함으로 매칭
+      const needle=":"+(MW_PALACE_ID||"_")+":";
+      const mnemonics=_collectLS(k=>k.indexOf("mp_mnemo:")===0 && k.indexOf(needle)>0);
+      const edits=_collectLS(k=>k.indexOf("mw_edit:")===0);
+      const defTitle=(palace.palace&&palace.palace.title)||"내 궁전";
+      const title=(prompt("내 서재에 저장할 제목:", defTitle)||"").trim();
+      if(!title) return;
+      const btn=document.getElementById("saveLibBtn"); const old=btn?btn.textContent:"";
+      if(btn){ btn.disabled=true; btn.textContent="저장 중…"; }
+      try {
+        const r=await fetch("/api/library/save",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({title,palace,designs,mnemonics,edits})});
+        if(r.status===401){ alert("로그인이 필요해요. 로그인 후 다시 저장해 주세요."); }
+        else if(r.ok){ if(btn){ btn.textContent="✓ 저장됨"; setTimeout(()=>{ if(btn){ btn.textContent=old; btn.disabled=false; } },1500); } return; }
+        else { const e=await r.json().catch(()=>({})); alert("저장 실패: "+(e.detail||("오류 "+r.status))); }
+      } catch(_){ alert("저장 중 오류가 났어요."); }
+      if(btn){ btn.textContent=old; btn.disabled=false; }
+    }
+    (function(){ const b=document.getElementById("saveLibBtn"); if(b) b.addEventListener("click", saveToLibrary); })();
     function renderMnemo(md, key){
       $("mnemoBody").innerHTML = mdLite(md) +
         '<div style="margin-top:11px;display:flex;gap:14px;align-items:center"><a id="mnemoRegen" style="color:#b5552f;font-weight:700;cursor:pointer;font-size:12px">🔄 다시 생성</a>' +

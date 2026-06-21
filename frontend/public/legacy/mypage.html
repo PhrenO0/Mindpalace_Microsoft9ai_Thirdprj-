@@ -212,6 +212,15 @@
           localStorage.setItem('mp_palace', JSON.stringify(item.palace));
           sessionStorage.setItem('mp_palace', JSON.stringify(item.palace));
           if (item.designs) localStorage.setItem('studio_designs', JSON.stringify(item.designs));
+          // 의미부여(mp_mnemo:*)·노드편집(mw_edit:*) 오버레이 복원 — 저장 시의 localStorage 키 그대로 되돌림
+          const restoreMap = (m) => {
+            if (!m || typeof m !== 'object') return;
+            for (const k in m) {
+              try { localStorage.setItem(k, typeof m[k] === 'string' ? m[k] : JSON.stringify(m[k])); } catch (_) {}
+            }
+          };
+          restoreMap(item.mnemonics);
+          restoreMap(item.edits);
         } catch (_) {}
         location.href = '/legacy/region-select.html';
       })
