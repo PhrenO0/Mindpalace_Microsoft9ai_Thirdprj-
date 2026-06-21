@@ -79,6 +79,11 @@ async def security_headers(request: Request, call_next):
     response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    # HTML·JS 는 매 배포마다 바뀌므로 브라우저가 옛 버전을 '신선'하다고 재사용하지 않게 항상 재검증(no-cache).
+    # → 배포 후 새로고침만으로 최신 코드를 받는다(ETag로 안 바뀌면 304라 비용도 작음). GLB·이미지 등은 그대로 캐시.
+    p = request.url.path.lower()
+    if p.endswith(".html") or p.endswith(".js") or p.endswith("/"):
+        response.headers["Cache-Control"] = "no-cache"
     return response
 
 

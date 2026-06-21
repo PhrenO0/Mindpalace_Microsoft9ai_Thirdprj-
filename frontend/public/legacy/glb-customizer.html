@@ -927,7 +927,10 @@
           '<button id="rpCapBtn" style="position:absolute;bottom:10px;right:10px;border:0;border-radius:9px;background:rgba(42,36,29,.85);color:#fff;font-weight:700;font-size:12px;padding:7px 12px;cursor:pointer">🔄 내부 4컷 둘러보기</button>';
         var cb = document.getElementById("rpCapBtn"); if (cb) cb.onclick = function () { startCapture(glb, thumb0); };
       } else {
-        startCapture(glb, null);   // 썸네일 없으면(커스텀 방 등) 바로 캡처
+        // 썸네일 없는 방(커스텀 등)도 자동 캡처하지 않음 — 버튼 눌러야만 캡처(수동) → 무한 "촬영 중" 원천 차단.
+        w.innerHTML = '<div class="rp-loading">방 미리보기 — 아래 <b>🔄 내부 4컷 둘러보기</b>로 내부를 보거나 <b>이 방으로 적용</b>으로 바로 쓰세요.</div>' +
+          '<button id="rpCapBtn" style="position:absolute;bottom:10px;right:10px;border:0;border-radius:9px;background:rgba(42,36,29,.85);color:#fff;font-weight:700;font-size:12px;padding:7px 12px;cursor:pointer">🔄 내부 4컷 둘러보기</button>';
+        var cb2 = document.getElementById("rpCapBtn"); if (cb2) cb2.onclick = function () { startCapture(glb, null); };
       }
     };
     function close(){ if (captureTimer) { clearTimeout(captureTimer); captureTimer = null; } modal.hidden = true; document.getElementById("rpFrame").src = "about:blank"; shots = []; }
