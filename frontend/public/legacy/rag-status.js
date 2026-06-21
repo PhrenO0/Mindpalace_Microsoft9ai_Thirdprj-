@@ -113,12 +113,26 @@
       var b = document.getElementById("mpRagBar"); if (b) b.style.background = "#c0463e";
       var ic = document.getElementById("mpRagIc"); if (ic) { ic.textContent = "⚠️"; ic.classList.remove("spin"); }
     }
+    // 잡 기록이 서버에서 사라짐(재시작 등으로 휘발성 var/ 가 날아감). 무한 폴링에 갇히지
+    // 않게 멈추고, mp_rag_job 을 지워 다른 페이지에서 되살아나지 않게 한다(재업로드 안내).
+    function lost() {
+      stopped = true;
+      if (tipTimer) clearInterval(tipTimer);
+      try { localStorage.removeItem("mp_rag_job"); } catch (_) {}
+      setLabel("이전 분석 작업을 찾을 수 없어요");
+      var b = document.getElementById("mpRagBar"); if (b) b.style.background = "#c0463e";
+      var ic = document.getElementById("mpRagIc"); if (ic) { ic.textContent = "⚠️"; ic.classList.remove("spin"); }
+      var go = document.getElementById("mpRagGo"); if (go) { go.href = "home.html#upload"; go.textContent = "다시 업로드 →"; }
+      var tip = document.getElementById("mpRagTip"); if (tip) tip.innerHTML = '<span>서버가 재시작되며 작업이 초기화됐어요. 다시 업로드해 주세요.</span>';
+    }
 
+    var gone = 0;
     async function poll() {
       if (stopped) return;
       try {
         var r = await fetch(job.base + "/orchestrator/jobs/" + job.jobId + "/status");
         if (r.ok) {
+          gone = 0;
           var s = await r.json();
           var stg = STAGE[s.state];
           if (stg) { setBar(stg.pct); setLabel("PDF 분석 중 · " + stg.label); }
@@ -132,6 +146,9 @@
               finish(); return;
             }
           }
+        } else if (r.status === 404) {
+          // 잡이 서버에서 사라짐 — 전이적 404 대비 몇 번 재시도 후 포기하고 정리.
+          if (++gone >= 3) { lost(); return; }
         }
       } catch (_) {}
       setTimeout(poll, 3000);
