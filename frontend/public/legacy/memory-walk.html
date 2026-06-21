@@ -83,6 +83,7 @@
     .card h2{margin:13px 0 0;font-size:22px;font-weight:800;letter-spacing:-.01em;}
     .card .furn{margin:8px 0 0;font-size:12px;font-weight:700;color:var(--gold);
                 display:inline-block;border:1px solid rgba(138,129,112,.35);border-radius:8px;padding:4px 9px;}
+    .card .imgcap{color:var(--muted);font-size:11.5px;line-height:1.5;margin:4px 0 2px;text-align:center;}
     .card .cap{color:var(--accent);font-size:13px;font-weight:700;margin:9px 0 0;}
     .card .desc{color:var(--muted);font-size:13px;line-height:1.66;margin:10px 0 0;white-space:pre-line;}
     .cmore{background:none;border:0;color:color-mix(in srgb,var(--accent) 62%,var(--gold) 38%);font-size:12px;font-weight:600;cursor:pointer;padding:8px 0 0;letter-spacing:.01em;}
@@ -285,6 +286,7 @@
       <div class="head"><span class="num" id="cNum">1</span><span class="type" id="cType"></span></div>
       <h2 id="cTitle"></h2>
       <div class="imgwrap" id="cImgWrap" hidden><img class="cimg" id="cImg" alt="" /><button class="imgzoom" id="cImgZoom" type="button" title="크게 보기" aria-label="크게 보기">⤢</button></div>
+      <div class="imgcap" id="cImgCap" hidden></div>
       <div class="furn" id="cFurn"></div>
       <div class="cap" id="cCap"></div>
       <button class="cmore" id="cMore" hidden></button>
@@ -895,7 +897,19 @@
       // 저장은 업로드한 진짜 학습자료(fromUpload)일 때만 — 데모·샘플은 저장 대상 아님. 버튼도 그때만 노출.
       MW_CAN_SAVE = fromUpload;
       { const _sb = document.getElementById("saveLibBtn"); if (_sb) _sb.hidden = !fromUpload; }
-      if (fromUpload) { try { const _j = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); MW_IMG_BASE = (_j && _j.base) || ""; MW_JOB_ID = (_j && _j.jobId) || ""; } catch(_) {} }
+      if (fromUpload) {
+        try { const _j = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); MW_IMG_BASE = (_j && _j.base) || ""; MW_JOB_ID = (_j && _j.jobId) || ""; } catch(_) {}
+        // 이미지를 mp_rag_job 하나에만 의존하면, 그게 사라지거나(404 정리·재업로드 덮어쓰기)
+        // 다른 잡으로 어긋나면 전 방 이미지가 안 뜬다. 라이브 잡은 palace.id == job_id 라,
+        // 로드된 palace 의 id 로 job_id 를 잡는 게 더 견고하고 정확하다(서재서 불러온 저장본도
+        // 이 경로로 가면 graphrag Blob 폴백으로 서빙된다). base 는 mp_rag_job 또는 기본 graphrag 주소.
+        if (MW_PALACE_ID && !/korean_history|sample|demo/i.test(MW_PALACE_ID)) MW_JOB_ID = MW_PALACE_ID;
+        if (!MW_IMG_BASE && MW_JOB_ID) {
+          MW_IMG_BASE = window.GRAPHRAG_BASE ||
+            (function(){ try { return localStorage.getItem("mp_graphrag_base"); } catch(_) { return null; } })() ||
+            "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net";
+        }
+      }
       loadConceptPhotos();   // 개념 대표사진(제목 매칭) 비동기 로드
       const rid = P.get("room");
       const room = (palace.rooms||[]).find(r => r.id === rid) || (palace.rooms||[])[0];
@@ -1425,8 +1439,18 @@
         $("cTitle").textContent = e.title;
         $("cFurn").textContent = `📍 ${dispName(h)}에 배치`;
         setCardImage(entImage(e));   // PDF figure > concept-photos > e.image > 랜드마크 공통
-        $("cCap").textContent = entCaption(e);   // e.caption > images[0].caption > summary
-        (function(){var cap=entCaption(e),desc=paraBreak(e.description||""),n=function(s){return String(s||"").replace(/\s/g,"");},cd=$("cDesc"),tg=$("cMore");if(!cap){cd.textContent=desc;cd.hidden=false;if(tg)tg.hidden=true;}else if(!desc||n(desc)===n(cap)||(n(desc).indexOf(n(cap))===0&&n(desc).length-n(cap).length<10)){cd.textContent="";cd.hidden=true;if(tg)tg.hidden=true;}else{cd.textContent=desc;cd.hidden=true;if(tg){tg.hidden=false;tg.textContent="더보기 ▾";tg.onclick=function(){cd.hidden=!cd.hidden;tg.textContent=cd.hidden?"더보기 ▾":"접기 ▴";};}}})();
+        // 카드 본문(cCap)은 개념 내용(summary)으로, 이미지 캡션은 사진 밑(cImgCap)에 작게.
+        // 기존엔 cCap 이 entCaption(이미지 캡션 우선)이라 그림 있는 개념은 내용 대신 사진 캡션이 떴다.
+        (function(){
+          var imgCap=(Array.isArray(e.images)&&e.images[0]&&e.images[0].caption)||"";
+          var ic=$("cImgCap"); if(ic){ if(imgCap&&entImage(e)){ic.textContent=imgCap;ic.hidden=false;}else{ic.textContent="";ic.hidden=true;} }
+          var summary=e.summary||e.caption||"";
+          $("cCap").textContent=summary;
+          var desc=paraBreak(e.description||""),n=function(s){return String(s||"").replace(/\s/g,"");},cd=$("cDesc"),tg=$("cMore");
+          if(!summary){cd.textContent=desc;cd.hidden=false;if(tg)tg.hidden=true;}
+          else if(!desc||n(desc)===n(summary)||(n(desc).indexOf(n(summary))===0&&n(desc).length-n(summary).length<10)){cd.textContent="";cd.hidden=true;if(tg)tg.hidden=true;}
+          else{cd.textContent=desc;cd.hidden=true;if(tg){tg.hidden=false;tg.textContent="더보기 ▾";tg.onclick=function(){cd.hidden=!cd.hidden;tg.textContent=cd.hidden?"더보기 ▾":"접기 ▴";};}}
+        })();
         if ((e.related||[]).length) {
           const lab = document.createElement("span"); lab.className="lab"; lab.textContent = "연결:"; rel.appendChild(lab);
           e.related.forEach(rid => {
