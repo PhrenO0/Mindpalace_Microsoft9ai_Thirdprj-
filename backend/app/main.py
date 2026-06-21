@@ -670,8 +670,22 @@ def mnemonic_delete(
     return {"ok": cosmos.delete_mnemonic(user_id, palace, spot, entity)}
 
 
+# 마운트된 StaticFiles 는 위 http 미들웨어를 우회한다(Starlette). HTML·JS 는 배포마다 바뀌므로
+# 여기서 직접 Cache-Control:no-cache 를 붙여 브라우저가 옛 코드를 재사용하지 않게 한다(ETag로 미변경 시 304).
+class NoCacheStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        try:
+            p = path.lower()
+            if p.endswith(".html") or p.endswith(".js"):
+                response.headers["Cache-Control"] = "no-cache"
+        except Exception:
+            pass
+        return response
+
+
 if LEGACY_DIR.exists():
-    app.mount("/legacy", StaticFiles(directory=LEGACY_DIR, html=True), name="legacy")
+    app.mount("/legacy", NoCacheStaticFiles(directory=LEGACY_DIR, html=True), name="legacy")
 
 
 if FRONTEND_DIST.exists():
