@@ -1539,6 +1539,8 @@
       try { const sd=localStorage.getItem("studio_designs"); if(sd) designs=JSON.parse(sd); } catch(_){}
       // 의미부여는 생성 즉시 /api/mnemonic 으로 저장되므로 이 번들엔 담지 않음.
       const edits=_collectLS(k=>k.indexOf("mw_edit:")===0);
+      // 저장 id 연속성: 이 궁전을 전에 저장했으면 그 id로 덮어쓰기(중복 방지)
+      let existId=null; try { if(MW_PALACE_ID){ existId=(JSON.parse(localStorage.getItem("mp_lib_items")||"{}"))[MW_PALACE_ID]||null; } } catch(_){}
       const defTitle=(palace.palace&&palace.palace.title)||"내 궁전";
       const title=(prompt("내 서재에 저장할 제목:", defTitle)||"").trim();
       if(!title) return;
@@ -1546,9 +1548,12 @@
       if(btn){ btn.disabled=true; btn.textContent="저장 중…"; }
       try {
         const r=await fetch("/api/library/save",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({title,palace,designs,edits})});
+          body:JSON.stringify({title,palace,designs,edits,id:existId})});
         if(r.status===401){ alert("로그인이 필요해요. 로그인 후 다시 저장해 주세요."); }
-        else if(r.ok){ if(btn){ btn.textContent="✓ 저장됨"; setTimeout(()=>{ if(btn){ btn.textContent=old; btn.disabled=false; } },1500); } return; }
+        else if(r.ok){
+          try { const jr=await r.json(); const iid=jr&&jr.item&&jr.item.id; if(iid&&MW_PALACE_ID){ const m=JSON.parse(localStorage.getItem("mp_lib_items")||"{}"); m[MW_PALACE_ID]=iid; localStorage.setItem("mp_lib_items", JSON.stringify(m)); } } catch(_){}
+          if(btn){ btn.textContent="✓ 저장됨"; setTimeout(()=>{ if(btn){ btn.textContent=old; btn.disabled=false; } },1500); } return;
+        }
         else { const e=await r.json().catch(()=>({})); alert("저장 실패: "+(e.detail||("오류 "+r.status))); }
       } catch(_){ alert("저장 중 오류가 났어요."); }
       if(btn){ btn.textContent=old; btn.disabled=false; }
