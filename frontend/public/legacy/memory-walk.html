@@ -728,6 +728,10 @@
           const b = new THREE.Box3().setFromObject(c); if (b.isEmpty()) return;
           const s = b.getSize(new THREE.Vector3()), maxd = Math.max(s.x, s.y, s.z);
           if (maxd < roomMax * 0.03 || maxd > roomMax * 0.92) return; // 소품(너무 작음)·구조물(너무 큼) 제외
+          // 모양 기반 구조물 제외 — 이름없는 GLB(벽·바닥이 "Object_N")는 STRUCT_RE를 못 거르므로 형태로 판별.
+          const thin = Math.min(s.x, s.z), wide = Math.max(s.x, s.z);
+          if (thin < roomMax * 0.028 && (s.y > roomH * 0.45 || wide > roomMax * 0.30)) return;  // 얇고 크게 선 면 = 벽·칸막이
+          if (s.y < roomMax * 0.012 && wide > roomMax * 0.45) return;                            // 아주 납작·거대 = 바닥/천장 슬래브(러그는 더 작음)
           const ctr = b.getCenter(new THREE.Vector3());
           if (ctr.y > roomH * 0.72) return;   // 천장 부착물(조명·실링팬 등) 제외 — 마커가 천장에 찍히지 않게
           cand.push({ pos: ctr, name: c.name || "object", vol: s.x * s.y * s.z,
@@ -1347,14 +1351,15 @@
     function geomGuess(s, cy, roomH){
       const h = s.y, foot = Math.max(s.x, s.z), thin = Math.min(s.x, s.z);
       const H = Math.max(roomH, 0.001);
-      if (h < H * 0.07 && foot > 1.4) return "러그";                 // 바닥에 깔린 아주 납작·넓은 것
-      if (h > H * 0.60 && foot > 0.7) return "수납장";               // 키 크고 폭 있음 → 장/책장
-      if (h > H * 0.42 && thin < 0.55) return "스탠드";              // 키 크고 가늚 → 스탠드/조명대
-      if (cy < H * 0.30 && foot > 2.6) return "침대";                // 바닥 가까이·아주 넓음
-      if (cy < H * 0.32 && foot > 1.8) return "소파";                // 바닥 가까이·넓음
-      if (cy < H * 0.44 && foot > 1.0 && h < H * 0.34) return "테이블"; // 중간높이 평평한 상판
-      if (cy < H * 0.42 && foot <= 1.2) return "의자";               // 앉는 높이의 작은 덩어리
-      return "소품";                                                  // 그 외(표면 위 작은 것)
+      // 낮은 가구 먼저(바닥 가까이) → 키큰 것 → 작은 것. '수납장'은 깊이 있는(thin>0.35) 키큰 것만(남발 방지).
+      if (h < H * 0.06 && foot > 1.2) return "러그";                          // 아주 납작·넓게 깔림
+      if (cy < H * 0.30 && foot > 2.6 && h < H * 0.45) return "침대";          // 바닥 가까이·아주 넓고 낮음
+      if (cy < H * 0.33 && foot > 1.6 && h < H * 0.45) return "소파";          // 바닥 가까이·넓고 낮음
+      if (h > H * 0.55 && thin > 0.35 && foot > 0.6) return "수납장";          // 키 크고 '깊이도 있는' 것만 장
+      if (h > H * 0.45 && thin < 0.45) return "스탠드";                        // 키 크고 가늚 → 스탠드/조명대
+      if (cy < H * 0.46 && foot > 0.9 && h < H * 0.36) return "테이블";        // 중간높이 평평한 상판
+      if (cy < H * 0.46 && foot <= 1.1) return "의자";                         // 앉는 높이의 작은 덩어리
+      return "소품";                                                          // 그 외(표면 위 작은 것)
     }
 
     // 인식된 모든 가구 팝업 — 걷는 순번(1·2·3…)대로. 클릭=이동+개념 카드, ☰ 드래그=순서 변경.
