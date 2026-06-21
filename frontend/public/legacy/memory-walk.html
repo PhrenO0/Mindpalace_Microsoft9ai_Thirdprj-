@@ -264,7 +264,7 @@
     <a class="backbtn" id="firstBtn" href="home.html" style="margin-left:6px;text-decoration:none" title="처음 화면(시작)으로">🏠 처음</a>
     <button class="backbtn" id="nextRoomBtn" style="display:none;margin-left:6px">다음 방 ⏭</button>
     <button class="backbtn" id="liteToggle" style="margin-left:6px" title="저사양 모드: 그림자 끔·픽셀비 1.0·마커 캔버스 축소">⚡</button>
-    <button class="backbtn" id="saveLibBtn" style="margin-left:6px" title="현재 궁전·노드편집·의미부여를 내 서재에 저장">💾 내 서재 저장</button>
+    <button class="backbtn" id="saveLibBtn" style="margin-left:6px" title="현재 궁전·노드편집·의미부여를 내 서재에 저장">💾 내 서재에 저장</button>
     <script>
       (function(){ const b=document.getElementById("liteToggle"); if(!b) return;
         setTimeout(()=>{ b.textContent = window.LITE ? "⚡ 라이트 ON" : "⚡ 라이트 OFF"; }, 60);
@@ -841,7 +841,7 @@
     //   PDF 추출 엔티티는 e.image/e.caption이 없고 images:[{path,caption}]·summary를 가진다.
     //   이미지: PDF figure(백엔드 /images/{palaceId}/{파일명}) > concept-photos(제목 매칭) > e.image > 테마 공통.
     //   캡션:   e.caption > images[0].caption > summary.
-    let CONCEPT_PHOTOS = {}, MW_IMG_BASE = "", MW_PALACE_ID = "", MW_JOB_ID = "", _cpLoaded = false;
+    let CONCEPT_PHOTOS = {}, MW_IMG_BASE = "", MW_PALACE_ID = "", MW_JOB_ID = "", MW_LOADED_PALACE = null, _cpLoaded = false;
     async function loadConceptPhotos(){ if (_cpLoaded) return; _cpLoaded = true;
       try { const d = await (await fetch("public/data/concept-photos.json")).json(); CONCEPT_PHOTOS = d.concepts || d || {}; } catch(_) {} }
     const _imgUrl = v => !v ? "" : (typeof v === "string" ? v : (v.url || v.src || v.image || v.thumb || v.full || ""));
@@ -874,6 +874,7 @@
       CONTENT_LOCKED = !fromUpload && (palace === SAMPLE_PALACE || /korean_history|sample|demo/i.test(_pid) || /korean_history|sample/i.test(url || ""));
       $("palaceTitle").textContent = (CONTENT_LOCKED && !THEME) ? "기억 궁전" : (palace.palace?.title || "기억 궁전");
       MW_PALACE_ID = (palace.palace && palace.palace.id) || "";   // PDF figure URL 스코프(/images/{id}/...)
+      MW_LOADED_PALACE = palace;   // '내 서재에 저장' 버튼이 쓸 현재 로드된 궁전(업로드/샘플/?palace= 포함)
       if (fromUpload) { try { const _j = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); MW_IMG_BASE = (_j && _j.base) || ""; MW_JOB_ID = (_j && _j.jobId) || ""; } catch(_) {} }
       loadConceptPhotos();   // 개념 대표사진(제목 매칭) 비동기 로드
       const rid = P.get("room");
@@ -1523,8 +1524,10 @@
     function _collectLS(predicate){ const out={}; try { for (let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if (k && predicate(k)){ const v=localStorage.getItem(k); if (v!=null) out[k]=v; } } } catch(_){} return out; }
     async function saveToLibrary(){
       let palace=null, designs=null;
-      try { const sp=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace"); if(sp) palace=JSON.parse(sp); } catch(_){}
-      if(!palace){ alert("저장할 궁전이 없어요. 먼저 학습 자료(PDF)로 궁전을 만들어 주세요."); return; }
+      // 현재 로드된 궁전(업로드/샘플/?palace= 모두 포함) 우선, 없으면 mp_palace localStorage.
+      if (MW_LOADED_PALACE) palace = MW_LOADED_PALACE;
+      if (!palace) { try { const sp=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace"); if(sp) palace=JSON.parse(sp); } catch(_){} }
+      if(!palace){ alert("저장할 궁전이 없어요. 궁전(방)에 입장한 뒤 다시 시도해 주세요."); return; }
       try { const sd=localStorage.getItem("studio_designs"); if(sd) designs=JSON.parse(sd); } catch(_){}
       // 의미부여: 이 궁전(palaceId) 것만 — 계정 prefix가 달라도 ':<palaceId>:' 포함으로 매칭
       const needle=":"+(MW_PALACE_ID||"_")+":";
