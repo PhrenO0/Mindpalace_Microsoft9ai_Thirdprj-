@@ -247,7 +247,7 @@
     card.innerHTML=`
       <div class="info">
         <div class="cidx">챕터 ${ci+1} / ${PAL.rooms.length}</div>
-        <h2>${esc(ch.name)}</h2>
+        <h2>${esc(ch.name)} <button class="editRoomBtn" title="방 이름 수정" style="border:0;background:none;cursor:pointer;font-size:.62em;color:var(--accent,#b5552f);vertical-align:middle">✎</button></h2>
         <div class="sum">${esc(ch.summary||"")}</div>
         <div class="concepts">${concepts||'<span class="c more">학습 항목 없음</span>'}</div>
       </div>
@@ -288,6 +288,7 @@
       saveStudioDesign(nlm?nlm.name:"", st.designId); paint(); updateStart(); });
     dSel.addEventListener("change",()=>{ st.designId=dSel.value; saveStudioDesign(lmNameOf(st.lmId), st.designId); paint(); updateStart(); });
     paint();
+    { const _erb=card.querySelector(".editRoomBtn"); if(_erb) _erb.onclick=()=>{ const nv=(prompt("방 이름:", PAL.rooms[ci].name||"")||"").trim(); if(nv){ PAL.rooms[ci].name=nv; persistPalace(); render(); } }; }
     return card;
   }
 
@@ -302,8 +303,17 @@
     try { (chapState || []).forEach(st => st && saveStudioDesign(lmNameOf(st.lmId), st.designId)); } catch(_){}
   });
 
+  function persistPalace(){ try { const s=JSON.stringify(PAL); localStorage.setItem("mp_palace", s); sessionStorage.setItem("mp_palace", s); } catch(_){} }
   function render(){
-    $("title").innerHTML = `${esc(PAL.palace?.title||"학습 콘텐츠")}를 <span class="g">기억의 궁전</span>으로 구성`;
+    // 제목이 플레이스홀더(hex / "기억의 궁전:")면 PDF 파일명으로 기본 세팅(✎로 수정 가능)
+    try {
+      const _t=(PAL.palace&&PAL.palace.title)||"", _pid=(PAL.palace&&PAL.palace.id)||"";
+      const _ph=!_t||(_pid&&_t.indexOf(_pid)>=0)||/^기억의 궁전\s*[:：]/.test(_t);
+      if(_ph&&PAL.palace){ let _fn=""; try{ const j=JSON.parse(localStorage.getItem("mp_rag_job")||"null"); if(j&&j.filename) _fn=String(j.filename).replace(/\.[^.]+$/,"").trim(); }catch(_){} if(_fn){ PAL.palace.title=_fn; persistPalace(); } }
+    } catch(_){}
+    const _pt=(PAL.palace&&PAL.palace.title)||"학습 콘텐츠";
+    $("title").innerHTML = `${esc(_pt)} <button id="editTitleBtn" title="궁전 이름 수정" style="border:0;background:none;cursor:pointer;font-size:.6em;color:var(--accent,#b5552f);vertical-align:middle">✎</button>를 <span class="g">기억의 궁전</span>으로 구성`;
+    { const _e=document.getElementById("editTitleBtn"); if(_e) _e.onclick=()=>{ const nv=(prompt("궁전 이름:", (PAL.palace&&PAL.palace.title)||"")||"").trim(); if(nv&&PAL.palace){ PAL.palace.title=nv; persistPalace(); render(); } }; }
     const corpus=(PAL.palace?.source?.corpus)||"";
     $("sub").textContent = "챕터마다 어울리는 장소와 방을 추천했어요. 장소·방을 바꿔 구성한 뒤 입장하세요.";
     $("src").textContent = corpus ? `학습 출처: ${corpus} · ${PAL.rooms?.length||0}개 챕터` : `${PAL.rooms?.length||0}개 챕터`;
@@ -389,6 +399,10 @@
       if (s) s.textContent = "✅"; if (t) t.textContent = "분석 완료! 챕터를 불러옵니다…";
       setTimeout(function () { location.reload(); }, 1300);
     });
+    // 안전망: 분석 중 잠금이 떠 있으면 mp_palace 도착 즉시 새로고침(mp-rag-ready 이벤트 누락 대비)
+    if (lock && !lock.hidden && ragPending()) {
+      var _pw = setInterval(function () { if (hasPalace()) { clearInterval(_pw); location.reload(); } }, 1500);
+    }
   })();
 </script>
 </body>

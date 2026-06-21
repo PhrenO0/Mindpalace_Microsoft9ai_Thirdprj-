@@ -844,7 +844,7 @@
     //   PDF 추출 엔티티는 e.image/e.caption이 없고 images:[{path,caption}]·summary를 가진다.
     //   이미지: PDF figure(백엔드 /images/{palaceId}/{파일명}) > concept-photos(제목 매칭) > e.image > 테마 공통.
     //   캡션:   e.caption > images[0].caption > summary.
-    let CONCEPT_PHOTOS = {}, MW_IMG_BASE = "", MW_PALACE_ID = "", MW_JOB_ID = "", MW_LOADED_PALACE = null, MW_CAN_SAVE = false, _cpLoaded = false;
+    let CONCEPT_PHOTOS = {}, MW_IMG_BASE = "", MW_PALACE_ID = "", MW_JOB_ID = "", MW_LOADED_PALACE = null, MW_CAN_SAVE = false, MW_SAVED = false, _cpLoaded = false;
     async function loadConceptPhotos(){ if (_cpLoaded) return; _cpLoaded = true;
       try { const d = await (await fetch("public/data/concept-photos.json")).json(); CONCEPT_PHOTOS = d.concepts || d || {}; } catch(_) {} }
     const _imgUrl = v => !v ? "" : (typeof v === "string" ? v : (v.url || v.src || v.image || v.thumb || v.full || ""));
@@ -1552,6 +1552,7 @@
         if(r.status===401){ alert("로그인이 필요해요. 로그인 후 다시 저장해 주세요."); }
         else if(r.ok){
           try { const jr=await r.json(); const iid=jr&&jr.item&&jr.item.id; if(iid&&MW_PALACE_ID){ const m=JSON.parse(localStorage.getItem("mp_lib_items")||"{}"); m[MW_PALACE_ID]=iid; localStorage.setItem("mp_lib_items", JSON.stringify(m)); } } catch(_){}
+          MW_SAVED=true;
           if(btn){ btn.textContent="✓ 저장됨"; setTimeout(()=>{ if(btn){ btn.textContent=old; btn.disabled=false; } },1500); } return;
         }
         else { const e=await r.json().catch(()=>({})); alert("저장 실패: "+(e.detail||("오류 "+r.status))); }
@@ -1559,6 +1560,43 @@
       if(btn){ btn.textContent=old; btn.disabled=false; }
     }
     (function(){ const b=document.getElementById("saveLibBtn"); if(b) b.addEventListener("click", saveToLibrary); })();
+
+    // ── 나가기 저장 안내: 저장 안 한 업로드 궁전에서 이탈 시 모달 + 탭닫기 beforeunload 백스톱 ──
+    function mwIsDirty(){
+      if (!MW_CAN_SAVE || MW_SAVED) return false;
+      try { if (MW_PALACE_ID && (JSON.parse(localStorage.getItem("mp_lib_items")||"{}"))[MW_PALACE_ID]) return false; } catch(_){}
+      return true;
+    }
+    function showExitModal(proceed){
+      if (document.getElementById("mwExitModal")) return;
+      const ov=document.createElement("div"); ov.id="mwExitModal";
+      ov.style.cssText="position:fixed;inset:0;z-index:99998;background:rgba(20,16,12,.55);display:flex;align-items:center;justify-content:center;padding:24px;font-family:'Pretendard','Malgun Gothic',sans-serif;";
+      ov.innerHTML='<div style="background:#fbf7f1;border-radius:16px;max-width:380px;width:100%;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.4);color:#2a241d;">'
+        +'<b style="font-size:15px">아직 내 서재에 저장하지 않았어요</b>'
+        +'<p style="font-size:13px;color:#6b6258;line-height:1.6;margin:10px 0 16px">저장하지 않고 나가면 이 브라우저에만 남고 다른 기기에서는 볼 수 없어요.</p>'
+        +'<div style="display:flex;flex-direction:column;gap:8px">'
+        +'<button id="mwExSave" style="padding:10px;border:0;border-radius:10px;background:var(--accent,#b5552f);color:#fff;font-weight:800;font-size:13px;cursor:pointer">💾 저장하고 나가기</button>'
+        +'<button id="mwExLeave" style="padding:10px;border:1px solid rgba(51,46,40,.2);border-radius:10px;background:none;color:#7a7066;font-weight:700;font-size:13px;cursor:pointer">그냥 나가기</button>'
+        +'<button id="mwExCancel" style="padding:8px;border:0;background:none;color:#9a8f82;font-size:12.5px;cursor:pointer">취소</button>'
+        +'</div></div>';
+      document.body.appendChild(ov);
+      const close=()=>ov.remove();
+      ov.addEventListener("click",e=>{ if(e.target===ov) close(); });
+      document.getElementById("mwExCancel").onclick=close;
+      document.getElementById("mwExLeave").onclick=()=>{ MW_SAVED=true; close(); proceed(); };
+      document.getElementById("mwExSave").onclick=async ()=>{ close(); try{ await saveToLibrary(); }catch(_){} MW_SAVED=true; proceed(); };
+    }
+    (function(){
+      ["backBtn","mapBtn","firstBtn"].forEach(function(id){
+        const btn=document.getElementById(id); if(!btn) return;
+        btn.addEventListener("click", function(e){
+          if (!mwIsDirty()) return;
+          e.preventDefault(); e.stopImmediatePropagation();
+          showExitModal(function(){ btn.click(); });
+        }, true);
+      });
+      window.addEventListener("beforeunload", function(e){ if (mwIsDirty()) { e.preventDefault(); e.returnValue=""; } });
+    })();
     // 서버(mnemonics 컨테이너)에서 이 궁전 의미부여를 불러와 localStorage 병합 — 다른 기기서도 보이게.
     async function loadServerMnemonics(palaceId){
       if(!palaceId) return;
