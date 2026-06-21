@@ -149,13 +149,10 @@
         encodeURIComponent('/legacy/home.html');
     });
 
-    // 프로필
-    const claims = principal.user_claims || [];
-    const byType = (t) => { const c = claims.find((x) => x.typ === t); return c && c.val; };
-    const email = principal.userDetails || principal.user_id ||
-      byType('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress') || byType('emails') || '';
-    const name = byType('name') || email || '사용자';
-    const pic = byType('picture');
+    // 프로필 — 정규화된 /api/me: { email, displayName, avatarUrl, provider }
+    const email = principal.email || '';
+    const name = principal.displayName || email || '사용자';
+    const pic = principal.avatarUrl;
     $('pname').textContent = name;
     $('pmail').textContent = email;
     if (pic) $('avatar').innerHTML = '<img alt="" src="' + pic + '" referrerpolicy="no-referrer">';
@@ -221,6 +218,11 @@
           };
           restoreMap(item.mnemonics);
           restoreMap(item.edits);
+          // 저장 id 연속성: 이 궁전(palaceId)이 곧 이 library 항목 → 재저장 시 덮어쓰기
+          try {
+            const pid = item.palace && item.palace.palace && item.palace.palace.id;
+            if (pid) { const m = JSON.parse(localStorage.getItem('mp_lib_items') || '{}'); m[pid] = id; localStorage.setItem('mp_lib_items', JSON.stringify(m)); }
+          } catch (_) {}
         } catch (_) {}
         location.href = '/legacy/region-select.html';
       })
@@ -234,15 +236,10 @@
       .catch(() => alert('삭제하지 못했어요.'));
   }
 
-  // 로그인 확인
-  fetch('/.auth/me', { credentials: 'include' })
+  // 로그인 확인 — 정규화된 /api/me 사용(전체 이메일 일관 표시). 비로그인은 401 → 익명.
+  fetch('/api/me', { credentials: 'include' })
     .then((r) => r.ok ? r.json() : null)
-    .then((data) => {
-      let principal = null;
-      if (Array.isArray(data) && data.length) principal = data[0];
-      else if (data && data.clientPrincipal) principal = data.clientPrincipal;
-      if (principal) showAuthed(principal); else showAnon();
-    })
+    .then((profile) => { if (profile) showAuthed(profile); else showAnon(); })
     .catch(showAnon);
 })();
 </script>
