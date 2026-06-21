@@ -444,15 +444,23 @@ def pdf_integration_status() -> dict:
 #       → 익명(로그인 신원 없음) 요청은 아래 require_login 의존성이 401로 막는다.
 #         이렇게 하면 익명끼리 같은 'anonymous' 버킷을 공유하는 프라이버시 문제 자체가 사라진다.
 
-# Easy Auth principal 클레임 중 사용자 식별에 쓸 타입들(이메일 우선).
+# Easy Auth principal 클레임 중 사용자 식별에 쓸 타입들.
+# 이메일/UPN(도메인 포함)을 먼저 잡고, 그게 전혀 없을 때만 이름으로 폴백한다.
+# (학원 Entra 계정처럼 email 클레임이 없고 name=아이디인 경우라도
+#  preferred_username 의 전체 UPN '아이디@도메인' 을 안정적 식별 키로 쓰기 위함.
+#  과거엔 name 도 이 집합에 섞여 있어, 클레임 배열에서 name 이 preferred_username
+#  보다 앞서 오면 도메인 없는 짧은 아이디가 키로 잡히는 문제가 있었다.)
 _EMAIL_CLAIM_TYPES = {
     "emails",
     "email",
     "emailaddress",
     "preferred_username",
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
-    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
+}
+# 이메일/UPN 클레임이 하나도 없을 때만 쓰는 폴백(이름).
+_USERID_NAME_FALLBACK_TYPES = {
     "name",
+    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
 }
 
 # 표시 이름·Entra object id 클레임(프로필 기록용). Microsoft(AAD) 전환 대비.
@@ -481,10 +489,21 @@ def _principal_claims(request: Request) -> list[dict]:
 
 
 def _principal_user_id(request: Request) -> str | None:
-    """principal 클레임에서 안정적인 사용자 식별값(이메일/이름)을 추출. NAME 헤더보다 우선."""
-    for claim in _principal_claims(request):
+    """principal 클레임에서 안정적인 사용자 식별값을 추출. NAME 헤더보다 우선.
+    이메일/UPN 클레임(도메인 포함)을 이름보다 우선해 잡는다 — 클레임 배열에서 name 이
+    preferred_username 보다 앞서 와도 전체 UPN 을 식별 키로 쓰기 위함(짧은 아이디 키 방지)."""
+    claims = _principal_claims(request)
+    # 1순위: 이메일/UPN 클레임(전체 도메인 포함).
+    for claim in claims:
         typ = (claim.get("typ") or "").lower()
-        if typ in _EMAIL_CLAIM_TYPES or typ.endswith("/emailaddress") or typ.endswith("/name"):
+        if typ in _EMAIL_CLAIM_TYPES or typ.endswith("/emailaddress"):
+            val = (claim.get("val") or "").strip()
+            if val:
+                return val
+    # 2순위(폴백): 이름 클레임. 이메일/UPN 클레임이 전혀 없을 때만.
+    for claim in claims:
+        typ = (claim.get("typ") or "").lower()
+        if typ in _USERID_NAME_FALLBACK_TYPES or typ.endswith("/name"):
             val = (claim.get("val") or "").strip()
             if val:
                 return val
