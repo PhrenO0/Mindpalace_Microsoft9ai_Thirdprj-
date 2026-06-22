@@ -51,22 +51,34 @@
       "#mpRagTip{padding:0 15px 13px;margin-top:-6px;font-size:12.5px;color:#7a5a3a;font-weight:600;display:flex;align-items:center;gap:6px;}" +
       "#mpRagTip .tw{animation:mpTwinkle 1.4s ease-in-out infinite;}" +
       "@keyframes mpTwinkle{0%,100%{opacity:.4;transform:scale(.9);}50%{opacity:1;transform:scale(1.15);}}" +
+      // 다음 행동(CTA) 반짝·둥실 — 어디를 누를지 한눈에.
+      "#mpRagChip .rg-go{animation:mpRagCta 1.5s ease-in-out infinite;}" +
+      "@keyframes mpRagCta{0%,100%{transform:translateY(0);box-shadow:0 0 0 0 rgba(196,98,58,0);}50%{transform:translateY(-3px);box-shadow:0 7px 16px rgba(196,98,58,.5),0 0 0 4px rgba(196,98,58,.20);}}" +
+      "#mpRagChip.rg-done .rg-go{animation:none;}" +
+      "#mpRagDismiss{margin-left:auto;font-size:11.5px;color:rgba(42,36,29,.42);font-weight:600;cursor:pointer;background:none;border:0;text-decoration:underline;padding:0;}" +
+      "#mpRagDismiss:hover{color:#7a5a3a;}" +
       "#mpRagTipTx{transition:opacity .4s ease;}";
     var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
     var fname = job.filename ? String(job.filename).replace(/[<>&"]/g, "") : "학습자료";
     var chip = document.createElement("div"); chip.id = "mpRagChip";
     var CITY = (P.get("city") || "").trim();
-    var browseHref = "region-select.html" + (CITY ? ("?city=" + encodeURIComponent(CITY)) : "");
+    var cityQ = CITY ? ("?city=" + encodeURIComponent(CITY)) : "";
+    var file = (location.pathname.split("/").pop() || "").toLowerCase().replace(".html", "");
+    // 페이지별 '다음 행동' — PDF 넣은 뒤 둘러보기 → 구성 → 입장까지 차례로 안내(반짝·둥실).
+    var nextStep = (file === "region-select") ? { href: "compose.html" + cityQ, label: "🏠 방 구성하기" }
+                 : (file === "compose")       ? { href: "vworld_map.html" + cityQ, label: "🚪 방 입장" }
+                 :                              { href: "region-select.html" + cityQ, label: "🗺 둘러보기" };
     chip.innerHTML =
       '<div id="mpRagBar"></div>' +
       '<div id="mpRagInner">' +
         '<span class="rg-ic spin" id="mpRagIc">📚</span>' +
         '<div class="rg-tx"><span id="mpRagLabel">PDF 분석 중…</span><small>' + fname + "</small></div>" +
-        '<a class="rg-go" id="mpRagGo" href="' + browseHref + '">🗺 둘러보기</a>' +
+        '<a class="rg-go" id="mpRagGo" href="' + nextStep.href + '">' + nextStep.label + '</a>' +
         '<button class="rg-x" id="mpRagX" title="숨기기">✕</button>' +
       "</div>" +
-      '<div id="mpRagTip"><span class="tw">✨</span><span id="mpRagTipTx">분석하는 동안 명소를 먼저 둘러보세요!</span></div>';
+      '<div id="mpRagTip"><span class="tw">✨</span><span id="mpRagTipTx">분석하는 동안 명소를 먼저 둘러보세요!</span>' +
+        '<button id="mpRagDismiss" type="button">다시 보지 않기</button></div>';
 
     // 다음 행동 추천 멘트 — 처리 중 지루하지 않게 회전(반짝임과 함께).
     var TIPS = [
@@ -85,8 +97,11 @@
     }
 
     function mount() {
+      try { if (localStorage.getItem("mp_onboard_off") === "1") return; } catch (_) {}   // '다시 보지 않기' 누른 적 있으면 온보딩 미표시
       document.body.appendChild(chip);
       document.getElementById("mpRagX").onclick = function () { chip.style.display = "none"; if (tipTimer) clearInterval(tipTimer); };
+      var dz = document.getElementById("mpRagDismiss");
+      if (dz) dz.onclick = function () { try { localStorage.setItem("mp_onboard_off", "1"); } catch (_) {} chip.style.display = "none"; if (tipTimer) clearInterval(tipTimer); };
       tipTimer = setInterval(rotateTip, 4200);   // 4.2초마다 다음 추천 멘트
     }
     if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
