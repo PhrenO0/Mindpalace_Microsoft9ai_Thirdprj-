@@ -5720,7 +5720,7 @@ end of keeper CSS */
 
   <div class="gate-cinema-stage">
     <div class="gate-cinema reveal">
-      <video class="gate-cinema-video" muted loop playsinline preload="metadata" disablepictureinpicture
+      <video class="gate-cinema-video" autoplay muted loop playsinline webkit-playsinline preload="auto" disablepictureinpicture
              src="public/assets/gate-open.mp4"></video>
       <span class="gate-cinema-veil" aria-hidden="true"></span>
       <a class="gate-cinema-cta" href="#upload" aria-label="기억의 궁전 입장하기">시작하기 →</a>
@@ -7261,8 +7261,9 @@ end of keeper CSS */
 
 <script>
 /* ═══════ 엔딩 시네마틱 입장 영상 제어 ═══════
-   - 화면에 들어오면 6초 영상 1회 재생 → 끝나면 마지막(밝은) 프레임에서 멈추고 '시작하기' 버튼 등장
-   - 배너 전체가 클릭 가능(#upload 입장). 자동재생 차단/모션최소화 시에도 버튼은 항상 노출 */
+   - 화면에 보일 때 GIF처럼 무한 반복 재생, 안 보이면 정지(자원 절약)
+   - 모든 기기에서 반복되도록 보장: ended/pause 시 자동 재개, 탭 복귀·첫 사용자 동작 시 재생
+   - '시작하기' 버튼은 항상 노출되며 그 버튼만 #upload로 입장 */
 (function () {
   var cinema = document.querySelector('.gate-cinema');
   if (!cinema) return;
@@ -7271,35 +7272,43 @@ end of keeper CSS */
   cinema.classList.add('is-ready');
   if (!v) return;
 
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) {
-    // 모션 최소화: 반복 끄고 마지막(밝은) 프레임만 표시
-    v.removeAttribute('loop');
-    v.preload = 'auto';
-    v.addEventListener('loadeddata', function () {
-      try { v.currentTime = Math.max(0, (v.duration || 6) - 0.05); } catch (e) {}
-    }, { once: true });
-    try { v.load(); } catch (e) {}
-    return;
+  // 모든 기기에서 무한 반복되도록 보장 (속성이 누락/무시돼도 JS로 강제)
+  v.muted = true;
+  v.loop = true;
+  v.playsInline = true;
+  v.preload = 'auto';
+
+  var inView = true;
+  function tryPlay() {
+    if (!inView) return;
+    var p = v.play();
+    if (p && p.catch) p.catch(function () {}); // 자동재생 차단되면 조용히 무시(사용자 동작에서 재시도)
   }
 
-  function play() {
-    v.preload = 'auto';
-    var p = v.play();
-    if (p && p.catch) p.catch(function () {});
-  }
+  // 일부 환경에서 loop 속성이 무시될 때 대비
+  v.addEventListener('ended', function () { try { v.currentTime = 0; } catch (e) {} tryPlay(); });
+  // 절전/브라우저가 임의로 멈추면 화면에 보일 때 자동 재개
+  v.addEventListener('pause', function () { if (inView && !v.ended) setTimeout(tryPlay, 0); });
+  // 탭에 다시 돌아오면 재개
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) tryPlay(); });
+  // 자동재생이 차단된 기기: 첫 사용자 동작에서 재생 시작
+  ['pointerdown', 'touchstart', 'keydown', 'scroll'].forEach(function (ev) {
+    window.addEventListener(ev, tryPlay, { once: true, passive: true });
+  });
 
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
-        if (e.isIntersecting) play();          // 보일 때 재생
+        inView = e.isIntersecting;
+        if (inView) tryPlay();                 // 보일 때 재생
         else if (!v.paused) v.pause();         // 안 보이면 정지(자원 절약)
       });
-    }, { threshold: 0.25 });
+    }, { threshold: 0.2 });
     io.observe(cinema);
   } else {
-    play();
+    tryPlay();
   }
+  tryPlay();
 })();
 </script>
 
