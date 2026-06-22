@@ -1252,9 +1252,11 @@
       } catch (_) {}
       return shots;
     }
+    // 이름 신뢰 마커: label이 실제 가구 단어(이름/계층 추론) = 신뢰. label이 "obj숫자"(기하학 추정)·"spot"(합성)이면 비전으로 보강.
+    function isNamedMarker(h){ return !!(h && (h.named || (h.label && !/^obj\d+$/.test(String(h.label)) && h.label !== "spot"))); }
     function applyVisionLabels(labels) {
       let n = 0;
-      route.forEach(h => { if (h.named) return; const v = labels[String(h.number)]; if (v && typeof v === "string") { h.ko = v; h.disp = null; h.visionLabeled = true; n++; } });   // 이름 신뢰 사물은 비전이 덮지 않음(정확한 이름 보존)
+      route.forEach(h => { if (isNamedMarker(h)) return; const v = labels[String(h.number)]; if (v && typeof v === "string") { h.ko = v; h.disp = null; h.visionLabeled = true; n++; } });   // 이름 신뢰 사물은 비전이 덮지 않음(정확한 이름 보존)
       if (n) { try { buildObjectList(); } catch (_) {} try { updateRoomState(); } catch (_) {} try { if (activeIdx >= 0 && route[activeIdx]) showCard(route[activeIdx]); } catch (_) {} }
       return n;
     }
@@ -1334,7 +1336,7 @@
       try { precise = JSON.parse(localStorage.getItem(pk) || "[]") || []; } catch (_) {}
       const pset = new Set(precise.map(String));
       route.forEach(h => { if (pset.has(String(h.number))) h.precise = true; });
-      const todo = route.filter(h => !h.precise && !h.named);   // 이름 신뢰 사물 제외 — geomGuess/합성 지점만 비전으로 보강(이름 정확도 보존 + 호출 절약)
+      const todo = route.filter(h => !h.precise && !isNamedMarker(h));   // 이름 신뢰 사물 제외 — geomGuess/합성 지점만 비전으로 보강(이름 정확도 보존 + 호출 절약)
       if (!todo.length) return;
       let done = 0;
       for (const h of todo) {
