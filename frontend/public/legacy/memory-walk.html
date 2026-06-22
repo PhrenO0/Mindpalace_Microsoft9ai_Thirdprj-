@@ -726,7 +726,7 @@
         if (c.name && FURN_RE.test(c.name) && !/^None/i.test(c.name)) {
           const b = new THREE.Box3().setFromObject(c);
           if (!b.isEmpty()) { const lb = (c.name.match(FURN_RE) || ["object"])[0].toLowerCase();
-            anchors.push({ pos: b.getCenter(new THREE.Vector3()), name: c.name, label: lb, ko: furnKO(lb) }); }
+            anchors.push({ pos: b.getCenter(new THREE.Vector3()), name: c.name, label: lb, ko: furnKO(lb), named: true }); }   // 메쉬 이름=가구단어 → 신뢰(비전 교정 제외)
         }
       });
       // 가구 인식: 이름표(FURN_RE) 앵커 + 메쉬 지오메트리(바운딩박스 중심)로 실제 가구를 추가 검출.
@@ -761,9 +761,10 @@
           if (anchors.length >= TARGET) break;
           if (!anchors.every(a => a.pos.distanceTo(c.pos) > MINSEP)) continue;
           // label=고유("obj"+i, 병합/다양성 파이프라인용) · ko=표시명: 추론 성공=실제 가구명, 실패=기하학 추정명(숫자 X)
+          const namedHit = !!c.ko;   // 계층 이름에서 가구 종류를 찾음 = 신뢰(비전 교정 제외). geomGuess만이면 비전으로 보강.
           let ko = c.ko || c.geo || "가구";
           const n = (koSeen[ko] = (koSeen[ko] || 0) + 1);             // 같은 이름 2번째부터 "의자 2"처럼 구분
-          anchors.push({ pos: c.pos, name: c.name, label: "obj" + (gi++), ko: n > 1 ? (ko + " " + n) : ko });
+          anchors.push({ pos: c.pos, name: c.name, label: "obj" + (gi++), ko: n > 1 ? (ko + " " + n) : ko, named: namedHit });
         }
       }
       if (!CAPTURE) setStatus(`③ 가구 ${anchors.length}개 인식 · 조명 굽는 중…`);   // 가구 검출 완료
@@ -1181,7 +1182,7 @@
       //     공중에 떠 사물과 분리돼 보였음. → 폐기)
       route = ordered.map((a, i) => {
         const p = a.pos.clone();
-        return { pos: p, label: a.label, name: a.name, ko: a.ko || null, disp: a.disp || null, entity: entOf.get(a) || null, number: i+1, eye: p.clone() };
+        return { pos: p, label: a.label, name: a.name, ko: a.ko || null, disp: a.disp || null, named: !!a.named, entity: entOf.get(a) || null, number: i+1, eye: p.clone() };
       });
       // 겹쳐 보이는 마커(같은 XZ 0.4m 내)만 황금각 나선으로 x,z 살짝 흩음.
       const _cl = [];
@@ -1253,7 +1254,7 @@
     }
     function applyVisionLabels(labels) {
       let n = 0;
-      route.forEach(h => { const v = labels[String(h.number)]; if (v && typeof v === "string") { h.ko = v; h.disp = null; h.visionLabeled = true; n++; } });
+      route.forEach(h => { if (h.named) return; const v = labels[String(h.number)]; if (v && typeof v === "string") { h.ko = v; h.disp = null; h.visionLabeled = true; n++; } });   // 이름 신뢰 사물은 비전이 덮지 않음(정확한 이름 보존)
       if (n) { try { buildObjectList(); } catch (_) {} try { updateRoomState(); } catch (_) {} try { if (activeIdx >= 0 && route[activeIdx]) showCard(route[activeIdx]); } catch (_) {} }
       return n;
     }
@@ -1333,7 +1334,7 @@
       try { precise = JSON.parse(localStorage.getItem(pk) || "[]") || []; } catch (_) {}
       const pset = new Set(precise.map(String));
       route.forEach(h => { if (pset.has(String(h.number))) h.precise = true; });
-      const todo = route.filter(h => !h.precise);
+      const todo = route.filter(h => !h.precise && !h.named);   // 이름 신뢰 사물 제외 — geomGuess/합성 지점만 비전으로 보강(이름 정확도 보존 + 호출 절약)
       if (!todo.length) return;
       let done = 0;
       for (const h of todo) {
@@ -1517,7 +1518,7 @@
       "carpet":"러그", "rug":"러그", "pillow":"쿠션", "cushion":"쿠션", "blanket":"담요",
       "television":"TV", "monitor":"모니터", "laptop":"노트북", "computer":"컴퓨터", "speaker":"스피커",
       "piano":"피아노", "guitar":"기타", "trash":"휴지통", "cup":"컵",
-      "box":"상자", "basket":"바구니", "bottle":"병", "bag":"가방", "tray":"쟁반",
+      "box":"상자", "basket":"바구니", "bottle":"병", "bag":"가방", "tray":"쟁반", "umbrella":"우산", "kite":"연", "globe":"지구본",
       "board":"칠판", "book":"책" };
     const furnKO = label => { const l = String(label||"").toLowerCase(); for (const k in FURN_KO) if (l.includes(k)) return FURN_KO[k]; return label || "가구"; };
     // 노드 이름이 가구 종류를 안 담아도(예: "Object_12"), 부모 그룹·조상 이름까지 훑어 종류를 추론.
