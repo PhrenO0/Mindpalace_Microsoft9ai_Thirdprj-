@@ -35,6 +35,11 @@ DB_NAME = os.getenv("AZURE_COSMOS_DB_NAME", "mindpalace")
 USERS = "users"
 LIBRARY = "library"
 MNEMONICS = "mnemonics"
+# graphrag 워커가 분석 1건마다 쓰는 컨테이너(같은 DB). 우리는 읽기만 한다.
+#   doc id = "{jobId}:analysis", pk /jobId, 필드 total_tokens·total_cost_usd·calls·by_model.
+USAGE = "usage"
+# 사용자별 누적 토큰(우리가 쓰는 컨테이너). 분석은 jobId 멱등 집계, 대화는 질의마다 누적.
+USER_USAGE = "user_usage"
 
 # 클라이언트·컨테이너는 한 번만 만들어 캐시(매 요청 재연결 방지).
 _client = None
@@ -132,6 +137,15 @@ def _library():
 
 def _mnemonics():
     return _container(MNEMONICS, "/userId")
+
+
+def _usage():
+    # graphrag 가 만든 컨테이너(pk /jobId)와 동일한 파티션 키로 확보(있으면 그대로 사용).
+    return _container(USAGE, "/jobId")
+
+
+def _user_usage():
+    return _container(USER_USAGE, "/userId")
 
 
 # ── 사용자 프로필 ──────────────────────────────────────────────────────────
@@ -312,3 +326,107 @@ def delete_mnemonic(user_id: str, palace_id: str, spot: str, entity: str) -> boo
         return True
     except Exception:
         return False
+
+
+# ── AI 토큰 사용량 — 분석(graphrag usage 읽기) + 대화(질의마다 누적). 표시는 토큰만($는 내부). ──
+
+def get_analysis_usage(job_id: str) -> dict | None:
+    """graphrag 가 쓴 분석 usage 문서를 읽는다(같은 DB의 usage 컨테이너). 없으면 None."""
+    if not job_id:
+        return None
+    cont = _usage()
+    if cont is None:
+        return None
+    try:
+        return cont.read_item(item=f"{job_id}:analysis", partition_key=job_id)
+    except Exception:
+        return None
+
+
+def _init_user_usage(user_id: str) -> dict:
+    now = _now()
+    return {
+        "id": user_id,
+        "userId": user_id,
+        "analysisTokens": 0,
+        "chatTokens": 0,
+        "analysisCostUsd": 0.0,  # 내부용($). 유저 표시는 토큰만.
+        "chatCostUsd": 0.0,
+        "countedJobs": [],  # 분석 중복 집계 방지(멱등).
+        "chatCount": 0,
+        "createdAt": now,
+        "updatedAt": now,
+    }
+
+
+def _read_user_usage(user_id: str) -> dict | None:
+    cont = _user_usage()
+    if cont is None:
+        return None
+    try:
+        return cont.read_item(item=user_id, partition_key=user_id)
+    except Exception:
+        return None
+
+
+def get_user_usage(user_id: str) -> dict:
+    """이 사용자 누적 토큰(표시용 정규화). 문서 없으면 0. $ 는 노출하지 않는다."""
+    doc = _read_user_usage(user_id) or {}
+    a = int(doc.get("analysisTokens", 0) or 0)
+    c = int(doc.get("chatTokens", 0) or 0)
+    return {
+        "analysisTokens": a,
+        "chatTokens": c,
+        "totalTokens": a + c,
+        "chatCount": int(doc.get("chatCount", 0) or 0),
+    }
+
+
+def track_analysis(user_id: str, job_id: str) -> dict | None:
+    """분석 1건의 토큰을 이 사용자에 귀속(멱등 — 같은 jobId 는 한 번만 더한다).
+    graphrag usage 문서가 아직 없으면 집계하지 않고 그대로 둔다(다음 호출에서 재시도 가능)."""
+    if not (user_id and job_id):
+        return None
+    cont = _user_usage()
+    if cont is None:
+        return None
+    try:
+        doc = _read_user_usage(user_id) or _init_user_usage(user_id)
+        if job_id in (doc.get("countedJobs") or []):
+            return doc  # 이미 집계됨.
+        a = get_analysis_usage(job_id)
+        if not a:
+            return doc  # usage 아직 안 쓰임 → 미집계로 둠.
+        doc["analysisTokens"] = int(doc.get("analysisTokens", 0) or 0) + int(a.get("total_tokens", 0) or 0)
+        doc["analysisCostUsd"] = round(
+            float(doc.get("analysisCostUsd", 0.0) or 0.0) + float(a.get("total_cost_usd", 0.0) or 0.0), 6
+        )
+        doc.setdefault("countedJobs", []).append(job_id)
+        doc["updatedAt"] = _now()
+        cont.upsert_item(doc)
+        return doc
+    except Exception:
+        log.warning("분석 토큰 집계 실패: user=%s job=%s", user_id, job_id, exc_info=True)
+        return None
+
+
+def track_chat(user_id: str, tokens: int = 0, cost: float = 0.0) -> dict | None:
+    """대화(질의) 1건의 토큰을 누적. 질의마다 호출(실시간 표시용)."""
+    if not user_id:
+        return None
+    cont = _user_usage()
+    if cont is None:
+        return None
+    try:
+        doc = _read_user_usage(user_id) or _init_user_usage(user_id)
+        doc["chatTokens"] = int(doc.get("chatTokens", 0) or 0) + max(0, int(tokens or 0))
+        doc["chatCostUsd"] = round(
+            float(doc.get("chatCostUsd", 0.0) or 0.0) + max(0.0, float(cost or 0.0)), 6
+        )
+        doc["chatCount"] = int(doc.get("chatCount", 0) or 0) + 1
+        doc["updatedAt"] = _now()
+        cont.upsert_item(doc)
+        return doc
+    except Exception:
+        log.warning("대화 토큰 집계 실패: user=%s", user_id, exc_info=True)
+        return None

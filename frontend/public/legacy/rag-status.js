@@ -104,6 +104,17 @@
       var go = document.getElementById("mpRagGo"); if (go) { go.href = "compose.html" + (CITY ? ("?city=" + encodeURIComponent(CITY)) : ""); go.textContent = "방 미리보기 →"; }
       var tip = document.getElementById("mpRagTip"); if (tip) tip.innerHTML = '<span class="tw">🎉</span><span>학습 내용이 준비됐어요 — 방에 들어가 확인해 보세요!</span>';
       try { job.done = true; localStorage.setItem("mp_rag_job", JSON.stringify(job)); } catch (_) {}
+      // 이 분석이 쓴 토큰을 로그인 사용자에 1회 귀속(서버가 jobId로 멱등 처리 — 중복 안 됨).
+      // 비로그인이면 401 무시. graphrag 가 아니라 Mindpalace 백엔드(/api)로 보낸다.
+      try {
+        if (job && job.jobId) {
+          fetch("/api/usage/track", {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kind: "analysis", jobId: job.jobId })
+          }).catch(function () {});
+        }
+      } catch (_) {}
       try { window.dispatchEvent(new CustomEvent("mp-rag-ready")); } catch (_) {}
     }
     function fail(msg) {

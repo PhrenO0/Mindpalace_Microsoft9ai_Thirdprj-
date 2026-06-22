@@ -50,6 +50,12 @@
   .stat { background: var(--surface2); border-radius: 12px; padding: 16px; text-align: center; }
   .stat .num { font-size: 24px; font-weight: 700; color: var(--acc); }
   .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  /* AI 토큰 사용량 */
+  .tok-hero { text-align: center; padding: 6px 0 2px; }
+  .tok-hero .big { font-size: 40px; font-weight: 800; color: var(--acc); line-height: 1.1; letter-spacing: -0.5px; }
+  .tok-hero .cap { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .tok-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .tok-note { font-size: 12px; color: var(--muted); margin-top: 14px; line-height: 1.55; }
   /* 내 서재 */
   .lib-item {
     display: flex; align-items: center; gap: 14px;
@@ -111,6 +117,19 @@
         </div>
       </div>
 
+      <div class="card" id="usageCard" hidden>
+        <h2>AI 토큰 사용량</h2>
+        <div class="tok-hero">
+          <div class="big" id="tokTotal">0</div>
+          <div class="cap">총 사용 토큰</div>
+        </div>
+        <div class="tok-split">
+          <div class="stat"><div class="num" id="tokAnalysis">0</div><div class="lbl">분석</div></div>
+          <div class="stat"><div class="num" id="tokChat">0</div><div class="lbl">대화</div></div>
+        </div>
+        <div class="tok-note">자료를 분석하고 답변할 때 사용한 AI 토큰이에요. 더 큰 자료를 올리거나 질문을 많이 할수록 늘어나요.</div>
+      </div>
+
       <div class="card">
         <h2>내 서재</h2>
         <div id="libList"><div class="empty">불러오는 중…</div></div>
@@ -158,6 +177,24 @@
     if (pic) $('avatar').innerHTML = '<img alt="" src="' + pic + '" referrerpolicy="no-referrer">';
 
     loadLibrary();
+    loadUsage();
+  }
+
+  function fmtNum(n) {
+    try { return Number(n || 0).toLocaleString('ko-KR'); } catch (_) { return String(n || 0); }
+  }
+
+  function loadUsage() {
+    fetch('/api/usage/me', { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((u) => {
+        if (!u) return;
+        $('tokTotal').textContent = fmtNum(u.totalTokens);
+        $('tokAnalysis').textContent = fmtNum(u.analysisTokens);
+        $('tokChat').textContent = fmtNum(u.chatTokens);
+        $('usageCard').hidden = false;   // 값이 준비된 뒤 노출(0 깜빡임 방지)
+      })
+      .catch(() => {});
   }
 
   function fmtDate(iso) {
