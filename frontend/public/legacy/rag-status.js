@@ -66,7 +66,7 @@
     var cityQ = CITY ? ("?city=" + encodeURIComponent(CITY)) : "";
     var file = (location.pathname.split("/").pop() || "").toLowerCase().replace(".html", "");
     // 페이지별 '다음 행동' — PDF 넣은 뒤 둘러보기 → 구성 → 입장까지 차례로 안내(반짝·둥실).
-    var nextStep = (file === "region-select") ? { href: "compose.html" + cityQ, label: "🏠 방 구성하기" }
+    var nextStep = (file === "region-select") ? { href: "#", label: "🔭 둘러보기", explore: true }
                  : (file === "compose")       ? { href: "vworld_map.html" + cityQ, label: "🚪 방 입장" }
                  :                              { href: "region-select.html" + cityQ, label: "🗺 둘러보기" };
     chip.innerHTML =
@@ -102,6 +102,11 @@
       document.getElementById("mpRagX").onclick = function () { chip.style.display = "none"; if (tipTimer) clearInterval(tipTimer); };
       var dz = document.getElementById("mpRagDismiss");
       if (dz) dz.onclick = function () { try { localStorage.setItem("mp_onboard_off", "1"); } catch (_) {} chip.style.display = "none"; if (tipTimer) clearInterval(tipTimer); };
+      if (nextStep.explore) {   // region-select: '둘러보기' = 페이지 이동 대신, 도시 카드를 반짝·들썩으로 가리켜 클릭 유도
+        var goEl = document.getElementById("mpRagGo");
+        if (goEl) goEl.onclick = function (e) { e.preventDefault();
+          try { window.dispatchEvent(new CustomEvent("mp-onboard-explore")); } catch (_) {} };
+      }
       tipTimer = setInterval(rotateTip, 4200);   // 4.2초마다 다음 추천 멘트
     }
     if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
@@ -116,7 +121,7 @@
       setBar(100); setLabel("분석 완료 · 방 미리보기로");
       chip.classList.add("rg-done");
       var ic = document.getElementById("mpRagIc"); if (ic) ic.textContent = "✅";
-      var go = document.getElementById("mpRagGo"); if (go) { go.href = "compose.html" + (CITY ? ("?city=" + encodeURIComponent(CITY)) : ""); go.textContent = "방 미리보기 →"; }
+      var go = document.getElementById("mpRagGo"); if (go) { go.onclick = null; go.href = "compose.html" + (CITY ? ("?city=" + encodeURIComponent(CITY)) : ""); go.textContent = "방 미리보기 →"; }
       var tip = document.getElementById("mpRagTip"); if (tip) tip.innerHTML = '<span class="tw">🎉</span><span>학습 내용이 준비됐어요 — 방에 들어가 확인해 보세요!</span>';
       try { job.done = true; localStorage.setItem("mp_rag_job", JSON.stringify(job)); } catch (_) {}
       try { window.dispatchEvent(new CustomEvent("mp-rag-ready")); } catch (_) {}

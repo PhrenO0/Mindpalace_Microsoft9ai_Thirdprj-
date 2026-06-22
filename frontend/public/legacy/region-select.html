@@ -331,7 +331,7 @@
       try { data = await (await fetch("public/data/cities/" + encodeURIComponent(slug) + ".json")).json(); _lmCache[slug] = data; }
       catch(e){ grid.innerHTML = '<p class="lmb-loading">이 도시의 명소 데이터는 준비 중이에요. 바로 구성으로 진행할 수 있어요.</p>'; return; }
     }
-    document.getElementById("lmbIntro").textContent = (data.intro || data.headline || "") + (data.intro || data.headline ? " · " : "") + "⠿ 카드를 끌어 마커 순서를 바꿀 수 있어요";
+    document.getElementById("lmbIntro").textContent = "도시의 주요 랜드마크를 선정했어요. 대략적인 위치와 순서를 살펴보세요 · ⠿ 카드를 끌어 마커 순서를 바꿀 수 있어요";
     const lms = data.landmarks || [];
     if (!lms.length){ grid.innerHTML = '<p class="lmb-loading">등록된 명소가 없습니다.</p>'; return; }
 
@@ -400,12 +400,54 @@
         setTimeout(() => { try { _lmbMap.invalidateSize(); fit(); } catch(_){} }, 240);   // 패널 펼침 직후 크기 재계산
       } catch(_){}
     }
-    renderLmList(); renderLmPins();
+    renderLmList(); renderLmPins(); showScrollCue();
   }
   document.getElementById("lmbClose").addEventListener("click", () => {
     const p = document.getElementById("lmBrowse"); p.hidden = true;
+    const cue = document.getElementById("mpScrollCue"); if (cue) cue.remove();
     window.scrollTo({ top: 0, behavior:"smooth" });
   });
+
+  // ── 온보딩: 칩 '둘러보기' → 도시 카드 반짝·들썩 → 클릭 시 명소 패널 펼침 → 스크롤 유도 ──
+  (function(){
+    const s = document.createElement("style");
+    s.textContent =
+      "@keyframes mpGlowPulse{0%,100%{transform:translateY(0);box-shadow:0 0 0 0 rgba(196,98,58,0)}50%{transform:translateY(-7px);box-shadow:0 16px 32px rgba(196,98,58,.35),0 0 0 5px rgba(196,98,58,.28)}}"
+    + ".gcard.mp-glow{animation:mpGlowPulse 1.2s ease-in-out infinite;border-color:#c4623a !important;position:relative;z-index:3}"
+    + "@keyframes mpCueBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(7px)}}"
+    + "#mpScrollCue{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#2a241d;color:#fff;font-size:12.5px;font-weight:700;padding:8px 15px;border-radius:999px;box-shadow:0 10px 26px rgba(0,0,0,.24);animation:mpCueBob 1.1s ease-in-out infinite;pointer-events:none;z-index:60}";
+    document.head.appendChild(s);
+    window.addEventListener("mp-onboard-explore", function(){
+      const gv = document.getElementById("galleryview");
+      if (gv && gv.scrollIntoView) gv.scrollIntoView({ behavior:"smooth", block:"center" });
+      const city = (new URLSearchParams(location.search).get("city") || "").trim();
+      const card = (city && document.querySelector('#gtrack .gcard[data-slug="' + city + '"]'))
+                 || document.querySelector("#gtrack .gcard");
+      if (!card) return;
+      card.classList.add("mp-glow");
+      const stop = function(){ card.classList.remove("mp-glow"); };
+      card.addEventListener("click", stop, { once:true });
+      setTimeout(stop, 12000);   // 안전장치: 12초 후 자동 종료
+    });
+  })();
+  // 명소 패널이 넘칠 때만 '아래로 스크롤' 큐 표시(첫 스크롤에 사라짐)
+  function showScrollCue(){
+    try {
+      const old = document.getElementById("mpScrollCue"); if (old) old.remove();
+      setTimeout(function(){
+        const grid = document.getElementById("lmbGrid"); if (!grid) return;
+        const overflow = grid.scrollHeight > grid.clientHeight + 24 || document.body.scrollHeight > window.innerHeight + 40;
+        if (!overflow) return;
+        const cue = document.createElement("div"); cue.id = "mpScrollCue";
+        cue.textContent = "아래로 스크롤해 명소를 더 보세요 ↓";
+        document.body.appendChild(cue);
+        const rm = function(){ try { cue.remove(); } catch(_){} window.removeEventListener("scroll", rm); grid.removeEventListener("scroll", rm); };
+        window.addEventListener("scroll", rm, { passive:true });
+        grid.addEventListener("scroll", rm, { passive:true });
+        setTimeout(rm, 8000);
+      }, 350);
+    } catch(_){}
+  }
 
   function buildGallery(){
     const track = document.getElementById("gtrack");
@@ -421,6 +463,7 @@
       const card = document.createElement("a");
       card.className = "gcard";
       card.href = composeHref(slug);
+      card.dataset.slug = slug;
       card.dataset.name = (name + " " + region + " " + slug).toLowerCase();
       const phClass = ph.thumb ? "ph" : "ph noimg";
       const phStyle = ph.thumb ? ` style="background-image:url('${ph.thumb}')"` : "";
