@@ -3,6 +3,13 @@
    ?city 파라미터는 보존하고, 현재 페이지는 강조(.on)한다. home.html은 자체 내비가 있어 제외. */
 (function () {
   try {
+    // 전 페이지 공통 줄바꿈: 한글이 단어(어절) 중간에 끊기지 않게(keep-all) + 긴 토큰만 강제 줄바꿈(break-word).
+    //   제목은 줄 길이 균형(balance), 본문은 고아줄 방지(pretty). 반환문보다 먼저 주입해 임베드/모든 맥락에 적용.
+    if (!document.getElementById("mp-textwrap-style")) {
+      var _tw = document.createElement("style"); _tw.id = "mp-textwrap-style";
+      _tw.textContent = "*{word-break:keep-all;overflow-wrap:break-word;}h1,h2,h3,h4{text-wrap:balance;}p,li{text-wrap:pretty;}";
+      (document.head || document.documentElement).appendChild(_tw);
+    }
     const P = new URLSearchParams(location.search);
     if (P.get("dash") === "1" || window.self !== window.top) return; // 임베드(대시보드 iframe)·dash 모드에선 미주입
     const CITY = (P.get("city") || "").trim();

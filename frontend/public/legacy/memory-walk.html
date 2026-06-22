@@ -72,7 +72,7 @@
     .top h1{margin:6px 0 5px;font-size:clamp(15px,2vw,19px);font-weight:800;letter-spacing:-.01em;}
     .top p{margin:0;color:var(--muted);font-size:12px;line-height:1.55;}
     /* 엔티티 카드(우측) */
-    .card{top:16px;right:16px;width:min(340px,calc(100vw - 32px));padding:0;display:none;overflow:hidden;}
+    .card{top:16px;right:16px;width:min(340px,calc(100vw - 32px));padding:0;display:none;overflow-y:auto;overflow-x:hidden;max-height:calc(100dvh - 150px);overscroll-behavior:contain;}   /* 긴 내용은 카드 안에서 스크롤(잘림 방지) + 높이 제한으로 하단 UI(개념지도·인식가구)와 겹침 방지 */
     .card .bar{height:3px;background:linear-gradient(90deg,var(--gold),var(--accent));}
     .card .body{padding:15px 18px 18px;}
     .card .head{display:flex;align-items:center;gap:10px;}

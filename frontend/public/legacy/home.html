@@ -35,7 +35,9 @@
   --panel-border: rgba(99, 91, 81, 0.32);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; word-break: keep-all; overflow-wrap: break-word; }   /* 한글 어절 단위 줄바꿈(단어 중간 안 끊김) */
+h1,h2,h3,h4 { text-wrap: balance; }   /* 제목 줄 길이 균형 */
+p,li { text-wrap: pretty; }           /* 본문 고아줄 방지 */
 
 html { scroll-behavior: smooth; }
 
