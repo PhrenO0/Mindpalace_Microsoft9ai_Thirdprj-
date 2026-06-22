@@ -1100,16 +1100,28 @@
         arr.forEach(f => { const base = `${f.depth<=dMed?"앞":"뒤"} ${f.lat<lMed?"왼쪽":"오른쪽"} ${furnKO(c)}`;
           seen[base] = (seen[base]||0)+1; f.a.disp = seen[base]>1 ? `${base}${seen[base]}` : base; });
       }
-      // ④ 순서: 부채꼴(fan) 시야 스윕 — 시점에서 좌→우로 "각도" 순서.
-      //    카메라가 머리를 돌리듯 한 방향으로 부드럽게 팬(왔다갔다 지그재그 없음).
-      //    같은 각도대(거의 같은 방향)는 가까운 것 → 먼 것 순(그 방향으로 걸어 들어가듯).
-      //    → 모서리 끝 항목은 스윕의 양 끝에서 순서대로 밟힌다.
-      // 각도를 SECTOR 버킷으로 양자화 → (버킷, 깊이) 전순서로 정렬. 비교자가 추이적이라 결과가 일관됨.
-      //   (이전: |Δang|>SECTOR 분기 비교자는 비추이적 → 정렬 뒤섞임/엔진별 미정의. 버킷화로 해소.)
-      const SECTOR = 0.20;   // ~11°: 같은 버킷이면 같은 방향으로 보고 가까운 것 우선
-      picked.forEach(f => { f._ang = Math.atan2(f.lat, Math.max(f.depth, 0.05)); f._bucket = Math.round(f._ang / SECTOR); });
-      picked.sort((x, y) => (x._bucket - y._bucket) || (x.depth - y.depth));   // 좌→우 각도 버킷, 같은 버킷은 가까운 것 먼저
-      return picked.map(f=>f.a);
+      // ④ 순서: 매끄러운 동선(최근접 이웃 + 진행방향 유지) — 입장 지점에서 시작해, 가장 가깝고 방향이
+      //    덜 꺾이는 미방문 마커로 차례로 이동한다. (이전 '각도 스윕'은 좌우로 왔다갔다=지그재그/방 횡단이
+      //    잦았음.) 실제 걷는 경로를 이어 카메라가 한 바퀴 부드럽게 돌게 한다 → 모든 방에 적용.
+      const remain = picked.slice();
+      const seq = [];
+      let cx = eye.x, cz = eye.z;                 // 현재 위치(입장 시점)
+      let dx0 = fwd.x, dz0 = fwd.z;               // 진행 방향(턴 억제용)
+      while (remain.length) {
+        let bi = 0, best = -Infinity;
+        for (let i = 0; i < remain.length; i++) {
+          const p = remain[i].a.pos;
+          const ddx = p.x - cx, ddz = p.z - cz, dist = Math.hypot(ddx, ddz) || 0.001;
+          const turn = (ddx / dist) * dx0 + (ddz / dist) * dz0;   // +1=직진, -1=뒤로(큰 회전)
+          const score = -dist + turn * 0.7;                        // 가까움 우선 + 진행방향 유지로 매끄럽게
+          if (score > best) { best = score; bi = i; }
+        }
+        const nx = remain.splice(bi, 1)[0];
+        const np = nx.a.pos, ndx = np.x - cx, ndz = np.z - cz, nd = Math.hypot(ndx, ndz) || 0.001;
+        dx0 = ndx / nd; dz0 = ndz / nd; cx = np.x; cz = np.z;
+        seq.push(nx);
+      }
+      return seq.map(f => f.a);
     }
 
     // ── 동선 설계 + 엔티티 매핑 ──
@@ -1253,7 +1265,15 @@
       return shots;
     }
     // 이름 신뢰 마커: label이 실제 가구 단어(이름/계층 추론) = 신뢰. label이 "obj숫자"(기하학 추정)·"spot"(합성)이면 비전으로 보강.
-    function isNamedMarker(h){ return !!(h && (h.named || (h.label && !/^obj\d+$/.test(String(h.label)) && h.label !== "spot"))); }
+    //   단, GLB가 자주 오명명하는 모호한 이름(umbrella·kite 등 — 실제론 화분 등)은 신뢰하지 않고 비전이 실제로 판단하게 한다.
+    var AMBIG_NAME_RE = /umbrella|parasol|kite|globe|\btoy\b|object|mesh|none|untitled|default/i;
+    function isNamedMarker(h){
+      if (!h) return false;
+      var lb = String(h.label || "");
+      if (/^obj\d+$/.test(lb) || lb === "spot") return false;   // 기하학 추정·합성 지점 → 비전
+      if (AMBIG_NAME_RE.test(lb)) return false;                 // 모호·오명명 이름 → 비전이 판단
+      return true;                                              // 그 외 실제 가구 이름 = 신뢰
+    }
     function applyVisionLabels(labels) {
       let n = 0;
       route.forEach(h => { if (isNamedMarker(h)) return; const v = labels[String(h.number)]; if (v && typeof v === "string") { h.ko = v; h.disp = null; h.visionLabeled = true; n++; } });   // 이름 신뢰 사물은 비전이 덮지 않음(정확한 이름 보존)
