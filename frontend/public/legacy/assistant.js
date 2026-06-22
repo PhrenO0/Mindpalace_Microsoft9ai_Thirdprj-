@@ -199,7 +199,7 @@
     function ruleReply(text){
       var t = (text || "").toLowerCase();
       if (/테마|색|팔레트|분위기|톤|theme|컬러/.test(t) || text === "테마"){ addMsg("테마를 골라보세요.", "bot"); return themeChips(); }
-      if (/밝|어둡|글씨|크게|작게|크기|폰트|zoom/.test(t)){ addMsg("화면 크기를 조절해 드릴게요.", "bot"); return addChips([{label:"글씨 크게",act:"zoom",v:"1.12",say:1},{label:"글씨 작게",act:"zoom",v:"0.92",say:1},{label:"기본 크기",act:"zoom",v:"",say:1}]); }
+      if (/밝|어둡|글씨|크게|작게|크기|폰트|zoom/.test(t)){ addMsg("글씨 크기를 조절해 드릴게요.", "bot"); return addChips([{label:"글씨 크게",act:"zoom",v:"1.12",say:1},{label:"글씨 작게",act:"zoom",v:"0.92",say:1}]); }
       if (/가벼|렉|느려|성능|lite/.test(t)){ return setLite(get(LS_LITE,"0")!=="1"); }
       // 학습 커스텀(방 안에서만): "X를 3번에 연결" 직접 연결, "추천/미배치/커스텀" → 추천 칩
       // 명령형만: "<개념>을/를 N번에 연결[해줘]" — 조사·'번'·끝 앵커 필수(질문/서술문 오매칭 방지)
@@ -229,7 +229,7 @@
       if (/업로드|pdf|학습|자료/.test(t)){ addMsg("학습 PDF는 외부에서 palace.json으로 변환돼요. 올리면 '구성' 화면에서 장소·방을 추천해 드려요.", "bot"); return addChips([{label:"구성 화면으로",act:"go",v:"compose.html",say:1}]); }
       if (/구성|추천|장소|방 골/.test(t)){ addMsg("'구성' 화면에서 챕터마다 어울리는 장소와 방을 고를 수 있어요.", "bot"); return addChips([{label:"구성 화면으로",act:"go",v:"compose.html",say:1}]); }
       if (/입장|시작|걷|walk|방으로/.test(t)){ addMsg("첫 챕터의 방으로 입장할게요.", "bot"); return act({act:"enterFirst"}); }
-      addMsg("이렇게 도와드릴 수 있어요 — 테마 바꾸기, 글씨 크기, 가벼운 모드, 그리고 화면 이동이요.", "bot");
+      addMsg("테마·글씨 크기 변경, 화면 이동을 도와드려요.", "bot");
       themeChips(); navChips();
     }
 
