@@ -637,6 +637,7 @@
     let bounds = new THREE.Box3();
     let anchors = [];           // {pos:Vector3, name, label, entityId?}
     let anchorsPreOrdered = false;  // 사용자 편집본은 저장된 순서 그대로(최근접 재정렬 금지)
+    let overrideActive = false;     // mw_edit 오버라이드(사용자 keep/demote 편집본) 활성 — 미바인딩 kept 자동배치 끔
     let spawnPos = null;
     let route = [];             // 경로 순 핫스팟 [{pos, entity, number, marker, related:[]}]
     let activeIdx = -1;
@@ -846,6 +847,7 @@
           label: String(h.detectedClass || h.object || "object").toLowerCase(), name: h.object || "",
           ko: h.ko || furnKO(h.detectedClass || h.object || ""), entityId: h.entityId || null }));
         anchorsPreOrdered = true;   // 저장된 슬롯 순서 = 사용자가 정한 동선
+        overrideActive = true;      // 이 오버라이드의 entityId 바인딩 = 완전한 '보임(keep)' 셋
         setStatus(`✎ 사용자 편집 핫스팟 ${anchors.length}개 적용 (개념 지도 클릭=편집)`);
         loadPalaceThenBuild();
         return;
@@ -1181,13 +1183,18 @@
       }
       // ③ 남은 엔티티는 rank 순서 = 동선 순서로 배정(걷는 순서가 곧 서사 순서가 되게).
       //    (기존 타입-친화 배정은 순서를 흩뜨려 1번 개념이 9번 지점에 가는 문제 → 폐기)
+      //    단, 사용자 편집본(오버라이드) 활성이면 자동배치하지 않는다 — 저장된 entityId 바인딩이
+      //    곧 완전한 '보임' 셋이라, 미바인딩 kept 를 자유 앵커에 자동배치하면 사용자가 삭제(demote)한
+      //    개념이 되살아난다. 미배치 kept 는 개념 지도 추천에서 다시 ＋연결할 수 있다.
       const freeAnchors = ordered.filter(a => !used.has(a));
-      let fi = 0;
-      for (const ent of entities) {
-        if (boundEnts.has(ent)) continue;
-        const a = freeAnchors[fi++];
-        if (!a) break;
-        used.add(a); entOf.set(a, ent);
+      if (!overrideActive) {
+        let fi = 0;
+        for (const ent of entities) {
+          if (boundEnts.has(ent)) continue;
+          const a = freeAnchors[fi++];
+          if (!a) break;
+          used.add(a); entOf.set(a, ent);
+        }
       }
       // 3) 모든 가구 = 걷는 순서 번호 핫스팟. 일부엔 학습 엔티티가 얹힘.
       //    (기존: 모든 마커를 눈높이 1.2~1.95m로 강제 → 러그·의자·카운터 소품에서 마커가
@@ -1788,37 +1795,53 @@
 
     // ── 내 서재 저장: 현재 세션 스냅샷(궁전 + designs + 의미부여 + 노드편집)을 우리 DB(Cosmos+Blob)에 ──
     function _collectLS(predicate){ const out={}; try { for (let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if (k && predicate(k)){ const v=localStorage.getItem(k); if (v!=null) out[k]=v; } } } catch(_){} return out; }
-    async function saveToLibrary(){
-      if (!MW_CAN_SAVE) { alert("업로드한 학습 자료(PDF)로 만든 궁전만 내 서재에 저장할 수 있어요. (데모·샘플은 저장 대상이 아니에요)"); return; }
+    // opts.silent: 개념 지도 "저장하고 적용"이 부르는 조용한 모드 — 제목 prompt·alert·버튼UI 없이
+    //   기존 제목 유지로 덮어쓰기(없으면 자동 생성). 성공 시 true 반환.
+    async function saveToLibrary(opts){
+      opts = opts || {}; const silent = !!opts.silent;
+      const warn = (m)=>{ if(!silent) alert(m); };
+      if (!MW_CAN_SAVE) { warn("업로드한 학습 자료(PDF)로 만든 궁전만 내 서재에 저장할 수 있어요. (데모·샘플은 저장 대상이 아니에요)"); return false; }
       let palace=null, designs=null;
       // 업로드한 현재 궁전 우선, 없으면 mp_palace localStorage 폴백.
       if (MW_LOADED_PALACE) palace = MW_LOADED_PALACE;
       if (!palace) { try { const sp=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace"); if(sp) palace=JSON.parse(sp); } catch(_){} }
-      if(!palace){ alert("저장할 궁전이 없어요. 궁전(방)에 입장한 뒤 다시 시도해 주세요."); return; }
+      if(!palace){ warn("저장할 궁전이 없어요. 궁전(방)에 입장한 뒤 다시 시도해 주세요."); return false; }
       try { const sd=localStorage.getItem("studio_designs"); if(sd) designs=JSON.parse(sd); } catch(_){}
       // 의미부여는 생성 즉시 /api/mnemonic 으로 저장되므로 이 번들엔 담지 않음.
       const edits=_collectLS(k=>k.indexOf("mw_edit:")===0);
       // 저장 id 연속성: 이 궁전을 전에 저장했으면 그 id로 덮어쓰기(중복 방지)
       let existId=null; try { if(MW_PALACE_ID){ existId=(JSON.parse(localStorage.getItem("mp_lib_items")||"{}"))[MW_PALACE_ID]||null; } } catch(_){}
       const defTitle=(palace.palace&&palace.palace.title)||"내 궁전";
-      const title=(prompt("내 서재에 저장할 제목:", defTitle)||"").trim();
-      if(!title) return;
-      const btn=document.getElementById("saveLibBtn"); const old=btn?btn.textContent:"";
+      let title;
+      if (silent) {
+        // 조용한 저장: 이전에 저장한 제목 유지(없으면 palace 제목) — 사용자가 붙인 제목을 안 덮어씀.
+        let saved=""; try { if(MW_PALACE_ID){ saved=(JSON.parse(localStorage.getItem("mp_lib_titles")||"{}"))[MW_PALACE_ID]||""; } } catch(_){}
+        title=(saved||defTitle||"내 궁전").trim();
+      } else {
+        title=(prompt("내 서재에 저장할 제목:", defTitle)||"").trim();
+        if(!title) return false;
+      }
+      const btn = silent ? null : document.getElementById("saveLibBtn"); const old=btn?btn.textContent:"";
       if(btn){ btn.disabled=true; btn.textContent="저장 중…"; }
+      let ok=false;
       try {
         const r=await fetch("/api/library/save",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({title,palace,designs,edits,id:existId})});
-        if(r.status===401){ alert("로그인이 필요해요. 로그인 후 다시 저장해 주세요."); }
+        if(r.status===401){ warn("로그인이 필요해요. 로그인 후 다시 저장해 주세요."); }
         else if(r.ok){
-          try { const jr=await r.json(); const iid=jr&&jr.item&&jr.item.id; if(iid&&MW_PALACE_ID){ const m=JSON.parse(localStorage.getItem("mp_lib_items")||"{}"); m[MW_PALACE_ID]=iid; localStorage.setItem("mp_lib_items", JSON.stringify(m)); } } catch(_){}
-          MW_SAVED=true;
-          if(btn){ btn.textContent="✓ 저장됨"; setTimeout(()=>{ if(btn){ btn.textContent=old; btn.disabled=false; } },1500); } return;
+          try { const jr=await r.json(); const iid=jr&&jr.item&&jr.item.id; if(iid&&MW_PALACE_ID){
+            const m=JSON.parse(localStorage.getItem("mp_lib_items")||"{}"); m[MW_PALACE_ID]=iid; localStorage.setItem("mp_lib_items", JSON.stringify(m));
+            const tm=JSON.parse(localStorage.getItem("mp_lib_titles")||"{}"); tm[MW_PALACE_ID]=title; localStorage.setItem("mp_lib_titles", JSON.stringify(tm));
+          } } catch(_){}
+          MW_SAVED=true; ok=true;
+          if(btn){ btn.textContent="✓ 저장됨"; setTimeout(()=>{ if(btn){ btn.textContent=old; btn.disabled=false; } },1500); }
         }
-        else { const e=await r.json().catch(()=>({})); alert("저장 실패: "+(e.detail||("오류 "+r.status))); }
-      } catch(_){ alert("저장 중 오류가 났어요."); }
-      if(btn){ btn.textContent=old; btn.disabled=false; }
+        else { const e=await r.json().catch(()=>({})); warn("저장 실패: "+(e.detail||("오류 "+r.status))); }
+      } catch(_){ warn("저장 중 오류가 났어요."); }
+      if(btn && !ok){ btn.textContent=old; btn.disabled=false; }
+      return ok;
     }
-    (function(){ const b=document.getElementById("saveLibBtn"); if(b) b.addEventListener("click", saveToLibrary); })();
+    (function(){ const b=document.getElementById("saveLibBtn"); if(b) b.addEventListener("click", ()=>saveToLibrary()); })();
 
     // ── 나가기 저장 안내: 저장 안 한 업로드 궁전에서 돌아가기/지도/처음 버튼 이탈 시 모달(내부 방 이동엔 안 뜸) ──
     function mwIsDirty(){
@@ -2484,8 +2507,12 @@
           ko: h.ko || dispName(h), confidence: 1, markerPosition: [ +h.x.toFixed(3), +h.y.toFixed(3), +h.z.toFixed(3) ],
           posMethod: "manual-edit", entityId: h.entId || null })) };
     }
-    $("editSave").onclick = () => {
+    $("editSave").onclick = async () => {
       try { localStorage.setItem(OVERRIDE_KEY, JSON.stringify(editJSON())); } catch {}
+      // 로컬(localStorage)에 더해 서버(내 서재)에도 영속 — 업로드 궁전이면 조용히 저장(자동 생성/덮어쓰기).
+      //   keep/demote(미배치 개념 연결·삭제)가 계정에 남아 재로그인·다른 기기에서도 유지된다.
+      const sv = $("editSave");
+      if (MW_CAN_SAVE) { if(sv){ sv.disabled=true; sv.textContent="저장 중…"; } try { await saveToLibrary({silent:true}); } catch(_){} }
       location.reload();
     };
     $("editExport").onclick = () => {
