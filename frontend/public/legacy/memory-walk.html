@@ -682,6 +682,7 @@
               shots.push(renderer.domElement.toDataURL("image/jpeg", 0.85));
             });
           } catch (e) { /* 렌더 실패해도 아래에서 가진 만큼(혹은 빈) shots 전송 — 부모 무한 대기 방지 */ }
+          try { window.__mwShots = shots; } catch (_) {}   // 오프라인 사전캡처 회수용(메시지 경쟁 방지)
           try { parent.postMessage({ type: "mw-room-shots", glb: ROOM_GLB, shots: shots }, "*"); } catch (_) {}
           try { setStatus(shots.length ? "미리보기 4컷 캡처 완료" : "미리보기 캡처 실패"); } catch (_) {}
         };
