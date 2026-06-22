@@ -1415,8 +1415,10 @@
       if (h < H * 0.06 && foot > 1.2) return "러그";                          // 아주 납작·넓게 깔림
       if (cy < H * 0.30 && foot > 2.6 && h < H * 0.45) return "침대";          // 바닥 가까이·아주 넓고 낮음
       if (cy < H * 0.33 && foot > 1.6 && h < H * 0.45) return "소파";          // 바닥 가까이·넓고 낮음
-      if (h > H * 0.55 && thin > 0.35 && foot > 0.6) return "수납장";          // 키 크고 '깊이도 있는' 것만 장
-      if (h > H * 0.45 && thin < 0.45) return "스탠드";                        // 키 크고 가늚 → 스탠드/조명대
+      if (h > H * 0.55 && thin > 0.35 && foot > 0.6) return "수납장";          // 키 크고 '깊이도 있는' 것 → 장
+      if (h > H * 0.45 && foot > 0.55 && thin < 0.5) return "책장";            // 키 크고 넓지만 앞뒤 얇음(칸 있는 면) → 책장/선반 (넓은 선반을 '스탠드'로 오분류하던 것 교정)
+      if (h > H * 0.45 && foot < 0.45 && thin < 0.4) return "스탠드";          // 키 크고 양쪽 다 가는 '기둥' 형태만 → 스탠드/조명
+      if (h > H * 0.45) return "수납장";                                       // 그 외 키 큰 덩어리 → 수납장(스탠드 남발 방지)
       if (cy < H * 0.46 && foot > 0.9 && h < H * 0.36) return "테이블";        // 중간높이 평평한 상판
       if (cy < H * 0.46 && foot <= 1.1) return "의자";                         // 앉는 높이의 작은 덩어리
       return "소품";                                                          // 그 외(표면 위 작은 것)
@@ -1519,7 +1521,7 @@
       renderDots(i);
       // 카메라가 사물 정면으로 "걸어가" 바라본다(방 중심 쪽에서). 단, 다른 가구에 가리면 시점을 돌려 뚫린 곳에서.
       const camPos = clearViewPos(h.eye);
-      flyTo(camPos, h.eye.clone(), instant ? 0 : 750);
+      flyTo(camPos, h.eye.clone(), instant ? 0 : 900);   // 900ms easeInOutCubic — 다음 이동을 더 부드럽게
       // 투어 끝(마지막 지점 도달) → 1회 "퀴즈로 복습?" 프롬프트(학습 내용 있을 때만).
       if (!CONTENT_LOCKED && !_quizPrompted && i === route.length - 1 && i > 0 && (window.__mwEntities||[]).length) {
         _quizPrompted = true; setTimeout(showQuizPrompt, 800);
@@ -2792,10 +2794,12 @@
       const dt=Math.min((now-prev)/1000,0.05); prev=now;
       fpsFrames++; fpsAccum+=dt;
       if(fpsAccum>=1){ console.log(`[memory-walk] ${Math.round(fpsFrames/fpsAccum)} fps`); fpsFrames=0; fpsAccum=0; }
-      if(camTween){ const k=Math.min(1,(now-camTween.t0)/(camTween.dur||1)); const e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      if(camTween){ const k=Math.min(1,(now-camTween.t0)/(camTween.dur||1));
+        const e=k<0.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;   // easeInOutCubic — 더 부드러운 가감속(다음 이동이 매끄럽게)
         camera.position.lerpVectors(camTween.fromPos,camTween.toPos,e); controls.target.lerpVectors(camTween.fromTgt,camTween.toTgt,e);
-        if(k>=1){ const d=camTween.onDone; camTween=null; if(d)d(); } }
-      walk(dt); controls.update(); clampInsideRoom();
+        controls.update();   // 트윈 중엔 walk()·clampInsideRoom() 생략 → 카메라를 건드리지 않아 흔들림 없이 매끄럽게 활공
+        if(k>=1){ const d=camTween.onDone; camTween=null; if(d)d(); }
+      } else { walk(dt); controls.update(); clampInsideRoom(); }
       renderer.render(scene,camera); maybeDrawMini(now); requestAnimationFrame(tick);
     }
     if (!DASH) requestAnimationFrame(tick);   // dash(임베드) 모드: 3D 렌더 루프 생략 — 숨긴 씬 대신 2D 대시보드만
