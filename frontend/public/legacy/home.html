@@ -1250,6 +1250,16 @@ body {
   word-break: keep-all;
   margin: 0;
 }
+.problem-source {
+  margin: auto 0 0; /* 카드 하단으로 정렬(카드 높이 달라도 출처 줄 맞춤) */
+  padding-top: 14px;
+  border-top: 1px solid rgba(99, 91, 81, 0.2);
+  font-family: var(--font-accent);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+  color: rgba(245, 240, 232, 0.42);
+  word-break: keep-all;
+}
 .problem-bridge {
   margin-top: clamp(40px, 5vw, 60px);
   text-align: center;
@@ -4760,6 +4770,58 @@ body.perf-lite .memory-projection-beam {
 }
 body.perf-lite .perf-toggle .perf-dot { background: #fca435; }
 
+/* ═══════ 3D 둘러보기 — 하이브리드 영상 영역 ═══════ */
+.palace-video {
+  position: relative;
+  width: 100%;
+  margin-top: 26px;
+  aspect-ratio: 16 / 9;     /* 자리 고정 — 콘텐츠만 교체, 레이아웃 출렁임 방지 */
+  border-radius: 16px;
+  overflow: hidden;
+  background: #2C2E28;       /* 잉크 브라운 (로딩/영상 준비 전 폴백) */
+  border: 1px solid rgba(252, 164, 53, 0.22);
+}
+.palace-video__loop,
+.palace-video__full {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.palace-video__cta {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: #FCA435;       /* 앰버 */
+  color: #2C2E28;
+  font-family: var(--font-title);
+  font-weight: 700;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 100px;
+  cursor: pointer;
+  font-size: 15px;
+  box-shadow: 0 10px 26px rgba(40, 28, 6, 0.4);
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.palace-video__cta:hover { filter: brightness(1.06); transform: translateX(-50%) translateY(-1px); }
+.palace-video__badge {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  color: #F7F3EC;
+  font-family: var(--font-accent);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+.palace-video [hidden] { display: none !important; } /* 상태 전환 시 확실히 숨김 */
+
 /* ═══════ 3D 둘러보기 (#explore) ═══════ */
 .explore-stage {
   position: relative;
@@ -5032,33 +5094,36 @@ end of keeper CSS */
 <section class="section section-wide" id="problem">
   <div class="panel reveal">
     <div class="sec-eyebrow">왜 외워지지 않을까</div>
-    <h2 class="sec-title">읽기만 한 기억은 금방 잊혀집니다</h2>
+    <h2 class="sec-title">읽기만 한 기억은 오래 머물지 않습니다</h2>
     <p class="sec-body">
-      열심히 봤는데도 기억이 흐려지는 건 의지가 약해서가 아닙니다.<br>
-      <span class="em-line">우리 뇌의 작동 방식</span>과 어긋난 학습 도구를 쓰고 있기 때문입니다.
+      열심히 봤는데도 잘 잊는 건 의지의 문제가 아닙니다.<br>
+      기억이 쌓이는 방식과 다르게 공부하고 있을 뿐입니다.
     </p>
 
     <div class="problem-grid" role="list" aria-label="학습 중 흔히 마주치는 세 가지 문제">
       <article class="problem-card" role="listitem">
         <div class="problem-icon" aria-hidden="true">🌫</div>
-        <h3 class="problem-title">하루면 절반이 사라집니다</h3>
+        <h3 class="problem-title">하루가 지나면 대부분 흐려집니다</h3>
         <p class="problem-desc">
-          처음 본 정보는 24시간 안에 절반 이상이 흐려집니다. 복습 시점을 놓치면 사흘 뒤엔 거의 남지 않습니다.
+          하루만 지나도 3분의 2가 흐려지고, 일주일 뒤엔 거의 남지 않습니다.
         </p>
+        <p class="problem-source">에빙하우스 망각곡선 · 2015년 재검증</p>
       </article>
       <article class="problem-card" role="listitem">
         <div class="problem-icon" aria-hidden="true">✏️</div>
-        <h3 class="problem-title">밑줄은 외운 듯한 착각만 줍니다</h3>
+        <h3 class="problem-title">눈에 익은 것과 외운 것은 다릅니다</h3>
         <p class="problem-desc">
-          형광펜으로 줄을 그을수록 "다 안다"는 친숙감만 쌓입니다. 정작 떠올려야 할 때 그 문장은 통째로 사라져 있습니다.
+          익숙함은 기억이 아닙니다. 기억의 궁전은 직접 떠올리는 인출을 돕습니다.
         </p>
+        <p class="problem-source">인출 연습 효과 · Karpicke &amp; Roediger 2008</p>
       </article>
       <article class="problem-card" role="listitem">
-        <div class="problem-icon" aria-hidden="true">⚡</div>
-        <h3 class="problem-title">벼락치기는 시험 뒤를 책임지지 않습니다</h3>
+        <div class="problem-icon" aria-hidden="true">🔁</div>
+        <h3 class="problem-title">한 번에 외운 기억은 오래가지 않습니다</h3>
         <p class="problem-desc">
-          전날 밤 외운 내용은 시험이 끝나면 함께 끝납니다. 단기 기억의 다리는 시험장 너머로 이어지지 않습니다.
+          몰아서 외운 기억은 금세 옅어집니다. 다시 볼 시점은 기억의 궁전이 챙깁니다.
         </p>
+        <p class="problem-source">간격 복습 효과 · Cepeda et al. 2006</p>
       </article>
     </div>
 
@@ -5620,16 +5685,28 @@ end of keeper CSS */
       업로드한 자료가 어떤 좌표에 놓이는지 미리 살펴볼 수 있습니다.
     </p>
 
-    <div class="explore-stage" id="exploreStage">
-      <div class="explore-placeholder" id="explorePlaceholder">
-        <p>3D 공간은 그래픽 자원을 많이 사용하므로, 준비가 되면 아래 버튼으로 불러오세요.</p>
-        <button type="button" class="explore-load-btn" id="exploreLoadBtn">3D 공간 불러오기</button>
-      </div>
+    <!-- 하이브리드 영상 영역: 상태1 루프(자동) ↔ 상태2 전체 시연(클릭) -->
+    <div class="palace-video" id="palaceVideo">
+      <!-- 상태 1: 6~8초 무음 루프 (자동 무한재생) -->
+      <video id="loopVideo" class="palace-video__loop"
+             autoplay muted loop playsinline webkit-playsinline preload="auto">
+        <source src="public/assets/explore-loop.mp4" type="video/mp4">
+      </video>
+
+      <!-- 상태 1 오버레이: 전체 시연 재생 버튼 -->
+      <button class="palace-video__cta" id="playFull" type="button">▶ 전체 시연 보기 (15초)</button>
+
+      <!-- LOOP 배지 -->
+      <span class="palace-video__badge">LOOP</span>
+
+      <!-- 상태 2: 15초 전체 시연 (소리+자막+컨트롤, 처음엔 숨김) -->
+      <video id="fullVideo" class="palace-video__full" controls playsinline preload="none" hidden>
+        <source src="public/assets/explore-3d.mp4" type="video/mp4">
+      </video>
     </div>
 
     <div class="explore-actions">
-      <button type="button" id="exploreFullscreenBtn" hidden>전체 화면으로 보기</button>
-      <a href="region-select.html" target="_blank" rel="noopener">새 탭에서 열기 ↗</a>
+      <a href="region-select.html" target="_blank" rel="noopener">직접 걸어보기 · 새 탭에서 인터랙티브로 열기 ↗</a>
     </div>
   </div>
 </section>
@@ -5727,8 +5804,8 @@ end of keeper CSS */
   </div>
 
   <div class="gate-wrap">
-    <p class="gate-reassure">PDF 1장이면 충분 · 회원가입 없이 1분 · 분석에만 사용</p>
-    <p class="footer-note">記憶宮殿 · Memory Palace, Seoul</p>
+    <p class="gate-reassure">PDF 한 개로 충분 · 분석에만 사용</p>
+    <p class="footer-note">Memory Palace, Seoul</p>
   </div>
 </section>
 
@@ -7308,6 +7385,75 @@ end of keeper CSS */
     tryPlay();
   }
   tryPlay();
+})();
+</script>
+
+<script>
+/* ═══════ 3D 둘러보기 하이브리드 영상 (#explore) ═══════
+   상태1: 무음 루프 자동재생 + '전체 시연' 버튼 / 상태2: 클릭 시 15초 풀시연(소리+자막)
+   풀시연 ended → 자동으로 루프 복귀. 모바일·자동재생 차단 시 poster + 버튼 fallback */
+(function () {
+  var box = document.getElementById('palaceVideo');
+  if (!box) return;
+  var loop  = document.getElementById('loopVideo');
+  var full  = document.getElementById('fullVideo');
+  var btn   = document.getElementById('playFull');
+  var badge = box.querySelector('.palace-video__badge');
+  var inView = false;
+
+  var LOOP_RATE = 0.9; // 상태1 루프 재생속도 (이 값만 바꾸면 조절)
+  var FULL_RATE = 0.7; // 상태2 전체 시연 재생속도
+  if (loop) {
+    loop.muted = true; loop.loop = true; loop.playsInline = true;
+    loop.playbackRate = LOOP_RATE;
+    loop.addEventListener('loadedmetadata', function () { loop.playbackRate = LOOP_RATE; });
+  }
+  if (full) {
+    full.preservesPitch = true; // 느리게 재생해도 오디오 음정 유지
+    full.addEventListener('loadedmetadata', function () { full.playbackRate = FULL_RATE; });
+  }
+
+  function loopActive() { return loop && !loop.hidden; }
+  function playLoop() { if (loopActive() && inView) { loop.playbackRate = LOOP_RATE; var p = loop.play(); if (p && p.catch) p.catch(function () {}); } }
+
+  // 상태1 → 상태2 (전체 시연)
+  if (btn) btn.addEventListener('click', function () {
+    if (loop) { loop.pause(); loop.hidden = true; }
+    btn.hidden = true;
+    if (badge) badge.hidden = true;
+    if (full) { full.hidden = false; try { full.currentTime = 0; } catch (e) {} full.playbackRate = FULL_RATE; var p = full.play(); if (p && p.catch) p.catch(function () {}); }
+  });
+
+  // 상태2 종료(또는 ESC) → 상태1 복귀
+  function resetToLoop() {
+    if (full) { full.pause(); full.hidden = true; }
+    if (loop) loop.hidden = false;
+    if (btn) btn.hidden = false;
+    if (badge) badge.hidden = false;
+    playLoop();
+  }
+  if (full) full.addEventListener('ended', resetToLoop);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && full && !full.hidden) resetToLoop(); });
+
+  // 루프 자동재생 견고화 (기기별 차이 대비 — 엔딩 영상과 동일 전략)
+  if (loop) {
+    loop.addEventListener('pause', function () { if (loopActive() && inView && !loop.ended) setTimeout(playLoop, 0); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) playLoop(); });
+  }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        inView = e.isIntersecting;
+        if (inView) playLoop();
+        else if (loop && !loop.paused && loopActive()) loop.pause(); // 화면 밖이면 정지(자원 절약)
+      });
+    }, { threshold: 0.25 });
+    io.observe(box);
+  } else { inView = true; playLoop(); }
+  // 자동재생 차단 기기: 첫 사용자 동작에서 루프 시작
+  ['pointerdown', 'touchstart', 'keydown', 'scroll'].forEach(function (ev) {
+    window.addEventListener(ev, function () { inView = true; playLoop(); }, { once: true, passive: true });
+  });
 })();
 </script>
 
