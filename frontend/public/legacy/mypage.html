@@ -125,9 +125,9 @@
         </div>
         <div class="tok-split">
           <div class="stat"><div class="num" id="tokAnalysis">0</div><div class="lbl">분석</div></div>
-          <div class="stat"><div class="num" id="tokChat">0</div><div class="lbl">대화</div></div>
+          <div class="stat"><div class="num" id="tokActivity">0</div><div class="lbl">활동</div></div>
         </div>
-        <div class="tok-note">자료를 분석하고 답변할 때 사용한 AI 토큰이에요. 더 큰 자료를 올리거나 질문을 많이 할수록 늘어나요.</div>
+        <div class="tok-note">자료를 분석하고, 질문·퀴즈·의미부여로 학습할 때 사용한 AI 토큰이에요. 더 많이 학습할수록 늘어나요.</div>
       </div>
 
       <div class="card">
@@ -180,8 +180,11 @@
     loadUsage();
   }
 
-  function fmtNum(n) {
-    try { return Number(n || 0).toLocaleString('ko-KR'); } catch (_) { return String(n || 0); }
+  // 큰 토큰 수를 한국어 단위(만/억)로 짧게 — 285,335 → "28.5만". 미지원 브라우저는 천단위 콤마.
+  function fmtTok(n) {
+    const v = Number(n || 0);
+    try { return new Intl.NumberFormat('ko-KR', { notation: 'compact', maximumFractionDigits: 1 }).format(v); }
+    catch (_) { return v.toLocaleString('ko-KR'); }
   }
 
   function loadUsage() {
@@ -189,9 +192,9 @@
       .then((r) => r.ok ? r.json() : null)
       .then((u) => {
         if (!u) return;
-        $('tokTotal').textContent = fmtNum(u.totalTokens);
-        $('tokAnalysis').textContent = fmtNum(u.analysisTokens);
-        $('tokChat').textContent = fmtNum(u.chatTokens);
+        $('tokTotal').textContent = fmtTok(u.totalTokens);
+        $('tokAnalysis').textContent = fmtTok(u.analysisTokens);
+        $('tokActivity').textContent = fmtTok(u.activityTokens);
         $('usageCard').hidden = false;   // 값이 준비된 뒤 노출(0 깜빡임 방지)
       })
       .catch(() => {});
