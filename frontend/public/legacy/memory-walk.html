@@ -1307,12 +1307,22 @@
         const half = Math.round(Math.min(W, H) * 0.36), cw = Math.min(2 * half, W), ch = Math.min(2 * half, H);
         const x0 = Math.max(0, Math.min(W - cw, Math.round(sx * W - half))), y0 = Math.max(0, Math.min(H - ch, Math.round(sy * H - half)));
         const crop = document.createElement("canvas"); crop.width = cw; crop.height = ch;
-        crop.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);
+        const cg = crop.getContext("2d");
+        cg.drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);
+        // 중앙 조준 십자선 — GPT가 '바로 이 지점'의 사물만 명명하도록(옆의 더 큰 가구 오인 방지). 마커의 크롭 내 좌표.
+        const ccx = sx * W - x0, ccy = sy * H - y0;
+        cg.strokeStyle = "rgba(255,36,36,0.95)"; cg.lineWidth = Math.max(2, cw * 0.006);
+        cg.beginPath(); cg.moveTo(ccx - cw * 0.07, ccy); cg.lineTo(ccx + cw * 0.07, ccy);
+        cg.moveTo(ccx, ccy - ch * 0.07); cg.lineTo(ccx, ccy + ch * 0.07); cg.stroke();
+        cg.beginPath(); cg.arc(ccx, ccy, cw * 0.035, 0, Math.PI * 2); cg.stroke();
         const r = await fetch("/api/vision-label", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageBase64: crop.toDataURL("image/jpeg", 0.85) }) });
-        if (!r.ok) return null;
+        if (!r.ok) return "";                                  // "" = 무응답/에러(이번 로드 건너뜀, 다음 방문 재시도)
         const j = await r.json();
-        return (j.configured && j.label) ? String(j.label).slice(0, 24) : null;
-      } catch (_) { return null; }
+        const lab = (j.configured && j.label) ? String(j.label).trim() : "";
+        if (!lab) return "";
+        if (/없음|모름|불명|바닥|벽\b|천장|빈\s*공간/.test(lab)) return "없음";   // 중앙이 빈 곳 → 옆 가구로 오인 금지
+        return lab.slice(0, 24);
+      } catch (_) { return ""; }
     }
     async function autoPrecision() {
       if (CONTENT_LOCKED || !route || !route.length || !window.__mwVisionOK) return;
@@ -1328,14 +1338,14 @@
       let done = 0;
       for (const h of todo) {
         if (_autoStop) break;
-        const label = await precisePointOffscreen(h);
-        if (label) {
-          h.ko = label; h.disp = null; h.visionLabeled = true; h.precise = true;
-          labels[String(h.number)] = label; pset.add(String(h.number)); done++;
-          try { buildObjectList(); } catch (_) {} try { updateRoomState(); } catch (_) {}
-          try { if (activeIdx >= 0 && route[activeIdx]) showCard(route[activeIdx]); } catch (_) {}
-          try { localStorage.setItem(lk, JSON.stringify(labels)); localStorage.setItem(pk, JSON.stringify([...pset])); } catch (_) {}
-        }
+        const res = await precisePointOffscreen(h);
+        if (res === "") { await new Promise(r => setTimeout(r, 300)); continue; }   // 무응답/에러 → precise 표시 안 함(다음 방문 재시도)
+        const empty = (res === "없음");
+        h.ko = empty ? "빈 자리" : res; h.disp = null; h.visionLabeled = !empty; h.emptySpot = empty; h.precise = true;
+        labels[String(h.number)] = h.ko; pset.add(String(h.number)); done++;
+        try { buildObjectList(); } catch (_) {} try { updateRoomState(); } catch (_) {}
+        try { if (activeIdx >= 0 && route[activeIdx]) showCard(route[activeIdx]); } catch (_) {}
+        try { localStorage.setItem(lk, JSON.stringify(labels)); localStorage.setItem(pk, JSON.stringify([...pset])); } catch (_) {}
         await new Promise(r => setTimeout(r, 300));   // 레이트리밋 여유
       }
       if (done) { try { setStatus(`🔬 사물별 정밀 인식 ${done}개 보강 완료`); } catch (_) {} }
