@@ -219,9 +219,8 @@
           var sp = d.querySelector(".di"); d.style.pointerEvents = "none"; if (sp) sp.textContent = "⏳";
           fetch("public/data/korean_history.palace.json").then(function (r) { return r.json(); }).then(function (pal) {
             try { var s = JSON.stringify(pal); sessionStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace_demo", "1"); } catch (_) {}
-            var rid = (pal.rooms && pal.rooms[0] && pal.rooms[0].id) || "";
-            location.href = "memory-walk.html?glb=" + encodeURIComponent("https://9aiteam1.blob.core.windows.net/models/living_room.glb")
-              + "&city=jongno&lmName=" + encodeURIComponent("종로구") + (rid ? ("&room=" + encodeURIComponent(rid)) : "");
+            // 데모: 바로 방으로 가지 않고 '구성(종로구)' 페이지로 — 방을 커스텀하고 튜토리얼(둥실·반짝)로 다음 행동 안내.
+            location.href = "compose.html?city=jongno&demo=1";
           }).catch(function () { d.style.pointerEvents = ""; if (sp) sp.textContent = "🎬"; alert("데모를 불러오지 못했어요. 잠시 후 다시 시도하세요."); });
         });
       })();

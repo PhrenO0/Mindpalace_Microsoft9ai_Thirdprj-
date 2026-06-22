@@ -401,16 +401,12 @@
             "<span style=\"font-size:11.5px;color:var(--muted)\">PDF 없이 샘플(한국사)로 전체 흐름을 둘러봅니다.</span></div>";
           var db = document.getElementById("demoTryBtn");
           if (db) db.onclick = function () {
-            db.disabled = true; db.textContent = "데모 방으로 입장 중…";
+            db.disabled = true; db.textContent = "데모 불러오는 중…";
             fetch("public/data/korean_history.palace.json").then(function (r) { return r.json(); }).then(function (pal) {
               try { var s = JSON.stringify(pal); sessionStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace", s); } catch (_) {}
-              try { localStorage.setItem("mp_palace_demo", "1"); } catch (_) {}   // 데모 표식(나중에 실제 업로드와 구분/초기화용)
-              // 프리셋: 한국사 + 종로구 + 예쁘고 사물 인식이 정확한 'living' 방으로 바로 입장(쇼케이스).
-              var rid = (pal.rooms && pal.rooms[0] && pal.rooms[0].id) || "";
-              var u = "memory-walk.html?glb=" + encodeURIComponent("https://9aiteam1.blob.core.windows.net/models/living_room.glb")
-                    + "&city=jongno&lmName=" + encodeURIComponent("종로구")
-                    + (rid ? ("&room=" + encodeURIComponent(rid)) : "");
-              location.href = u;
+              try { localStorage.setItem("mp_palace_demo", "1"); } catch (_) {}   // 데모 표식
+              // 데모: 바로 방으로 가지 않고 '구성(종로구)' 페이지로 — 방을 커스텀하고 튜토리얼(둥실·반짝)로 다음 행동 안내.
+              location.href = "compose.html?city=jongno&demo=1";
             }).catch(function () { db.disabled = false; db.textContent = "🎬 데모 데이터로 체험하기"; if (msg) msg.textContent = "샘플을 불러오지 못했어요. 잠시 후 다시 시도하세요."; });
           };
         }
@@ -426,6 +422,56 @@
     if (lock && !lock.hidden && ragPending()) {
       var _pw = setInterval(function () { if (hasPalace()) { clearInterval(_pw); location.reload(); } }, 1500);
     }
+  })();
+</script>
+<script>
+  /* 데모 튜토리얼 — ?demo=1 진입 시, 다음 행동을 '둥실(float)·반짝(glow)' 코치마크로 안내.
+     대상 요소에 반짝 테두리 + 둥실거리는 말풍선. 단계: 방 디자인 고르기 → 스튜디오에서 다듬기 → 입장. 건너뛰기 가능. */
+  (function () {
+    try { if (new URLSearchParams(location.search).get("demo") !== "1") return; } catch (_) { return; }
+    var css =
+      "@keyframes mpTutGlow{0%,100%{box-shadow:0 0 0 0 rgba(181,85,47,0);}50%{box-shadow:0 0 0 4px rgba(181,85,47,.38),0 0 22px rgba(181,85,47,.55);}}" +
+      "@keyframes mpTutFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}" +
+      ".mp-tut-glow{animation:mpTutGlow 1.5s ease-in-out infinite;border-radius:12px;position:relative;z-index:9000;outline:2px solid rgba(181,85,47,.85);outline-offset:2px;}" +
+      ".mp-tut-bubble{position:fixed;z-index:10000;background:#2a241d;color:#fff;padding:13px 15px;border-radius:14px;" +
+      "font-family:'Pretendard','Malgun Gothic',sans-serif;box-shadow:0 14px 36px rgba(0,0,0,.4);animation:mpTutFloat 1.9s ease-in-out infinite;}" +
+      ".mp-tut-bubble .tt{font-weight:900;font-size:14.5px;margin-bottom:4px;}" +
+      ".mp-tut-bubble .bd{font-weight:600;font-size:13px;line-height:1.55;opacity:.92;}" +
+      ".mp-tut-bubble .rw{margin-top:11px;display:flex;gap:8px;justify-content:flex-end;align-items:center;}" +
+      ".mp-tut-bubble .st{font-size:11.5px;color:rgba(255,255,255,.5);margin-right:auto;}" +
+      ".mp-tut-bubble button{border:0;border-radius:9px;padding:7px 13px;font:inherit;font-weight:800;font-size:12.5px;cursor:pointer;}" +
+      ".mp-tut-bubble .nx{background:var(--accent,#b5552f);color:#fff;}.mp-tut-bubble .sk{background:transparent;color:rgba(255,255,255,.55);}";
+    var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+    var steps = [
+      { sel: "[data-dsel]", tt: "🎨 방을 골라 꾸며보세요", bd: "챕터마다 '방 디자인'을 바꿔 나만의 공간을 만들 수 있어요." },
+      { sel: "#studioLink", tt: "✨ 더 다듬기(선택)", bd: "방 디자인 스튜디오에서 사물 마커·배치를 세밀하게 손볼 수 있어요." },
+      { sel: "#startBtn", tt: "🚀 3D로 입장!", bd: "준비됐으면 여기서 3D 지도에 입장해 방을 걸어보세요." }
+    ];
+    var idx = 0, curEl = null, bubble = null;
+    function clear() { if (curEl) { curEl.classList.remove("mp-tut-glow"); curEl = null; } if (bubble) { bubble.remove(); bubble = null; } }
+    function show() {
+      clear(); if (idx >= steps.length) return;
+      var s = steps[idx], el = document.querySelector(s.sel);
+      if (!el) { idx++; return show(); }
+      try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
+      curEl = el; el.classList.add("mp-tut-glow");
+      var r = el.getBoundingClientRect();
+      bubble = document.createElement("div"); bubble.className = "mp-tut-bubble";
+      bubble.innerHTML = '<div class="tt">' + s.tt + '</div><div class="bd">' + s.bd + '</div>' +
+        '<div class="rw"><span class="st">' + (idx + 1) + ' / ' + steps.length + '</span>' +
+        '<button class="sk">건너뛰기</button><button class="nx">' + (idx < steps.length - 1 ? "다음 →" : "시작하기") + '</button></div>';
+      document.body.appendChild(bubble);
+      var bw = Math.min(280, window.innerWidth - 24); bubble.style.maxWidth = bw + "px";
+      var bh = bubble.offsetHeight;
+      var top = r.bottom + 12; if (top + bh > window.innerHeight - 12) top = Math.max(12, r.top - bh - 12);
+      var left = Math.min(Math.max(12, r.left), window.innerWidth - bw - 12);
+      bubble.style.left = left + "px"; bubble.style.top = top + "px";
+      bubble.querySelector(".nx").onclick = function () { idx++; show(); };
+      bubble.querySelector(".sk").onclick = function () { idx = steps.length; clear(); };
+    }
+    function start() { if (document.querySelector("[data-dsel]") || document.querySelector(".card")) setTimeout(show, 400); else setTimeout(start, 500); }
+    setTimeout(start, 1000);
+    window.addEventListener("resize", function () { if (curEl && bubble) { var r = curEl.getBoundingClientRect(), bw = Math.min(280, window.innerWidth - 24), bh = bubble.offsetHeight; var top = r.bottom + 12; if (top + bh > window.innerHeight - 12) top = Math.max(12, r.top - bh - 12); bubble.style.left = Math.min(Math.max(12, r.left), window.innerWidth - bw - 12) + "px"; bubble.style.top = top + "px"; } });
   })();
 </script>
 </body>
