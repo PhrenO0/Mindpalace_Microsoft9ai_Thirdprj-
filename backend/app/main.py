@@ -672,7 +672,7 @@ def me(request: Request, user_id: str = Depends(require_login)) -> dict:
 
 
 class UsageTrackRequest(BaseModel):
-    kind: str = Field(max_length=16)  # "analysis" | "chat"
+    kind: str = Field(max_length=16)  # "analysis" | "chat" | "quiz" | "mnemonic"
     jobId: str | None = Field(default=None, max_length=128)
     tokens: int | None = Field(default=None, ge=0, le=100_000_000)
     cost: float | None = Field(default=None, ge=0)
@@ -682,7 +682,7 @@ class UsageTrackRequest(BaseModel):
 def usage_me(user_id: str = Depends(require_login)) -> dict:
     """이 사용자가 쓴 AI 토큰 누적(분석 + 대화). 책임있는 AI 투명성 표시 — $ 없이 토큰만."""
     if not cosmos.configured():
-        return {"analysisTokens": 0, "chatTokens": 0, "totalTokens": 0, "chatCount": 0}
+        return {"analysisTokens": 0, "activityTokens": 0, "totalTokens": 0}
     return cosmos.get_user_usage(user_id)
 
 
@@ -692,14 +692,14 @@ def usage_track(payload: UsageTrackRequest, user_id: str = Depends(require_login
     - analysis: 잡 완료 시 jobId 로 graphrag usage 를 읽어 1회 집계(멱등 — 중복 안 더함).
     - chat: /query 응답 토큰을 누적."""
     if not cosmos.configured():
-        return {"ok": False, "analysisTokens": 0, "chatTokens": 0, "totalTokens": 0, "chatCount": 0}
+        return {"ok": False, "analysisTokens": 0, "activityTokens": 0, "totalTokens": 0}
     kind = (payload.kind or "").lower()
     if kind == "analysis":
         if not payload.jobId:
             raise HTTPException(status_code=400, detail="jobId가 필요합니다.")
         cosmos.track_analysis(user_id, payload.jobId)
-    elif kind == "chat":
-        cosmos.track_chat(user_id, payload.tokens or 0, payload.cost or 0.0)
+    elif kind in ("chat", "quiz", "mnemonic"):
+        cosmos.track_event(user_id, kind, payload.tokens or 0, payload.cost or 0.0)
     else:
         raise HTTPException(status_code=400, detail="알 수 없는 사용량 종류입니다.")
     return {"ok": True, **cosmos.get_user_usage(user_id)}

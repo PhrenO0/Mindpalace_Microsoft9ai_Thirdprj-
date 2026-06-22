@@ -1899,6 +1899,7 @@
         clearTimeout(to);
         if(!r.ok){ $("mnemoBody").innerHTML=`<div style="color:#b03636">생성 실패(${r.status}) — 백엔드 LLM 설정/네트워크를 확인하세요.</div>`; return; }
         const j = await r.json(); const md = j.markdown||"(빈 응답)";
+        trackUsage("mnemonic", j.usage);   // 의미부여 생성에 쓴 토큰 누적
         try { localStorage.setItem(key, md); } catch(_){}        // 저장(계정+기기) — 다시 눌러도 표시
         try { fetch("/api/mnemonic",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({palaceId:MW_PALACE_ID,spot:dispName(h),entity:(node.title||node.id||""),markdown:md})}).catch(()=>{}); } catch(_){}  // 생성 즉시 서버 저장(mnemonics 컨테이너) — 죽은 /api/mnemo-save 대체
         renderMnemo(md, key);
@@ -1940,6 +1941,7 @@
           body: JSON.stringify({ topic: quizTopic(), count: 6, snapshot }) });
         if (!r.ok){ $("quizBody").innerHTML = `<div style="color:#b06a3a">퀴즈 기능이 아직 백엔드에 연결되지 않았어요 (${r.status}). graphrag에 /quiz/json 추가 후 작동합니다.</div>`; return; }
         const j = await r.json(); quizData = j;
+        trackUsage("quiz", j.usage);   // 퀴즈 생성에 쓴 토큰 누적
         if (!j.questions || !j.questions.length){ $("quizBody").innerHTML = `<div style="color:#b06a3a">이 방에서 만들 퀴즈가 없어요.</div>`; return; }
         renderQuizQuestions(j.questions);
       } catch(_){ $("quizBody").innerHTML = `<div style="color:#b03636">퀴즈 생성 실패 — 잠시 후 다시 시도하세요.</div>`; }
@@ -2796,23 +2798,15 @@
     };
     // 관련 개념 칩 → 그 학습 마커로 이동(도우미 답변의 '관련 방' 칩이 호출).
     window.mpGoToHotspot = (i) => { try { goTo(+i); } catch(_){} };
-    // 실시간 토큰 배지 — 채팅 답변마다 누적 토큰을 잠깐 띄운다(ChatGPT 토큰 카운터처럼). 자동 페이드.
-    function showTokenBadge(total, delta) {
+    // 사용량(토큰)을 Mindpalace 백엔드에 누적 — 마이페이지 표시용. 비로그인/실패는 조용히 무시.
+    //   kind: "chat" | "quiz" | "mnemonic". usage 는 graphrag 응답의 {total_tokens, total_cost_usd}.
+    function trackUsage(kind, usage) {
       try {
-        let el = document.getElementById("mpTokBadge");
-        if (!el) {
-          el = document.createElement("div");
-          el.id = "mpTokBadge";
-          el.style.cssText = "position:fixed;left:14px;bottom:14px;z-index:60;padding:7px 12px;border-radius:18px;" +
-            "background:rgba(23,17,13,.86);backdrop-filter:blur(8px);border:1px solid rgba(252,164,53,.32);" +
-            "color:#f5f0e8;font:600 12.5px/1 'Pretendard',system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.3);" +
-            "opacity:0;transition:opacity .3s;pointer-events:none";
-          document.body.appendChild(el);
-        }
-        const d = delta ? '<span style="color:#fca435">+' + Number(delta).toLocaleString("ko-KR") + '</span> ' : "";
-        el.innerHTML = '🪙 ' + d + '<span style="color:rgba(245,240,232,.7)">누적 ' + Number(total || 0).toLocaleString("ko-KR") + ' 토큰</span>';
-        el.style.opacity = "1";
-        clearTimeout(el._t); el._t = setTimeout(() => { el.style.opacity = "0"; }, 4200);
+        const t = usage && usage.total_tokens, c = usage && usage.total_cost_usd;
+        if (!t && !c) return;
+        fetch("/api/usage/track", { method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind: kind, tokens: t || 0, cost: c || 0 }) }).catch(() => {});
       } catch(_) {}
     }
 
@@ -2830,18 +2824,7 @@
         clearTimeout(to);
         if (!r.ok) return { text: "학습 답변을 가져오지 못했어요 (" + r.status + "). 분석이 끝났는지 확인해 주세요." };
         const j = await r.json();
-        // 이 질의가 쓴 토큰을 사용자 계정에 누적(실시간) — Mindpalace 백엔드로. 갱신된 총량을 배지에 반영.
-        try {
-          const u = j.usage;
-          if (u && (u.total_tokens || u.total_cost_usd)) {
-            fetch("/api/usage/track", { method: "POST", credentials: "include",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ kind: "chat", tokens: u.total_tokens || 0, cost: u.total_cost_usd || 0 }) })
-              .then(rr => rr.ok ? rr.json() : null)
-              .then(tot => { if (tot) showTokenBadge(tot.totalTokens, u.total_tokens || 0); })
-              .catch(() => {});
-          }
-        } catch(_) {}
+        trackUsage("chat", j.usage);   // 이 질의가 쓴 토큰을 사용자 계정에 누적(마이페이지 표시용)
         const ans = (j.answer || "").replace(/\s*\[Data:[^\]]*\]/g, "").trim();   // GraphRAG 인용 토큰 정리
         const chips = []; const seen = new Set();
         for (const e of ((j.sources && j.sources.entities) || [])) {

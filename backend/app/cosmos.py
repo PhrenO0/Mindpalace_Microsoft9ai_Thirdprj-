@@ -350,10 +350,16 @@ def _init_user_usage(user_id: str) -> dict:
         "userId": user_id,
         "analysisTokens": 0,
         "chatTokens": 0,
+        "quizTokens": 0,
+        "mnemonicTokens": 0,
         "analysisCostUsd": 0.0,  # 내부용($). 유저 표시는 토큰만.
         "chatCostUsd": 0.0,
+        "quizCostUsd": 0.0,
+        "mnemonicCostUsd": 0.0,
         "countedJobs": [],  # 분석 중복 집계 방지(멱등).
         "chatCount": 0,
+        "quizCount": 0,
+        "mnemonicCount": 0,
         "createdAt": now,
         "updatedAt": now,
     }
@@ -370,15 +376,21 @@ def _read_user_usage(user_id: str) -> dict | None:
 
 
 def get_user_usage(user_id: str) -> dict:
-    """이 사용자 누적 토큰(표시용 정규화). 문서 없으면 0. $ 는 노출하지 않는다."""
+    """이 사용자 누적 토큰(표시용 정규화). 문서 없으면 0. $ 는 노출하지 않는다.
+    활동(activity) = 대화 + 퀴즈 + 의미부여 — 마이페이지는 분석/활동 2개로 보여준다."""
     doc = _read_user_usage(user_id) or {}
     a = int(doc.get("analysisTokens", 0) or 0)
-    c = int(doc.get("chatTokens", 0) or 0)
+    chat = int(doc.get("chatTokens", 0) or 0)
+    quiz = int(doc.get("quizTokens", 0) or 0)
+    mnem = int(doc.get("mnemonicTokens", 0) or 0)
+    activity = chat + quiz + mnem
     return {
         "analysisTokens": a,
-        "chatTokens": c,
-        "totalTokens": a + c,
-        "chatCount": int(doc.get("chatCount", 0) or 0),
+        "chatTokens": chat,
+        "quizTokens": quiz,
+        "mnemonicTokens": mnem,
+        "activityTokens": activity,
+        "totalTokens": a + activity,
     }
 
 
@@ -410,23 +422,25 @@ def track_analysis(user_id: str, job_id: str) -> dict | None:
         return None
 
 
-def track_chat(user_id: str, tokens: int = 0, cost: float = 0.0) -> dict | None:
-    """대화(질의) 1건의 토큰을 누적. 질의마다 호출(실시간 표시용)."""
-    if not user_id:
+_EVENT_KINDS = ("chat", "quiz", "mnemonic")
+
+
+def track_event(user_id: str, kind: str, tokens: int = 0, cost: float = 0.0) -> dict | None:
+    """대화/퀴즈/의미부여 1건의 토큰을 해당 종류 필드에 누적. 활동마다 호출."""
+    if not user_id or kind not in _EVENT_KINDS:
         return None
     cont = _user_usage()
     if cont is None:
         return None
+    tk, ck, nk = kind + "Tokens", kind + "CostUsd", kind + "Count"
     try:
         doc = _read_user_usage(user_id) or _init_user_usage(user_id)
-        doc["chatTokens"] = int(doc.get("chatTokens", 0) or 0) + max(0, int(tokens or 0))
-        doc["chatCostUsd"] = round(
-            float(doc.get("chatCostUsd", 0.0) or 0.0) + max(0.0, float(cost or 0.0)), 6
-        )
-        doc["chatCount"] = int(doc.get("chatCount", 0) or 0) + 1
+        doc[tk] = int(doc.get(tk, 0) or 0) + max(0, int(tokens or 0))
+        doc[ck] = round(float(doc.get(ck, 0.0) or 0.0) + max(0.0, float(cost or 0.0)), 6)
+        doc[nk] = int(doc.get(nk, 0) or 0) + 1
         doc["updatedAt"] = _now()
         cont.upsert_item(doc)
         return doc
     except Exception:
-        log.warning("대화 토큰 집계 실패: user=%s", user_id, exc_info=True)
+        log.warning("%s 토큰 집계 실패: user=%s", kind, user_id, exc_info=True)
         return None
