@@ -235,9 +235,9 @@
         else addMsg("방 안(memory-walk)에서 이용할 수 있어요.", "bot");
         return;
       }
-      if (c.act === "quiz"){   // 📝 퀴즈 — 이 방 학습내용으로 퀴즈 생성·채점
-        if (typeof window.mpOpenQuiz === "function") { window.mpOpenQuiz(); addMsg("📝 이 방의 학습 내용으로 퀴즈를 내드릴게요. 풀고 '채점하기'를 누르면 오답은 마커로 복습할 수 있어요.", "bot"); }
-        else addMsg("방 안(memory-walk)에서 이용할 수 있어요.", "bot");
+      if (c.act === "quiz"){   // 📝 퀴즈 — 학습내용으로 퀴즈 생성·채점(주제·문제수·유형 선택)
+        if (typeof window.mpOpenQuiz === "function") { window.mpOpenQuiz(); addMsg("📝 학습 내용으로 퀴즈를 만들어 드릴게요. 주제·문제 수·유형을 고르고 '퀴즈 만들기'를 눌러 보세요.", "bot"); }
+        else addMsg("퀴즈를 준비 중이에요. 잠시 후 다시 시도해 주세요.", "bot");
         return;
       }
       if (c.act === "intent") return ruleReply(c.v);
@@ -320,7 +320,8 @@
       region:"도시를 골라 시작하는 화면이에요." }[pg] || "안녕하세요, 기억의 궁전 도우미예요.";
     addMsg(hi + " 무엇을 도와드릴까요?", "bot");
     addMsg("아래 바에서 테마·글씨, 화면 이동, 음성 안내를 바로 쓸 수 있어요.", "bot");
-    if (pg === "walk") addChips([{ label: "✨ 의미 매치", act: "mnemonic", say: 0 }, { label: "📝 퀴즈", act: "quiz", say: 0 }]);   // 의미부여 + 인룸 퀴즈
+    if (pg === "walk") addChips([{ label: "✨ 의미 매치", act: "mnemonic", say: 0 }]);   // 의미부여(인룸 퀴즈는 지도 맵으로 이동)
+    if (pg === "map") addChips([{ label: "📝 퀴즈 만들기", act: "quiz", say: 0 }]);   // 지도: 이 도시 학습내용으로 퀴즈
 
     function toggle(open){ panel.classList.toggle("open", open); set(LS_OPEN, open ? "1" : "0"); if (open){ input.focus(); try { window.mpTTS && window.mpTTS.warmup && window.mpTTS.warmup(); } catch (e) {} } }
     document.getElementById("mpLaunch").onclick = function(){ toggle(!panel.classList.contains("open")); };

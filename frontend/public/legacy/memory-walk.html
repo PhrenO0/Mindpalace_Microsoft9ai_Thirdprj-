@@ -400,7 +400,6 @@
     <button class="btn ghost" id="prevBtn">← 이전</button>
     <div class="dots" id="dots"></div>
     <button class="btn primary" id="nextBtn">다음 →</button>
-    <button class="btn ghost" id="quizBtn" title="이 방 학습 내용으로 퀴즈 풀기" hidden>📝 퀴즈</button>
     <button class="btn ghost mw-edit-only" id="addBtn" title="화면에서 사물을 클릭해 그 자리에 핫스팟 추가">➕ 지점</button>
     <button class="btn ghost mw-edit-only" id="moveBtn" title="선택한 핫스팟을 화면에서 클릭한 자리로 이동">✥ 이동</button>
     <button class="btn ghost mw-edit-only" id="undoBtn" title="마지막 변경(이동·추가·삭제·순서)을 되돌리기">↶</button>
@@ -1018,7 +1017,6 @@
       if (!CONTENT_LOCKED) { try { await visionLabelRoom(); } catch(_) {}   // 입장 전(동기): 방 4각도→GPT-4.1 비전으로 번호별 사물명 1차 교정
         try { autoPrecision(); } catch(_) {} }                              // 입장 후(배경·논블로킹): 사물별 오프스크린 close-up으로 정밀 보강(미정밀분만, 캐시)
       if (CONTENT_LOCKED) lockContentUI();   // 학습 편집·추가 비활성 + "아직 내용 없음" 안내
-      { const qb = $("quizBtn"); if (qb) qb.hidden = CONTENT_LOCKED || !(entities && entities.length); }   // 학습 내용 있을 때만 퀴즈 노출
     }
     // PDF 분석 전: 학습 마커 추가/편집 비활성 + 하단 안내 배너(분석하러 가기).
     function lockContentUI(){
@@ -1746,23 +1744,6 @@
       // 카메라가 사물 정면으로 "걸어가" 바라본다(방 중심 쪽에서). 단, 다른 가구에 가리면 시점을 돌려 뚫린 곳에서.
       const camPos = clearViewPos(h.eye);
       flyTo(camPos, h.eye.clone(), instant ? 0 : 900);   // 900ms easeInOutCubic — 다음 이동을 더 부드럽게
-      // 투어 끝(마지막 지점 도달) → 1회 "퀴즈로 복습?" 프롬프트(학습 내용 있을 때만).
-      if (!CONTENT_LOCKED && !_quizPrompted && i === route.length - 1 && i > 0 && (window.__mwEntities||[]).length) {
-        _quizPrompted = true; setTimeout(showQuizPrompt, 800);
-      }
-    }
-    function showQuizPrompt() {
-      if (document.getElementById("mwQuizPrompt")) return;
-      const b = document.createElement("div"); b.id = "mwQuizPrompt";
-      b.innerHTML = `<span>🎉 모든 지점을 다 봤어요! 외운 내용을 퀴즈로 확인해 볼까요?</span>` +
-                    `<button id="mwQuizGo" style="border:0;border-radius:9px;background:var(--accent,#b5552f);color:#fff;font-weight:800;font-size:13px;padding:8px 15px;cursor:pointer;white-space:nowrap">📝 퀴즈 풀기</button>` +
-                    `<button id="mwQuizX" style="border:0;background:none;color:rgba(245,240,232,.65);font-size:16px;cursor:pointer;padding:0 2px">✕</button>`;
-      b.style.cssText = "position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:8600;display:flex;align-items:center;gap:13px;" +
-        "background:rgba(42,36,29,.94);color:#f5f0e8;padding:12px 16px;border-radius:13px;font-size:13.5px;font-weight:600;" +
-        "box-shadow:0 8px 26px rgba(0,0,0,.32);font-family:'Pretendard','Malgun Gothic',sans-serif;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);";
-      document.body.appendChild(b);
-      document.getElementById("mwQuizGo").onclick = () => { b.remove(); openQuiz(); };
-      document.getElementById("mwQuizX").onclick = () => b.remove();
     }
     // 마커(eye)가 다른 가구·벽에 안 가리는 카메라 위치 — 삼각측량(가시성 샘플링).
     //   눈높이 평면에서 마커를 중심으로 N방향으로 레이를 쏴 "열린 거리"를 잰다(어디가 트였나).
@@ -2062,7 +2043,7 @@
       $("quizBody").innerHTML =
         `<div class="qz-setup">`
         + `<div class="qz-field"><span class="qz-flabel">주제</span>`
-          + `<input id="qzTopic" class="qz-in" placeholder="비우면 이 방 전체" value="${esc2(quizTopic())}" autocomplete="off"></div>`
+          + `<input id="qzTopic" class="qz-in" placeholder="주제 입력 (비우면 전체)" autocomplete="off"></div>`
         + `<div class="qz-field"><span class="qz-flabel">문제 수</span><div class="qz-seg" id="qzCount">`
           + [3,5,8,10].map(n=>`<button type="button" data-count="${n}"${n===5?' class="sel"':''}>${n}</button>`).join("")
           + `</div></div>`
@@ -2210,7 +2191,6 @@
     }
     function findMarkerForText(text){ const t=String(text||""); let best=-1; (route||[]).forEach((h,i)=>{ if(h.entity&&h.entity.title&&t.includes(h.entity.title)) best=i; }); return best; }
     window.mpOpenQuiz = openQuiz;
-    { const qb=$("quizBtn"); if (qb) qb.onclick = openQuiz; }   // 하단 nav '📝 퀴즈' 버튼(인룸 진입점)
     $("quizClose").onclick = ()=>{ $("quizModal").style.display="none"; };
     $("quizModal").addEventListener("click", e=>{ if(e.target===$("quizModal")) $("quizModal").style.display="none"; });
     // ✎ 편집 모드 토글 — 편집 도구(지점·이동·되돌리기·옮기기·삭제)를 필요할 때만 노출(기본은 보기·학습만).
