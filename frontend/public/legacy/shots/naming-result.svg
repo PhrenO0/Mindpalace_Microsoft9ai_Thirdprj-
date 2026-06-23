@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 440" font-family="Pretendard, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif">
+  <defs>
+    <style>
+      .bg{fill:#FFFDF9;}
+      .room{fill:#FBF5EC;stroke:#E7D9C2;stroke-width:2;}
+      .furn{fill:#EAE3D6;stroke:#D6CAB4;stroke-width:1.5;}
+      .pin{fill:#E0730F;}
+      .pinN{fill:#fff;font-weight:800;font-size:13px;text-anchor:middle;}
+      .nm{fill:#3A3128;font-weight:700;font-size:13px;}
+      .ttl{fill:#191F28;font-weight:800;font-size:17px;}
+      .sub{fill:#9A8C78;font-weight:600;font-size:12px;}
+      .cmp{fill:#B25400;font-weight:700;font-size:11px;text-anchor:middle;}
+      .lgt{fill:#5E5346;font-size:12px;}
+      .lgo{fill:#B25400;font-weight:800;}
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="680" height="440" rx="14"/>
+  <text x="26" y="34" class="ttl">자동 명명 결과 <tspan class="sub">— 방 파일 하나로 번호·이름·동선이 자동</tspan></text>
+
+  <!-- room -->
+  <rect class="room" x="30" y="52" width="620" height="300" rx="12"/>
+  <!-- compass(입구=앞) -->
+  <text x="340" y="70" class="cmp">▲ 뒤</text>
+  <text x="340" y="344" class="cmp">앞 (입구) ▼</text>
+
+  <!-- furniture -->
+  <rect class="furn" x="70" y="86" width="170" height="46" rx="6"/>
+  <rect class="furn" x="292" y="168" width="142" height="82" rx="6"/>
+  <rect class="furn" x="300" y="276" width="46" height="46" rx="6"/>
+  <rect class="furn" x="384" y="276" width="46" height="46" rx="6"/>
+  <circle class="furn" cx="578" cy="116" r="27"/>
+  <rect class="furn" x="556" y="196" width="46" height="98" rx="6"/>
+
+  <!-- markers: pin + name -->
+  <!-- 1 소파 -->
+  <circle class="pin" cx="92" cy="109" r="13"/><text class="pinN" x="92" y="113.5">1</text>
+  <text class="nm" x="112" y="114">소파</text>
+  <!-- 2 식탁 -->
+  <circle class="pin" cx="314" cy="209" r="13"/><text class="pinN" x="314" y="213.5">2</text>
+  <text class="nm" x="334" y="214">식탁</text>
+  <!-- 3 뒤 왼쪽 의자 -->
+  <circle class="pin" cx="323" cy="299" r="13"/><text class="pinN" x="323" y="303.5">3</text>
+  <text class="nm" x="270" y="343" text-anchor="middle">뒤 왼쪽 의자</text>
+  <!-- 4 의자2 -->
+  <circle class="pin" cx="407" cy="299" r="13"/><text class="pinN" x="407" y="303.5">4</text>
+  <text class="nm" x="430" y="303">의자2</text>
+  <!-- 5 화분 -->
+  <circle class="pin" cx="578" cy="116" r="13"/><text class="pinN" x="578" y="120.5">5</text>
+  <text class="nm" x="540" y="160" text-anchor="middle">화분</text>
+  <!-- 6 앞 오른쪽 수납장 -->
+  <circle class="pin" cx="579" cy="245" r="13"/><text class="pinN" x="579" y="249.5">6</text>
+  <text class="nm" x="548" y="312" text-anchor="middle">앞 오른쪽 수납장</text>
+
+  <!-- legend -->
+  <g transform="translate(30,378)">
+    <text class="lgt" x="0" y="14"><tspan class="lgo">① 번호</tspan> = 걷는 순서(외우는 순서)   ·   <tspan class="lgo">② '의자 / 의자2'</tspan> = 같은 종류 구분   ·   <tspan class="lgo">③ '뒤 왼쪽 · 앞 오른쪽'</tspan> = 입구에서 본 방향 기준 라벨</text>
+    <text class="lgt" x="0" y="38">헷갈리거나 이름 없는 것만 비전이 다시 봐서 한국어로 — 확실한 가구는 그대로(정확도 보존·비용 절약).</text>
+  </g>
+</svg>
