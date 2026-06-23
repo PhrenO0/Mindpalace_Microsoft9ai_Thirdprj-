@@ -217,7 +217,11 @@
         d.addEventListener("click", function (e) {
           e.preventDefault();
           var sp = d.querySelector(".di"); d.style.pointerEvents = "none"; if (sp) sp.textContent = "⏳";
-          fetch("public/data/korean_history.palace.json").then(function (r) { return r.json(); }).then(function (pal) {
+          var GBASE = (window.GRAPHRAG_BASE || (function(){ try { return localStorage.getItem("mp_graphrag_base"); } catch(_) { return null; } })() || "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net").replace(/\/+$/, "");
+          // 데모도 graphrag deliverables 스냅샷(이미지 포함)에서 가져온다 — 로컬 번들은 graphrag 불가 시 폴백.
+          fetch(GBASE + "/palace/korean_history").then(function (r) { if (!r.ok) throw 0; return r.json(); })
+            .catch(function () { return fetch("public/data/korean_history.palace.json").then(function (r) { return r.json(); }); })
+            .then(function (pal) {
             try { var s = JSON.stringify(pal); sessionStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace_demo", "1"); } catch (_) {}
             // 데모: 바로 방으로 가지 않고 '구성(종로구)' 페이지로 — 방을 커스텀하고 튜토리얼(둥실·반짝)로 다음 행동 안내.
             location.href = "compose.html?city=jongno&demo=1";

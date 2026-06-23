@@ -926,6 +926,15 @@
             "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net";
         }
       }
+      // 쇼케이스 데모(korean_history/statistics 등)는 라이브 잡이 아니라 위 fromUpload 배선이
+      // MW_IMG_BASE 를 비워둔다 → deliverables figure 가 안 뜨고 concept-photos(제목 매칭 위키사진)로
+      // 샌다. 쇼케이스면 graphrag base 를 붙여 _figURL 이 /images/{id}/{fn}(deliverables) 의 진짜
+      // 그림을 띄우게 한다(라이브 잡은 MW_JOB_ID 가 이미 잡혀 있어 여기 안 걸림).
+      if (!MW_IMG_BASE && MW_PALACE_ID && !MW_JOB_ID) {
+        MW_IMG_BASE = window.GRAPHRAG_BASE ||
+          (function(){ try { return localStorage.getItem("mp_graphrag_base"); } catch(_) { return null; } })() ||
+          "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net";
+      }
       loadConceptPhotos();   // 개념 대표사진(제목 매칭) 비동기 로드
       const rid = P.get("room");
       const room = (palace.rooms||[]).find(r => r.id === rid) || (palace.rooms||[])[0];
