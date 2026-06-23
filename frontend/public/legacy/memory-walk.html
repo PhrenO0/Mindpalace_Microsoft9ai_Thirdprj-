@@ -294,7 +294,7 @@
       <div class="desc" id="cDesc"></div>
       <div class="rel" id="cRel"></div>
       <div class="cardacts">
-        <button class="cact" id="cMnemo" title="이 사물에 학습 개념을 '어거지로' 연결해 기억 장면을 만들기" hidden>✨ 의미부여</button>
+        <button class="cact" id="cMnemo" title="이 사물에 학습 개념을 연결해 기억 장면을 만들기" hidden>✨ 의미부여</button>
         <button class="cact mw-edit-only" id="cMove" title="이 마커를 화면에서 클릭한 자리로 옮기기">✥ 옮기기</button>
         <button class="cact danger mw-edit-only" id="cDel" title="이 마커를 삭제">🗑 삭제</button>
       </div>
@@ -1809,7 +1809,7 @@
       if (!ents.length){ pick.innerHTML = `<div style="font-size:12.5px;color:#b06a3a">PDF를 분석하면 연결할 학습 개념이 생깁니다.</div>`; return ()=>null; }
       const sel = document.createElement("select");
       sel.style.cssText="width:100%;padding:8px;border:1px solid rgba(51,46,40,.2);border-radius:9px;font-size:13px;background:#fff";
-      sel.innerHTML = `<option value="">— «${esc2(dispName(h))}»에 연결할 학습 개념 선택(어거지로!) —</option>`+
+      sel.innerHTML = `<option value="">— «${esc2(dispName(h))}»에 연결할 학습 개념 선택 —</option>`+
         ents.slice(0,80).map((e,i)=>`<option value="${i}">${esc2(e.title||e.id||"")}</option>`).join("");
       pick.appendChild(sel);
       return ()=> { const i=sel.value; return i===""?null:ents[+i]; };
@@ -1818,10 +1818,14 @@
     // 저장 키: 팰리스+사물+개념 단위(계정별 prefix 포함) — 다시 눌러도 같은 장면을 본다.
     let MW_ACCT = "guest";
     try { fetch("/.auth/me",{credentials:"include"}).then(r=>r.ok?r.json():null).then(d=>{ const cp=!d?null:(Array.isArray(d)?d[0]:(d.clientPrincipal||d)); if(cp&&(cp.userId||cp.user_id)) MW_ACCT=String(cp.userId||cp.user_id).slice(0,40); }).catch(()=>{}); } catch(_){}
-    function mnemoKey(h, node){ return "mp_mnemo:" + MW_ACCT + ":" + (MW_PALACE_ID||"_") + ":" + dispName(h) + ":" + ((node&&(node.title||node.id))||""); }
+    // 마커 식별: 표시 이름(dispName)은 마커마다 유일하지 않다(합성 "기억 지점" 여러 개·같은 가구명 등).
+    // 키를 이름만으로 잡으면 다른 노드의 의미부여가 끌려온다(이전 노드 것이 뜸). 라우트 번호(h.number)를
+    // 붙여 마커 단위로 유일하게 만든다(화면 표시는 dispName 그대로).
+    function spotId(h){ return dispName(h) + " #" + ((h && h.number) || 0); }
+    function mnemoKey(h, node){ return "mp_mnemo:" + MW_ACCT + ":" + (MW_PALACE_ID||"_") + ":" + spotId(h) + ":" + ((node&&(node.title||node.id))||""); }
     // 이 사물에 이미 만들어둔 의미부여(어느 학습 개념으로든)가 있나? — 버튼 '다시 보기' 표시 + 재열람용.
     function findMnemoForSpot(h){
-      try { const pre = "mp_mnemo:" + MW_ACCT + ":" + (MW_PALACE_ID||"_") + ":" + dispName(h) + ":";
+      try { const pre = "mp_mnemo:" + MW_ACCT + ":" + (MW_PALACE_ID||"_") + ":" + spotId(h) + ":";
         for (let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf(pre)===0){ const v=localStorage.getItem(k); if(v) return {key:k, md:v}; } }
       } catch(_){}
       return null;
@@ -1989,7 +1993,7 @@
         const j = await r.json(); const md = j.markdown||"(빈 응답)";
         trackUsage("mnemonic", j.usage);   // 의미부여 생성에 쓴 토큰 누적
         try { localStorage.setItem(key, md); } catch(_){}        // 저장(계정+기기) — 다시 눌러도 표시
-        try { fetch("/api/mnemonic",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({palaceId:MW_PALACE_ID,spot:dispName(h),entity:(node.title||node.id||""),markdown:md})}).catch(()=>{}); } catch(_){}  // 생성 즉시 서버 저장(mnemonics 컨테이너) — 죽은 /api/mnemo-save 대체
+        try { fetch("/api/mnemonic",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({palaceId:MW_PALACE_ID,spot:spotId(h),entity:(node.title||node.id||""),markdown:md})}).catch(()=>{}); } catch(_){}  // 생성 즉시 서버 저장(mnemonics 컨테이너) — 죽은 /api/mnemo-save 대체
         renderMnemo(md, key);
       } catch(_){ $("mnemoBody").innerHTML=`<div style="color:#b03636">요청 실패 — 잠시 후 다시 시도하세요.</div>`; }
     }
