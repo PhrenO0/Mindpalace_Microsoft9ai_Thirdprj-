@@ -18,8 +18,10 @@
   }
   function snapshotKey() {
     if (cfg().snapshot) return cfg().snapshot;
+    // 업로드한 PDF(라이브 잡)가 있으면 그 jobId 가 graphrag 스냅샷 키. 없으면 데모(korean_history).
+    //   ?city 는 지도(vworld_map)용 도시 슬러그일 뿐 graphrag 스냅샷이 아니라서 폴백에 쓰지 않는다.
+    //   (jongno 등 미등록 슬러그를 보내면 /quiz/json 이 '스냅샷 없음' 404 를 냈음.)
     try { var j = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); if (j && j.jobId) return j.jobId; } catch (e) {}
-    try { var city = new URLSearchParams(location.search).get("city"); if (city) return city; } catch (e) {}
     return "korean_history";
   }
   function palaceId() {
@@ -104,6 +106,12 @@
     if (!$("quizStyle")) { var st = document.createElement("style"); st.id = "quizStyle"; st.textContent = STYLE; document.head.appendChild(st); }
     $("quizClose").onclick = function () { $("quizModal").style.display = "none"; };
     $("quizModal").addEventListener("click", function (e) { if (e.target === $("quizModal")) $("quizModal").style.display = "none"; });
+    // 모달 안에서 친 키(스페이스·엔터 등)가 호스트 페이지의 전역 단축키로 새어 나가지 않게 막는다.
+    //   (vworld_map: Enter=현재 정거장 진입, Space=preventDefault+라벨 토글+UI 재렌더 → 주제 입력칸에서
+    //    띄어쓰기가 안 되고 엉뚱한 방으로 이동하던 원인. assistant.js 채팅 입력과 동일한 처리.)
+    ["keydown", "keyup", "keypress"].forEach(function (evt) {
+      $("quizModal").addEventListener(evt, function (e) { e.stopPropagation(); });
+    });
   }
 
   var quizData = null, lastQuizTopic = "";
@@ -131,6 +139,10 @@
     $("quizBody").querySelectorAll("#qzCount button").forEach(function (b) {
       b.addEventListener("click", function () { $("quizBody").querySelectorAll("#qzCount button").forEach(function (x) { x.classList.toggle("sel", x === b); }); });
     });
+    // 주제 입력 후 Enter 는 '퀴즈 만들기'로 연결(한글 IME 조합 중 Enter 오발 방지: isComposing/keyCode 229 가드).
+    $("qzTopic").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); generateQuiz(); }
+    });
     $("quizActions").innerHTML = '<button id="quizGenBtn" class="qz-submit">📝 퀴즈 만들기</button>';
     $("quizGenBtn").onclick = generateQuiz;
   }
@@ -148,8 +160,16 @@
     if (count) body.count = count;
     fetch(quizBase() + "/quiz/json", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       .then(function (r) {
-        if (!r.ok) { $("quizBody").innerHTML = '<div style="color:#b06a3a">퀴즈 기능이 아직 백엔드에 연결되지 않았어요 (' + r.status + '). graphrag에 /quiz/json 추가 후 작동합니다.</div>'; quizBackBtn(); return null; }
-        return r.json();
+        // 비정상 응답이어도 본문(JSON {detail})을 읽어 서버가 주는 실제 사유를 보여준다.
+        return r.json().catch(function () { return null; }).then(function (j) { return { ok: r.ok, status: r.status, body: j }; });
+      })
+      .then(function (res) {
+        if (!res.ok) {
+          var detail = res.body && res.body.detail ? esc2(res.body.detail) : "잠시 후 다시 시도해 주세요.";
+          $("quizBody").innerHTML = '<div style="color:#b06a3a">퀴즈를 만들지 못했어요 (' + res.status + '). ' + detail + '</div>';
+          quizBackBtn(); return null;
+        }
+        return res.body;
       })
       .then(function (j) {
         if (!j) return;
