@@ -1023,6 +1023,46 @@ body {
   background: color-mix(in srgb, var(--accent, #b5552f) 16%, transparent);
   font-weight: 700;
 }
+/* 글씨 크게/작게는 한 그룹으로 묶어 다음 줄에 함께 배치 */
+.phone-chat-themes .ptheme-fonts {
+  flex-basis: 100%;
+  display: flex;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+/* ── 음성 안내(TTS · 시각 접근성) 컨트롤 ── */
+.phone-chat-tts {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 8px 12px 4px; margin-top: 2px;
+  border-top: 1px dashed var(--line, rgba(51,46,40,0.14));
+}
+.phone-chat-tts .ptts-label {
+  width: 100%; font-family: var(--font-body); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.02em; color: var(--muted, rgba(42,36,29,0.6)); margin-bottom: 2px;
+}
+.phone-chat-tts button {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--line, rgba(51,46,40,0.12));
+  background: var(--panel2, #fff); color: var(--text, #2a241d);
+  font-family: var(--font-body); font-size: 12px; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s; white-space: nowrap;
+}
+.phone-chat-tts button:hover {
+  border-color: var(--accent, #b5552f);
+  background: color-mix(in srgb, var(--accent, #b5552f) 10%, transparent);
+}
+.phone-chat-tts .ptts-master[aria-pressed="true"],
+.phone-chat-tts button.is-active,
+.phone-chat-tts button[aria-pressed="true"] {
+  border-color: var(--accent, #b5552f);
+  background: color-mix(in srgb, var(--accent, #b5552f) 16%, transparent);
+  font-weight: 700;
+}
+.phone-chat-tts .ptts-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
+.phone-chat-tts .ptts-row[hidden] { display: none; }
+.phone-chat-tts .ptts-seg { display: inline-flex; gap: 4px; }
 
 .phone-chat-homebar {
   width: 80px;
@@ -5238,8 +5278,23 @@ end of keeper CSS */
           <button type="button" data-phone-theme="sage"><span class="swatch" style="background:#2c7a63"></span>세이지</button>
           <button type="button" data-phone-theme="indigo"><span class="swatch" style="background:#4f56d3"></span>인디고</button>
           <button type="button" data-phone-theme="clay"><span class="swatch" style="background:#b5552f"></span>클레이</button>
-          <button type="button" data-phone-zoom="1.12">글씨 크게</button>
-          <button type="button" data-phone-zoom="0.92">글씨 작게</button>
+          <span class="ptheme-fonts" role="group" aria-label="글씨 크기">
+            <button type="button" data-phone-zoom="1.12">글씨 크게</button>
+            <button type="button" data-phone-zoom="0.92">글씨 작게</button>
+          </span>
+        </div>
+        <div class="phone-chat-tts" id="phoneTts" aria-label="음성 안내 설정">
+          <span class="ptts-label">🔈 음성 안내 (시각 접근성)</span>
+          <button type="button" id="ttsToggle" class="ptts-master" aria-pressed="false" aria-label="음성 안내 켜기">음성 안내 켜기</button>
+          <div class="ptts-row" id="ttsOptions" hidden>
+            <button type="button" id="ttsGender" aria-label="목소리 전환 (현재 여성)">목소리: 여성</button>
+            <span class="ptts-seg" role="group" aria-label="읽기 속도">
+              <button type="button" data-tts-speed="slow" aria-label="느리게 읽기">느리게</button>
+              <button type="button" data-tts-speed="normal" class="is-active" aria-label="보통 속도로 읽기">보통</button>
+              <button type="button" data-tts-speed="fast" aria-label="빠르게 읽기">빠르게</button>
+            </span>
+            <button type="button" id="ttsSpatial" aria-pressed="false" aria-label="공간음향 켜기">공간음향: 끄기</button>
+          </div>
         </div>
         <div class="phone-chat-input">
           <input type="file" id="phonePdfInput" accept="application/pdf" hidden>
@@ -7193,6 +7248,11 @@ end of keeper CSS */
     bubble.appendChild(p);
     phoneChatBody.appendChild(bubble);
     phoneChatBody.scrollTop = phoneChatBody.scrollHeight;
+    // 음성 안내가 켜져 있으면 봇 답변을 자동으로 읽어줌(시각 접근성)
+    if (who === 'bot' && window.__mpVoiceOn && window.mpTTS) {
+      var spoken = String(text).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').trim();
+      if (spoken) { try { window.mpTTS.speak(spoken); } catch (e) {} }
+    }
     return bubble;
   }
 
@@ -7464,6 +7524,91 @@ end of keeper CSS */
   ['pointerdown', 'touchstart', 'keydown', 'scroll'].forEach(function (ev) {
     window.addEventListener(ev, function () { inView = true; playLoop(); }, { once: true, passive: true });
   });
+})();
+</script>
+
+<!-- 음성 안내(TTS) 엔진 — Azure 토큰 엔드포인트(다른 도메인) 지정 후 로드. 실패 시 브라우저 음성 폴백 -->
+<script>
+  window.MP_TTS_TOKEN_URL = "https://3d-mindpalace-ai-backend.azurewebsites.net/api/speech-token";
+  // 로컬(localhost)에선 Azure 토큰 CORS가 막히므로 브라우저 내장 음성을 바로 사용
+  window.MP_TTS_FORCE_BROWSER = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+</script>
+<script src="tts-controls.js" defer></script>
+<script>
+/* ═══════ 챗봇 음성 안내(TTS) 컨트롤 배선 (시각 접근성) ═══════
+   - '음성 안내 켜기' → 이후 봇 답변을 자동으로 읽어줌(window.__mpVoiceOn)
+   - 목소리(남/여) · 속도(느리게/보통/빠르게) · 공간음향(on/off) = mpTTS 설정 */
+(function () {
+  function init() {
+    var panel   = document.getElementById('phoneTts');
+    if (!panel) return;
+    var master  = document.getElementById('ttsToggle');
+    var options = document.getElementById('ttsOptions');
+    var genderB = document.getElementById('ttsGender');
+    var spatialB= document.getElementById('ttsSpatial');
+    var speedBtns = panel.querySelectorAll('[data-tts-speed]');
+
+    // 저장된 설정 반영
+    function syncFromState() {
+      if (!window.mpTTS) return;
+      var st = window.mpTTS.getState();
+      genderB.textContent = '목소리: ' + st.genderLabel;
+      genderB.setAttribute('aria-label', '목소리 전환 (현재 ' + st.genderLabel + ')');
+      speedBtns.forEach(function (b) {
+        var on = b.getAttribute('data-tts-speed') === st.speed;
+        b.classList.toggle('is-active', on);
+      });
+      spatialB.textContent = '공간음향: ' + (st.spatial ? '켜기' : '끄기');
+      spatialB.setAttribute('aria-pressed', st.spatial ? 'true' : 'false');
+      spatialB.setAttribute('aria-label', st.spatial ? '공간음향 끄기' : '공간음향 켜기');
+    }
+    syncFromState();
+
+    // 음성 안내 마스터 토글
+    master.addEventListener('click', function () {
+      window.__mpVoiceOn = !window.__mpVoiceOn;
+      master.setAttribute('aria-pressed', window.__mpVoiceOn ? 'true' : 'false');
+      master.textContent = window.__mpVoiceOn ? '음성 안내 끄기' : '음성 안내 켜기';
+      master.setAttribute('aria-label', window.__mpVoiceOn ? '음성 안내 끄기' : '음성 안내 켜기');
+      if (options) options.hidden = !window.__mpVoiceOn;
+      if (window.__mpVoiceOn && window.mpTTS) {
+        window.mpTTS.speak('음성 안내를 켰습니다. 도우미의 답변을 읽어 드릴게요.');
+      } else if (window.mpTTS) {
+        window.mpTTS.stop();
+      }
+    });
+
+    // 목소리(남/여)
+    genderB.addEventListener('click', function () {
+      if (!window.mpTTS) return;
+      var g = window.mpTTS.toggleGender();
+      genderB.textContent = '목소리: ' + g.label;
+      genderB.setAttribute('aria-label', '목소리 전환 (현재 ' + g.label + ')');
+      if (window.__mpVoiceOn) window.mpTTS.speak(g.label + ' 목소리로 읽어 드릴게요.');
+    });
+
+    // 속도
+    speedBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (!window.mpTTS) return;
+        var s = window.mpTTS.setSpeed(b.getAttribute('data-tts-speed'));
+        speedBtns.forEach(function (x) { x.classList.toggle('is-active', x === b); });
+        if (window.__mpVoiceOn) window.mpTTS.speak('속도를 ' + s.label + '로 맞췄어요.');
+      });
+    });
+
+    // 공간음향
+    spatialB.addEventListener('click', function () {
+      if (!window.mpTTS) return;
+      var on = window.mpTTS.toggleSpatial();
+      spatialB.textContent = '공간음향: ' + (on ? '켜기' : '끄기');
+      spatialB.setAttribute('aria-pressed', on ? 'true' : 'false');
+      spatialB.setAttribute('aria-label', on ? '공간음향 끄기' : '공간음향 켜기');
+      if (window.__mpVoiceOn) window.mpTTS.speak(on ? '공간음향을 켰습니다.' : '공간음향을 껐습니다.');
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 
