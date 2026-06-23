@@ -114,6 +114,9 @@
     });
   }
 
+  // 데모(지도 도시·노드)나 stale 잡 id는 백엔드에 인덱싱돼 있지 않아 /quiz/json 이 404를 낸다.
+  // 그때 항상 준비된 샘플 코퍼스로 자동 재시도해 '퀴즈가 생성 안 됨'을 막는다.
+  var QUIZ_FALLBACK_SNAPSHOT = "korean_history";
   var quizData = null, lastQuizTopic = "";
   var QZ_TYPE_LABEL = { multiple_choice: "객관식", true_false: "OX", short_answer: "단답형" };
   function qzOptLabel(q, c) {
@@ -160,25 +163,38 @@
     if (!types.length) { alert("문제 유형을 하나 이상 선택해 주세요."); return; }
     lastQuizTopic = topic;
     $("quizBody").innerHTML = '<div style="color:#7a7066">📝 퀴즈를 만드는 중…</div>'; $("quizActions").innerHTML = "";
-    var body = { topic: topic, snapshot: snapshotKey(), quiz_types: types };
+    requestQuiz(snapshotKey(), topic, count, types, false);
+  }
+
+  // /quiz/json 호출 — 미등록 snapshot(404)이면 샘플 코퍼스로 한 번 폴백 재시도.
+  function requestQuiz(snap, topic, count, types, isFallback) {
+    var body = { topic: topic, snapshot: snap, quiz_types: types };
     if (count) body.count = count;
     fetch(quizBase() + "/quiz/json", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       .then(function (r) {
-        // 비정상 응답이어도 본문(JSON {detail})을 읽어 서버가 주는 실제 사유를 보여준다.
-        return r.json().catch(function () { return null; }).then(function (j) { return { ok: r.ok, status: r.status, body: j }; });
-      })
-      .then(function (res) {
-        if (!res.ok) {
-          var detail = res.body && res.body.detail ? esc2(res.body.detail) : "잠시 후 다시 시도해 주세요.";
-          $("quizBody").innerHTML = '<div style="color:#b06a3a">퀴즈를 만들지 못했어요 (' + res.status + '). ' + detail + '</div>';
-          quizBackBtn(); return null;
+        // 미등록/미준비 스냅샷 → 데모는 준비된 샘플 코퍼스로 자동 재시도.
+        if (r.status === 404 && !isFallback && snap !== QUIZ_FALLBACK_SNAPSHOT) {
+          requestQuiz(QUIZ_FALLBACK_SNAPSHOT, topic, count, types, true);
+          return null;
         }
-        return res.body;
+        // 비정상 응답이어도 본문(JSON {detail})을 읽어 서버가 주는 실제 사유를 보여준다.
+        return r.json().catch(function () { return null; }).then(function (j) {
+          if (!r.ok) {
+            var detail = (j && j.detail) ? esc2(j.detail) : "잠시 후 다시 시도해 주세요.";
+            $("quizBody").innerHTML = '<div style="color:#b06a3a">퀴즈를 만들지 못했어요 (' + r.status + '). ' + detail + '</div>';
+            quizBackBtn(); return null;
+          }
+          return j;
+        });
       })
       .then(function (j) {
-        if (!j) return;
+        if (j === null) return;  // 폴백 재시도 중이거나 위에서 처리됨
+        if (!j || !j.questions || !j.questions.length) {
+          $("quizBody").innerHTML = '<div style="color:#b06a3a">만들 퀴즈가 없어요. 유형이나 주제를 바꿔보세요.</div>';
+          quizBackBtn(); return;
+        }
+        if (isFallback) j.__fallback = true;
         quizData = j;
-        if (!j.questions || !j.questions.length) { $("quizBody").innerHTML = '<div style="color:#b06a3a">만들 퀴즈가 없어요. 유형이나 주제를 바꿔보세요.</div>'; quizBackBtn(); return; }
         renderQuizQuestions(j.questions);
       })
       .catch(function () { $("quizBody").innerHTML = '<div style="color:#b03636">퀴즈 생성 실패 — 잠시 후 다시 시도하세요.</div>'; quizBackBtn(); });
@@ -189,7 +205,8 @@
     var modeBadge = (j.mode === "llm_verified")
       ? '<span class="qz-mode ok">✓ LLM 검증 통과</span>'
       : '<span class="qz-mode warn">⚠ 대체(fallback) 모드' + (j.warning ? ": " + esc2(j.warning) : "") + '</span>';
-    var header = '<div class="qz-head">' + modeBadge + '<div class="qz-meta">주제: ' + esc2(lastQuizTopic || "전체") + ' · ' + qs.length + '문항</div></div>';
+    var fbNote = j.__fallback ? ' · 샘플(한국사) 자료로 출제' : '';
+    var header = '<div class="qz-head">' + modeBadge + '<div class="qz-meta">주제: ' + esc2(lastQuizTopic || "전체") + ' · ' + qs.length + '문항' + fbNote + '</div></div>';
     var cards = qs.map(function (q, i) {
       var type = q.type || (q.choices && q.choices.length ? "multiple_choice" : "short_answer");
       var badge = QZ_TYPE_LABEL[type] || "문제";
