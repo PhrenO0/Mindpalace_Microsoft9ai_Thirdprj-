@@ -91,6 +91,15 @@
     .cmore:hover{text-decoration:underline;}
     .card .rel{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
     .card .rel .lab{font-size:11px;color:var(--muted);margin-right:2px;}
+    /* 🔊 엔티티 설명 듣기(접근성) — 음성 안내 ON일 때만 노출 */
+    .card .tts-listen{margin-top:12px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      border:1px solid var(--line);border-radius:9px;background:rgba(51,46,40,.05);color:var(--text);
+      font-size:13px;font-weight:700;padding:9px 12px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
+    .card .tts-listen:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);}
+    .card .tts-listen:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+    .card .tts-listen.playing{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent);}
+    .card .tts-listen[hidden]{display:none;}   /* display:inline-flex 가 hidden 속성을 덮으므로 명시 */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
     .card .cardacts{margin-top:14px;display:flex;gap:8px;}
     .card .cact{flex:1;border:1px solid var(--line);border-radius:9px;background:rgba(51,46,40,.05);color:var(--text);font-size:12.5px;font-weight:700;padding:8px 10px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
     .card .cact:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);}
@@ -293,6 +302,8 @@
       <button class="cmore" id="cMore" hidden></button>
       <div class="desc" id="cDesc"></div>
       <div class="rel" id="cRel"></div>
+      <button type="button" class="tts-listen" id="cListen" hidden aria-label="엔티티 설명 듣기">🔊 설명 듣기</button>
+      <div id="cTtsLive" class="sr-only" aria-live="polite" role="status"></div>
       <div class="cardacts">
         <button class="cact" id="cMnemo" title="이 사물에 학습 개념을 연결해 기억 장면을 만들기" hidden>✨ 의미부여</button>
         <button class="cact mw-edit-only" id="cMove" title="이 마커를 화면에서 클릭한 자리로 옮기기">✥ 옮기기</button>
@@ -1733,8 +1744,91 @@
       // ✨ 의미부여: 학습 개념이 있을 때(PDF 분석 후)만 노출 — 사물에 개념을 연결해 기억 장면 생성.
       const mn = $("cMnemo"); if (mn) { mn.hidden = !(!CONTENT_LOCKED && (!!e || (window.__mwEntities||[]).length > 0));
         if (!mn.hidden) mn.textContent = findMnemoForSpot(h) ? "✨ 의미 부여 다시 보기" : "✨ 의미부여"; }   // 이미 만든 게 있으면 '다시 보기'
+      stopListen(); syncListenBtn();   // 엔티티 변경 시 이전 음성 중지 + 음성 안내 ON일 때만 듣기 버튼 노출
       $("card").style.display = "block";
     }
+
+    // ── 🔊 엔티티 설명 듣기(시각 접근성) + 공간음향 pan ───────────────────────
+    //   · 음성 안내(assistant.js 의 window.__mpVoiceOn)가 켜져 있을 때만 카드에 버튼 노출.
+    //   · 공간음향 ON → 엔티티 월드좌표(h.eye)와 카메라 방향으로 pan(-1왼~+1오) 계산, OFF → 0(중앙).
+    //   · 재생 중 '■ 읽기 중지', 엔티티 변경/음성 끄기 시 이전 음성 중지(토큰으로 콜백 무효화).
+    //   · 목소리·속도는 mpTTS 의 기존 설정을 그대로 사용. 토큰 엔드포인트도 기존 것 재사용.
+    let _ttsToken = 0, _ttsPlaying = false;
+    function ttsAnnounce(msg){ const l = $("cTtsLive"); if (l) l.textContent = msg; }   // 스크린리더 안내(aria-live)
+    function panForSpot(h){
+      try {
+        if (!(window.mpTTS && window.mpTTS.isSpatial && window.mpTTS.isSpatial())) return 0;   // 공간음향 OFF → 중앙
+        if (!h || !h.eye) return 0;
+        const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0;             // 카메라 시선(수평)
+        if (fwd.lengthSq() < 1e-6) return 0; fwd.normalize();
+        const right = new THREE.Vector3().crossVectors(fwd, UP);                                // 카메라 우측축 = forward × up
+        if (right.lengthSq() < 1e-6) return 0; right.normalize();
+        const toObj = h.eye.clone().sub(camera.position); toObj.y = 0;                          // 카메라→엔티티(수평)
+        if (toObj.lengthSq() < 1e-6) return 0; toObj.normalize();
+        return Math.max(-1, Math.min(1, toObj.dot(right)));                                     // +오른쪽 / -왼쪽
+      } catch (_) { return 0; }
+    }
+    function cardReadText(h){
+      if (!h) return "";
+      const e = h.entity;
+      if (e){
+        const t = (e.title || "").trim();
+        const body = (e.description || e.summary || e.caption || "").trim();
+        return body ? (t + ". " + body) : t;
+      }
+      const nm = dispName(h);
+      const d = (($("cDesc") && $("cDesc").textContent) || "").trim();
+      return d ? (nm + ". " + d) : nm;
+    }
+    function listenAriaLabel(){
+      const sp = !!(window.mpTTS && window.mpTTS.isSpatial && window.mpTTS.isSpatial());
+      return (sp ? "공간음향으로 " : "") + "엔티티 설명 듣기";
+    }
+    function setListenIdle(){
+      _ttsPlaying = false; const b = $("cListen"); if (!b) return;
+      b.textContent = "🔊 설명 듣기"; b.classList.remove("playing");
+      b.setAttribute("aria-label", listenAriaLabel());
+    }
+    function setListenPlaying(){
+      _ttsPlaying = true; const b = $("cListen"); if (!b) return;
+      b.textContent = "■ 읽기 중지"; b.classList.add("playing");
+      b.setAttribute("aria-label", "설명 읽기 중지");
+    }
+    function stopListen(){
+      _ttsToken++;                                       // 진행 중 재생 콜백 무효화
+      try { window.mpTTS && window.mpTTS.stop(); } catch (_) {}
+      setListenIdle();
+    }
+    function syncListenBtn(){
+      const b = $("cListen"); if (!b) return;
+      const on = !!window.__mpVoiceOn;
+      b.hidden = !on;                                    // 음성 안내 ON일 때만 노출
+      if (!on){ stopListen(); return; }                 // 끄면 즉시 숨김 + 진행 음성 중지
+      if (!_ttsPlaying) setListenIdle();                // 라벨/공간음향 상태 갱신
+    }
+    (function wireListen(){
+      const b = $("cListen"); if (!b) return;
+      b.addEventListener("click", function(){
+        if (!window.mpTTS){ ttsAnnounce("음성 엔진을 불러오는 중입니다."); return; }
+        if (_ttsPlaying){ stopListen(); ttsAnnounce("읽기를 멈췄습니다."); return; }
+        const h = (activeIdx >= 0) ? route[activeIdx] : null;
+        const text = cardReadText(h); if (!text) return;
+        const myToken = ++_ttsToken;
+        setListenPlaying(); ttsAnnounce("설명을 읽습니다.");
+        try { window.mpTTS.warmup && window.mpTTS.warmup(); } catch (_) {}
+        window.mpTTS.speak(text, { pan: panForSpot(h) })
+          .then(function(){ if (myToken === _ttsToken){ setListenIdle(); ttsAnnounce("읽기를 마쳤습니다."); } })
+          .catch(function(){ if (myToken === _ttsToken) setListenIdle(); });
+      });
+    })();
+    // 음성 안내 토글(assistant.js) → 버튼 표시/숨김(+끌 때 진행 음성 중지)
+    window.addEventListener("mp-voice-toggle", function(e){
+      syncListenBtn();
+      if (e && e.detail && e.detail.on === false) stopListen();
+    });
+    // 공간음향 토글 → 듣기 버튼 aria-label 즉시 갱신
+    window.addEventListener("mp-spatial-toggle", function(){ if (!_ttsPlaying) setListenIdle(); });
+
     let _quizPrompted = false;
     function goTo(i, instant) {
       if (i<0 || i>=route.length) return;
@@ -3186,6 +3280,7 @@
     addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   </script>
 <script src="nav.js" defer></script>
+<script src="tts-controls.js" defer></script>
 <script src="assistant.js" defer></script>
 
 <script>

@@ -398,6 +398,8 @@
         vMaster.setAttribute("aria-pressed", window.__mpVoiceOn ? "true" : "false");
         vMaster.textContent = window.__mpVoiceOn ? "음성 안내 끄기" : "음성 안내 켜기";
         vMaster.setAttribute("aria-label", window.__mpVoiceOn ? "음성 안내 끄기" : "음성 안내 켜기");
+        // 페이지(예: memory-walk 엔티티 카드의 '설명 듣기' 버튼)가 ON/OFF에 반응하도록 알림
+        try { window.dispatchEvent(new CustomEvent("mp-voice-toggle", { detail: { on: window.__mpVoiceOn } })); } catch (e) {}
         if (window.__mpVoiceOn && window.mpTTS){ syncState(); if (window.mpTTS.warmup) window.mpTTS.warmup(); window.mpTTS.speak("음성 안내를 켰습니다. 도우미의 답변을 읽어 드릴게요."); }
         else if (window.mpTTS){ window.mpTTS.stop(); }
       });
@@ -420,6 +422,8 @@
         vSpatial.textContent = "공간음향: " + (on ? "켜기" : "끄기");
         vSpatial.setAttribute("aria-pressed", on ? "true" : "false");
         vSpatial.setAttribute("aria-label", on ? "공간음향 끄기" : "공간음향 켜기");
+        // 카드 '설명 듣기' 버튼의 공간음향 라벨을 즉시 갱신
+        try { window.dispatchEvent(new CustomEvent("mp-spatial-toggle", { detail: { on: on } })); } catch (e) {}
         if (window.__mpVoiceOn) window.mpTTS.speak(on ? "공간음향을 켰습니다." : "공간음향을 껐습니다.");
       });
     })();
