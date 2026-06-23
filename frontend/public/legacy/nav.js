@@ -17,7 +17,9 @@
     // 상단 목차 = 3구획. 현재 페이지가 어느 구획인지(활성). home은 자체 네비가 있어 미주입.
     //   2.공간 둘러보기=region-select / 3.나만의 공간 만들기=구성·방디자인·3D지도·방안
     const CUR = { "region-select": "browse",
-                  "compose": "create", "glb-customizer": "create", "vworld_map": "create", "memory-walk": "create" }[file];
+                  "compose": "create", "glb-customizer": "create", "vworld_map": "create", "memory-walk": "create",
+                  "bounding-box-visual": "explain", "how-it-all-works": "explain", "how-markers-work": "explain",
+                  "how-route-works": "explain", "system-architecture": "explain" }[file];
     if (CUR === undefined) return; // 등록 안 된 페이지(home 포함)엔 주입 안 함
 
     const withCity = (href, key) =>
@@ -25,7 +27,7 @@
 
     // home.html의 상단 네비와 동일한 번호 라벨로 통일(동일 서비스 느낌).
     const ITEMS = [
-      { key: "explain", label: "1 · 기술 설명",         href: "home.html" },
+      { key: "explain", label: "1 · 전체 기술 설명",     href: "bounding-box-visual.html" },
       { key: "browse",  label: "2 · 공간 둘러보기",      href: "region-select.html" },
       { key: "create",  label: "3 · 나만의 공간 만들기", href: "compose.html" },
     ];
@@ -75,29 +77,14 @@
     nav.setAttribute("aria-label", "주요 메뉴");
     nav.innerHTML = `<a class="mpb" href="${withCity("home.html", "explain")}">기억의 궁전</a>`;
     // 우측 그룹: 번호 라벨 링크(home과 동일) + 계정. 몰입형 바엔 컴팩트.
-    // '기술 설명'은 단일 링크가 아니라 하위 기술 문서로 가는 드롭다운(클릭 시 작은 팝업).
-    const TECH_SUB = [
-      { label: "🏛 전체 소개",          href: "home.html" },
-      { label: "🧭 전체 기술 한눈에",    href: "how-it-all-works.html" },
-      { label: "🗺 3D 시스템 아키텍처",  href: "system-architecture.html" },
-      { label: "📍 3D 마커 만드는 법",   href: "how-markers-work.html" },
-      { label: "🚶 동선 설계",           href: "how-route-works.html" },
-      { label: "📦 바운딩 박스 시각화",  href: "bounding-box-visual.html" },
-    ];
+    // '전체 기술 설명'은 단일 링크 → bounding-box-visual.html(3D 기술 워크스루). 세부 기술 문서는 그 페이지 안에서 링크.
     const right = document.createElement("div");
     right.className = "mpright";
-    right.innerHTML = ITEMS.map((it) => {
-      if (it.key === "explain") {
-        return `<div class="mpdd">`
-          + `<a class="mpsec mpdd-t" role="button" aria-haspopup="true" aria-expanded="false" tabindex="0">${it.label} <span class="mpcar">▾</span></a>`
-          + `<div class="mpdd-menu" role="menu">`
-          + TECH_SUB.map((s) => `<a role="menuitem" href="${s.href}">${s.label}</a>`).join("")
-          + `</div></div>`;
-      }
-      return (it.key === CUR)
+    right.innerHTML = ITEMS.map((it) =>
+      (it.key === CUR)
         ? `<a class="mpsec on" aria-current="page">${it.label}</a>`
-        : `<a class="mpsec" href="${withCity(it.href, it.key)}" title="${it.label}로 이동">${it.label}</a>`;
-    }).join("");
+        : `<a class="mpsec" href="${withCity(it.href, it.key)}" title="${it.label}로 이동">${it.label}</a>`
+    ).join("");
     // Easy Auth 계정 섹션(로그인 → Microsoft / 로그인됨 → 마이페이지). 몰입형 바엔 숨김(CSS).
     const auth = document.createElement("div");
     auth.className = "mpauth";

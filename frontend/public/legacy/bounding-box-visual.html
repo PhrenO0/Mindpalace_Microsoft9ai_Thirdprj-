@@ -3,82 +3,67 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>바운딩 박스로 좌표를 잡는 법 · 시각화</title>
+<title>전체 기술 설명 · 3D 워크스루 (메쉬 → 좌표 → 이름 → 동선 → 카메라)</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet" />
 <style>
   :root{
-    --blue:#3182F6; --blue-d:#1B64DA; --ink:#191F28; --gray:#4E5968;
-    --line:#E5E8EB; --bg:#F2F4F6; --soft:#8B95A1; --green:#15B86B; --amber:#F59E0B;
+    --orange:#E0730F; --orange-d:#B25400; --soft-o:#FBE7D1;
+    --ink:#191F28; --gray:#4E5968; --line:#E5E8EB; --bg:#F2F4F6; --soft:#8B95A1;
+    --green:#15B86B; --amber:#F59E0B;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   html,body{height:100%; overflow:hidden;}
   body{font-family:'Pretendard',-apple-system,sans-serif; color:var(--ink);
-       background:radial-gradient(120% 120% at 50% 0%, #FBFCFE 0%, #EEF2F7 60%, #E6EBF1 100%);
+       background:radial-gradient(120% 120% at 50% 0%, #FFFBF6 0%, #F4ECE2 60%, #ECE3D6 100%);
        word-break:keep-all;}
   #c{position:fixed; inset:0; display:block;}
   .overlay{position:fixed; pointer-events:none; z-index:5;}
 
-  /* 헤더 */
-  .hd{top:0; left:0; right:0; padding:22px 26px 0;}
-  .hd h1{font-size:21px; font-weight:800; letter-spacing:-.4px;}
-  .hd h1 .b{color:var(--blue);}
-  .hd p{font-size:13px; color:var(--gray); margin-top:5px; max-width:520px; line-height:1.5;}
+  /* 헤더(좌상단) */
+  .hd{top:60px; left:26px; right:auto; max-width:540px;}
+  .hd h1{font-size:20px; font-weight:800; letter-spacing:-.4px;}
+  .hd h1 .b{color:var(--orange);}
+  .hd p{font-size:12.5px; color:var(--gray); margin-top:5px; line-height:1.5;}
 
-  /* 수식 리드아웃(우상단) */
-  .readout{top:20px; right:22px; width:236px; background:rgba(255,255,255,.92);
+  /* 근거 패널(우상단) — 이 스텝 값의 "왜" */
+  .why{top:62px; right:22px; width:248px; background:rgba(255,255,255,.94);
     backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:16px;
-    padding:14px 16px; box-shadow:0 8px 28px rgba(20,40,80,.10); opacity:0; transform:translateY(-6px);
-    transition:opacity .4s, transform .4s; pointer-events:none;}
-  .readout.show{opacity:1; transform:none;}
-  .readout .rt{font-size:11px; font-weight:700; color:var(--soft); letter-spacing:.3px; text-transform:uppercase;}
-  .readout .row{display:flex; justify-content:space-between; align-items:baseline; margin-top:8px; font-size:13px;}
-  .readout .row .k{color:var(--gray); font-weight:600;}
-  .readout .row .v{font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink);}
-  .readout .v.min{color:var(--amber);} .readout .v.max{color:var(--blue);} .readout .v.ctr{color:var(--green);}
-  .readout .hint{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:11.5px; color:var(--soft); line-height:1.5;}
+    padding:13px 16px; box-shadow:0 8px 28px rgba(60,40,20,.12);}
+  .why .wt{font-size:11px; font-weight:800; color:var(--orange); letter-spacing:.3px; text-transform:uppercase;}
+  .why .wv{font-size:14px; font-weight:800; color:var(--ink); margin-top:7px; font-variant-numeric:tabular-nums;}
+  .why .wd{margin-top:8px; padding-top:9px; border-top:1px dashed var(--line); font-size:11.5px; color:var(--gray); line-height:1.55;}
 
   /* 캡션(하단 중앙) */
-  .caption{left:50%; bottom:96px; transform:translateX(-50%); width:min(640px,calc(100vw - 40px));
-    background:#fff; border:1px solid var(--line); border-radius:18px; padding:16px 20px;
-    box-shadow:0 10px 36px rgba(20,40,80,.12); text-align:center;}
-  .caption .step-no{display:inline-block; font-size:11px; font-weight:800; color:#fff; background:var(--blue);
+  .caption{left:50%; bottom:92px; transform:translateX(-50%); width:min(660px,calc(100vw - 36px));
+    background:#fff; border:1px solid var(--line); border-radius:18px; padding:15px 20px;
+    box-shadow:0 10px 36px rgba(60,40,20,.14); text-align:center;}
+  .caption .step-no{display:inline-block; font-size:11px; font-weight:800; color:#fff; background:var(--orange);
     border-radius:999px; padding:3px 11px; letter-spacing:.4px; margin-bottom:9px;}
-  .caption .step-no.s4{background:var(--green);}
-  .caption h2{font-size:17px; font-weight:800; letter-spacing:-.3px; line-height:1.4;}
-  .caption p{font-size:13.5px; color:var(--gray); margin-top:7px; line-height:1.55;}
-  .caption .em{color:var(--blue); font-weight:700;} .caption .emg{color:var(--green); font-weight:700;}
+  .caption .step-no.fin{background:var(--green);}
+  .caption h2{font-size:16.5px; font-weight:800; letter-spacing:-.3px; line-height:1.4;}
+  .caption p{font-size:13px; color:var(--gray); margin-top:7px; line-height:1.55;}
+  .caption .em{color:var(--orange); font-weight:700;} .caption .emg{color:var(--green); font-weight:700;}
 
   /* 단계 바(하단) */
-  .bar{left:50%; bottom:22px; transform:translateX(-50%); display:flex; gap:8px; align-items:center;
-    background:rgba(255,255,255,.94); backdrop-filter:blur(8px); border:1px solid var(--line);
-    border-radius:999px; padding:7px 8px; box-shadow:0 8px 26px rgba(20,40,80,.12); pointer-events:auto; z-index:6;}
+  .bar{left:50%; bottom:18px; transform:translateX(-50%); display:flex; gap:5px; align-items:center;
+    background:rgba(255,255,255,.95); backdrop-filter:blur(8px); border:1px solid var(--line);
+    border-radius:999px; padding:6px 7px; box-shadow:0 8px 26px rgba(60,40,20,.14); pointer-events:auto; z-index:6;}
   .bar button{font-family:inherit; cursor:pointer; border:none; background:none; color:var(--gray);
-    font-size:13px; font-weight:700; border-radius:999px; padding:8px 12px; transition:.18s;}
-  .bar .chip{min-width:34px;}
-  .bar .chip.on{background:var(--blue); color:#fff;}
-  .bar .chip.on.s4{background:var(--green);}
+    font-size:12.5px; font-weight:700; border-radius:999px; padding:7px 10px; transition:.16s;}
+  .bar .chip{min-width:30px; padding:7px 0;}
+  .bar .chip.on{background:var(--orange); color:#fff;}
+  .bar .chip.on.fin{background:var(--green);}
   .bar .chip:hover:not(.on){background:var(--bg); color:var(--ink);}
-  .bar .nav{font-size:18px; color:var(--soft); padding:6px 10px;}
+  .bar .nav{font-size:17px; color:var(--soft); padding:6px 8px;}
   .bar .nav:hover{color:var(--ink);}
-  .bar .play{background:var(--bg); color:var(--ink); padding:8px 14px;}
-  .bar .play:hover{background:#E1E6EB;}
-  .bar .sep{width:1px; height:20px; background:var(--line); margin:0 2px;}
+  .bar .play{background:var(--bg); color:var(--ink); padding:7px 12px;}
+  .bar .play:hover{background:#E8E0D5;}
+  .bar .sep{width:1px; height:18px; background:var(--line); margin:0 2px;}
 
-  /* 2D 투영 오버레이(4단계) */
-  #ov{position:fixed; inset:0; z-index:4; pointer-events:none; opacity:0; transition:opacity .5s;}
-  #ov.show{opacity:1;}
-  .nameCard{position:fixed; z-index:5; background:#fff; border:1px solid var(--line); border-radius:14px;
-    padding:10px 14px; box-shadow:0 10px 30px rgba(20,40,80,.16); opacity:0; transform:scale(.9);
-    transition:.45s; pointer-events:none;}
-  .nameCard.show{opacity:1; transform:none;}
-  .nameCard .t{font-size:11px; font-weight:700; color:var(--soft);}
-  .nameCard .v{font-size:18px; font-weight:800; color:var(--ink); margin-top:2px;}
-  .nameCard .v .g{color:var(--green);}
-
-  .hintfoot{left:50%; bottom:2px; transform:translateX(-50%); font-size:11px; color:var(--soft);
-    width:100%; text-align:center;}
-  @media (max-width:640px){ .readout{display:none;} .caption{bottom:90px;} }
+  #ov{position:fixed; inset:0; z-index:4; pointer-events:none;}
+  .hintfoot{left:26px; bottom:2px; font-size:11px; color:var(--soft);}
+  @media (max-width:720px){ .why{display:none;} .hd{max-width:60vw;} .bar .chip{min-width:24px;} }
 </style>
 </head>
 <body>
@@ -86,22 +71,20 @@
 <canvas id="ov"></canvas>
 
 <div class="overlay hd">
-  <h1>메쉬 → <span class="b">바운딩 박스</span> → 좌표</h1>
-  <p>스크린샷이 아니라 <b>3D 점(정점)의 좌표 계산</b>으로 사물의 위치를 잡습니다. 드래그하면 돌려볼 수 있어요.</p>
+  <h1>전체 기술 설명 — <span class="b">메쉬 → 좌표 → 이름 → 동선 → 카메라</span></h1>
+  <p>방 하나에 기술이 <b>순서대로 얹히는</b> 과정을 3D로. 각 단계는 실제 코드 동작이고, 우측에 <b>그 값의 ‘왜’</b>가 떠요. 드래그로 돌려볼 수 있어요.</p>
 </div>
 
-<div class="overlay readout" id="readout">
-  <div class="rt">Box3 · 바운딩 박스 (정규화 좌표)</div>
-  <div class="row"><span class="k">min (x,y,z)</span><span class="v min" id="vmin">—</span></div>
-  <div class="row"><span class="k">max (x,y,z)</span><span class="v max" id="vmax">—</span></div>
-  <div class="row"><span class="k">center</span><span class="v ctr" id="vctr">—</span></div>
-  <div class="hint" id="rhint">모든 정점의 x·y·z 최솟값과 최댓값으로 만든 "딱 맞는 상자". 중심 = 사물 좌표.</div>
+<div class="overlay why" id="why">
+  <div class="wt" id="whyT">왜 이 값?</div>
+  <div class="wv" id="whyV">—</div>
+  <div class="wd" id="whyD">—</div>
 </div>
 
 <div class="overlay caption" id="caption">
   <span class="step-no" id="stepNo">STEP 1</span>
-  <h2 id="capH">메쉬 = 3D 점(정점)들의 목록</h2>
-  <p id="capP">GLB 안 의자는 좌판·등받이·다리 <b>6조각 메쉬</b>. 각 점마다 <span class="em">(x, y, z) 숫자</span>가 이미 들어 있어요 — 그리지 않아도 위치를 압니다.</p>
+  <h2 id="capH">방 전체가 하나의 GLB</h2>
+  <p id="capP">GLTFLoader+DRACO로 받아요.</p>
 </div>
 
 <div class="bar">
@@ -109,18 +92,18 @@
   <button class="chip on" data-s="1">1</button>
   <button class="chip" data-s="2">2</button>
   <button class="chip" data-s="3">3</button>
-  <button class="chip s4" data-s="4">4</button>
+  <button class="chip" data-s="4">4</button>
+  <button class="chip" data-s="5">5</button>
+  <button class="chip" data-s="6">6</button>
+  <button class="chip" data-s="7">7</button>
+  <button class="chip" data-s="8">8</button>
+  <button class="chip fin" data-s="9">9</button>
   <button class="nav" id="next" title="다음">›</button>
   <span class="sep"></span>
   <button class="play" id="play">▶ 자동</button>
 </div>
 
-<div class="nameCard" id="nameCard">
-  <div class="t">📸 십자선 크롭 → GPT-4.1 비전</div>
-  <div class="v">"<span class="g" id="aiName">의자</span>" 라고 이름만</div>
-</div>
-
-<div class="overlay hintfoot">위치 = 기하학(공짜·정확) &nbsp;·&nbsp; 이름 = 비전(스크린샷 + AI)</div>
+<div class="overlay hintfoot">위치 = 기하학(공짜·정확) · 이름 = 비전(스크린샷+AI) · 동선·카메라 = 보행감</div>
 
 <script type="importmap">
 { "imports": {
@@ -132,204 +115,298 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
+const DPR = Math.min(devicePixelRatio, 2);
 const cv = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias:true, alpha:true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(DPR);
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100);
-camera.position.set(3.0, 2.1, 3.4);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 100);
+camera.position.set(5.6, 6.6, 6.6);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.minDistance = 2.2; controls.maxDistance = 8;
-controls.maxPolarAngle = Math.PI * 0.49; controls.target.set(0, 0.55, 0);
-controls.autoRotate = true; controls.autoRotateSpeed = 0.8;
+controls.minDistance = 3.5; controls.maxDistance = 14;
+controls.maxPolarAngle = Math.PI * 0.43; controls.target.set(0, 0.5, 0);
+controls.autoRotate = true; controls.autoRotateSpeed = 0.55;
 controls.addEventListener("start", ()=>{ controls.autoRotate = false; });
 
 // ── 조명 ──
-scene.add(new THREE.HemisphereLight(0xffffff, 0xdfe6ee, 0.95));
-const key = new THREE.DirectionalLight(0xffffff, 1.5);
-key.position.set(3.5, 6, 4); key.castShadow = true;
-key.shadow.mapSize.set(1024,1024); key.shadow.camera.near=1; key.shadow.camera.far=20;
-key.shadow.camera.left=-4; key.shadow.camera.right=4; key.shadow.camera.top=4; key.shadow.camera.bottom=-4;
+scene.add(new THREE.HemisphereLight(0xffffff, 0xe6ddd0, 0.95));
+const key = new THREE.DirectionalLight(0xffffff, 1.45);
+key.position.set(4.5, 8, 5); key.castShadow = true;
+key.shadow.mapSize.set(2048,2048); key.shadow.camera.near=1; key.shadow.camera.far=30;
+key.shadow.camera.left=-7; key.shadow.camera.right=7; key.shadow.camera.top=7; key.shadow.camera.bottom=-7;
 scene.add(key);
 
-// ── 바닥 + 그리드 ──
-const ground = new THREE.Mesh(
-  new THREE.CircleGeometry(6, 64),
-  new THREE.MeshStandardMaterial({ color:0xeef2f7, roughness:1 }));
-ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
-const grid = new THREE.GridHelper(12, 24, 0xcdd6e0, 0xe2e8f0);
-grid.position.y = 0.002; scene.add(grid);
+// ── 방 치수(정규화 결과: 가로 7.2) ──
+const ROOM_W = 7.2, ROOM_D = 5.4, ROOM_H = 2.7, WT = 0.12;
 
-// ── 의자(6조각 메쉬 그룹) — "한 사물 = 여러 메쉬 조각" 예시 ──
-const wood = new THREE.MeshStandardMaterial({ color:0x9DB4D2, roughness:0.55, metalness:0.05 });
-const chair = new THREE.Group();
-function part(w,h,d, x,y,z){
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wood);
-  m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; chair.add(m); return m;
+// 재질
+const furnMat  = new THREE.MeshStandardMaterial({ color:0xC9CED6, roughness:0.62, metalness:0.04 });
+const structMat= new THREE.MeshStandardMaterial({ color:0xDDE3EA, roughness:1, transparent:true, opacity:0.22, depthWrite:false, side:THREE.DoubleSide });
+const floorMat = new THREE.MeshStandardMaterial({ color:0xEDE6DB, roughness:1 });
+function bx(w,h,d, x,y,z, mat){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; return m; }
+
+// ── 구조물(벽·바닥): 검출에서 '제외'되는 것들 ──
+const structMeshes = [];
+const floor = bx(ROOM_W, WT, ROOM_D, 0, -WT/2, 0, floorMat); floor.receiveShadow=true; scene.add(floor); structMeshes.push(floor);
+const wallBack = bx(ROOM_W, ROOM_H, WT, 0, ROOM_H/2, -ROOM_D/2, structMat); scene.add(wallBack); structMeshes.push(wallBack);
+const wallLeft = bx(WT, ROOM_H, ROOM_D, -ROOM_W/2, ROOM_H/2, 0, structMat); scene.add(wallLeft); structMeshes.push(wallLeft);
+const wallRight= bx(WT, ROOM_H, ROOM_D,  ROOM_W/2, ROOM_H/2, 0, structMat); scene.add(wallRight); structMeshes.push(wallRight);
+[wallBack,wallLeft,wallRight].forEach(w=> w.castShadow=false);   // 반투명 벽: 그림자 끔(가구가 항상 보이게)
+const grid = new THREE.GridHelper(ROOM_W, 18, 0xcdbfa9, 0xe2d8c7); grid.position.y = 0.002; scene.add(grid);
+
+// ── 가구(검출 대상) ──
+const furnMeshes = [];
+function makeFurn(builder){ const g=new THREE.Group(); builder(g); g.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; furnMeshes.push(o);} }); scene.add(g); return g; }
+
+// 소파(좌석+등받이+팔걸이 = 여러 서브메쉬 → 세그멘테이션 예시)
+const sofa = makeFurn(g=>{
+  g.add(bx(2.0,0.42,0.85, 0,0.30,0, furnMat));      // 좌석
+  g.add(bx(2.0,0.5,0.18, 0,0.62,-0.34, furnMat));   // 등받이
+  g.add(bx(0.18,0.5,0.85, -0.91,0.42,0, furnMat));  // 팔걸이
+  g.add(bx(0.18,0.5,0.85,  0.91,0.42,0, furnMat));
+}); sofa.position.set(-2.05,0,-1.55);
+// 식탁(상판+다리)
+const table = makeFurn(g=>{
+  g.add(bx(1.3,0.07,0.85, 0,0.72,0, furnMat));
+  [[-0.58,-0.36],[0.58,-0.36],[-0.58,0.36],[0.58,0.36]].forEach(([x,z])=> g.add(bx(0.07,0.72,0.07, x,0.36,z, furnMat)));
+}); table.position.set(0.2,0,0.3);
+// 의자 x2
+function chair(){ const g=new THREE.Group();
+  g.add(bx(0.5,0.07,0.5, 0,0.46,0, furnMat));
+  g.add(bx(0.5,0.5,0.07, 0,0.7,-0.215, furnMat));
+  [[-0.2,0.2],[0.2,0.2],[-0.2,-0.2],[0.2,-0.2]].forEach(([x,z])=> g.add(bx(0.06,0.46,0.06, x,0.23,z, furnMat)));
+  g.traverse(o=>{ if(o.isMesh){o.castShadow=true;o.receiveShadow=true;furnMeshes.push(o);} }); scene.add(g); return g; }
+const chair1 = chair(); chair1.position.set(-0.7,0,1.35); chair1.rotation.y = Math.PI;
+const chair2 = chair(); chair2.position.set(1.1,0,1.35); chair2.rotation.y = Math.PI;
+// 화분(=비전 명명 사례: 'umbrella'로 오검출되는 그 사물)
+const plant = makeFurn(g=>{
+  g.add(bx(0.34,0.34,0.34, 0,0.17,0, furnMat));                                   // 화분
+  const f=new THREE.Mesh(new THREE.SphereGeometry(0.36,16,16), new THREE.MeshStandardMaterial({color:0x8FB59A,roughness:0.8})); f.position.y=0.62; f.castShadow=true; g.add(f);
+}); plant.position.set(2.75,0,-1.85);
+// 수납장
+const cabinet = makeFurn(g=>{ g.add(bx(0.55,1.3,0.42, 0,0.65,0, furnMat)); }); cabinet.position.set(2.85,0,0.7);
+
+// ── 가구 메타(검출 결과) — center는 실제 Box3.setFromObject(그룹) 중심 ──
+function centerOf(g){ return new THREE.Box3().setFromObject(g).getCenter(new THREE.Vector3()); }
+const FURN = [
+  { g:sofa,    ko:"소파",   ai:"소파",  via:"이름표 'Sofa'", concept:"고려 건국 918" },
+  { g:table,   ko:"식탁",   ai:"식탁",  via:"이름표 'Table'", concept:"훈민정음 1443" },
+  { g:chair1,  ko:"의자",   ai:"의자",  via:"기하 패스(모양)", concept:"임진왜란 1592" },
+  { g:chair2,  ko:"의자2",  ai:"의자",  via:"기하 패스(모양)", concept:"병자호란 1636" },
+  { g:plant,   ko:"화분",   ai:"우산",  via:"모호어→비전 재명명", concept:"갑오개혁 1894" },
+  { g:cabinet, ko:"수납장", ai:"수납장",via:"기하 패스(모양)", concept:"3·1운동 1919" },
+];
+FURN.forEach(f=>{ f.center = centerOf(f.g); });
+
+// ── 마커 핀(좌표) ──
+function makePin(color){ const m=new THREE.Group();
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(0.11,0.016,12,32), new THREE.MeshBasicMaterial({color})); ring.rotation.x=Math.PI/2; m.add(ring);
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(0.055,16,16), new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:0.4})); m.add(ball);
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,0.45,8), new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.5})); stem.position.y=-0.225; m.add(stem);
+  return m;
 }
-const SEAT_Y = 0.46, LEG = 0.46, SEAT_T = 0.07, BACK_H = 0.52;
-part(0.62, SEAT_T, 0.58, 0, SEAT_Y, 0);                       // 좌판
-part(0.62, BACK_H, 0.07, 0, SEAT_Y + BACK_H/2, -0.255);       // 등받이
-const lx=0.25, lz=0.24;
-part(0.07, LEG, 0.07, -lx, LEG/2,  lz);                       // 다리 4개
-part(0.07, LEG, 0.07,  lx, LEG/2,  lz);
-part(0.07, LEG, 0.07, -lx, LEG/2, -lz);
-part(0.07, LEG, 0.07,  lx, LEG/2, -lz);
-chair.position.set(0.18, 0, 0.05);                            // 원점에서 살짝 비켜둠(중심≠원점 보이게)
-scene.add(chair);
-chair.updateWorldMatrix(true, true);
+FURN.forEach(f=>{ const p=makePin(0x15B86B); p.position.copy(f.center); p.visible=false; scene.add(p); f.pin=p; });
 
-// ── 정점 점(각 조각의 8모서리) — "메쉬는 점의 목록" ──
-const dotsGroup = new THREE.Group(); scene.add(dotsGroup);
-const dotGeo = new THREE.SphereGeometry(0.022, 10, 10);
-const dotMat = new THREE.MeshBasicMaterial({ color:0xF59E0B });
-chair.children.forEach(m=>{
-  const b = new THREE.Box3().setFromObject(m);
-  const cs = [
-    [b.min.x,b.min.y,b.min.z],[b.max.x,b.min.y,b.min.z],[b.min.x,b.max.y,b.min.z],[b.max.x,b.max.y,b.min.z],
-    [b.min.x,b.min.y,b.max.z],[b.max.x,b.min.y,b.max.z],[b.min.x,b.max.y,b.max.z],[b.max.x,b.max.y,b.max.z],
-  ];
-  cs.forEach(p=>{ const d=new THREE.Mesh(dotGeo,dotMat); d.position.set(p[0],p[1],p[2]); dotsGroup.add(d); });
+// ── 한 가구의 AABB 박스 헬퍼(스텝 4) ──
+const boxHelpers = FURN.map(f=>{ const b=new THREE.Box3().setFromObject(f.g);
+  const h=new THREE.Box3Helper(b, 0xE0730F); h.material.transparent=true; h.material.opacity=0; scene.add(h); return h; });
+
+// ── 정규화 오버레이(스텝 2): 가로 7.2 브래킷 + 바닥선 ──
+const normGroup = new THREE.Group(); normGroup.visible=false; scene.add(normGroup);
+(function(){
+  const y=0.02, x0=-ROOM_W/2, x1=ROOM_W/2, z=ROOM_D/2+0.25;
+  const mat=new THREE.LineBasicMaterial({color:0xE0730F});
+  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x0,y,z),new THREE.Vector3(x1,y,z)]);
+  normGroup.add(new THREE.Line(g,mat));
+  [x0,x1].forEach(xx=>{ const t=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(xx,y,z-0.18),new THREE.Vector3(xx,y,z+0.18)]); normGroup.add(new THREE.Line(t,mat)); });
+})();
+
+// ── 명명 고스트 카메라 4컷(스텝 6): 네 모서리 대각 ──
+const ghosts = new THREE.Group(); ghosts.visible=false; scene.add(ghosts);
+[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sz])=>{
+  const cone=new THREE.Mesh(new THREE.ConeGeometry(0.16,0.34,4), new THREE.MeshBasicMaterial({color:0xE0730F}));
+  const px=sx*(ROOM_W/2-0.5), pz=sz*(ROOM_D/2-0.5);
+  cone.position.set(px,1.5,pz); cone.lookAt(0,0.8,0); cone.rotateX(Math.PI/2); ghosts.add(cone);
 });
 
-// ── 바운딩 박스(전체 그룹) — 실제 Box3.setFromObject ──
-const fullBox = new THREE.Box3().setFromObject(chair);
-const boxSize = fullBox.getSize(new THREE.Vector3());
-const boxCtr  = fullBox.getCenter(new THREE.Vector3());
-const boxHelper = new THREE.Box3Helper(fullBox, 0x3182F6);
-boxHelper.material.transparent = true; boxHelper.material.opacity = 0; scene.add(boxHelper);
-// 반투명 박스 면(택배 상자 느낌)
-const faceBox = new THREE.Mesh(
-  new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z),
-  new THREE.MeshBasicMaterial({ color:0x3182F6, transparent:true, opacity:0, side:THREE.BackSide }));
-faceBox.position.copy(boxCtr); scene.add(faceBox);
+// ── 동선 라인(스텝 7) ──
+let routeOrder = [];
+const routeLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color:0xE0730F, transparent:true, opacity:0.85}));
+routeLine.visible=false; scene.add(routeLine);
+function computeRoute(){
+  // 입장 시점: 더 긴 수평축(x=7.2)의 한쪽 끝에 서서 +x를 바라봄(눈높이 1.6)
+  const eye={x:-ROOM_W/2+0.5, z:0}, fwd={x:1, z:0};
+  const pts=FURN.map(f=>({x:f.center.x, z:f.center.z}));
+  const rem=pts.map((_,i)=>i); const order=[]; let cur={...eye}, d0={...fwd};
+  while(rem.length){ let best=-1,bs=-Infinity;
+    for(const i of rem){ const dx=pts[i].x-cur.x, dz=pts[i].z-cur.z; const dist=Math.hypot(dx,dz)||1e-6;
+      const turn=(dx/dist)*d0.x+(dz/dist)*d0.z; const score=-dist+turn*0.7;   // 실제 designRoute 점수식
+      if(score>bs){bs=score;best=i;} }
+    order.push(best); const dx=pts[best].x-cur.x, dz=pts[best].z-cur.z, dist=Math.hypot(dx,dz)||1e-6;
+    d0={x:dx/dist,z:dz/dist}; cur={x:pts[best].x,z:pts[best].z}; rem.splice(rem.indexOf(best),1);
+  }
+  routeOrder=order;
+  const v=order.map(i=> new THREE.Vector3(FURN[i].center.x, 0.5, FURN[i].center.z));
+  v.unshift(new THREE.Vector3(eye.x,0.5,eye.z));
+  routeLine.geometry.setFromPoints(v);
+}
+computeRoute();
+const orderOf = {}; routeOrder.forEach((fi,idx)=> orderOf[fi]=idx+1);
 
-// ── 중심 마커(좌표) — 핀 + 광륜 ──
-const marker = new THREE.Group(); scene.add(marker);
-const ring = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.018, 12, 36),
-  new THREE.MeshBasicMaterial({ color:0x15B86B }));
-ring.rotation.x = Math.PI/2; marker.add(ring);
-const ball = new THREE.Mesh(new THREE.SphereGeometry(0.06, 18, 18),
-  new THREE.MeshStandardMaterial({ color:0x15B86B, emissive:0x0a7a45, emissiveIntensity:0.5 }));
-marker.add(ball);
-const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006, 0.5, 8),
-  new THREE.MeshBasicMaterial({ color:0x15B86B, transparent:true, opacity:0.5 }));
-stem.position.y = -0.25; marker.add(stem);
-marker.position.copy(boxCtr); marker.visible = false;
-const centerDot = new THREE.Mesh(new THREE.SphereGeometry(0.03,12,12),
-  new THREE.MeshBasicMaterial({ color:0x15B86B })); centerDot.position.copy(boxCtr);
-centerDot.visible = false; scene.add(centerDot);
+// ── 28방향 레이팬(스텝 8) ──
+const TARGET8 = 5; // 수납장 마커 대상
+const rayFan = new THREE.Group(); rayFan.visible=false; scene.add(rayFan);
+let bestDir8 = 0;
+(function(){
+  const c = FURN[TARGET8].center, N=28; let bestOpen=-1;
+  for(let k=0;k<N;k++){ const a=(k/N)*Math.PI*2; const dx=Math.cos(a), dz=Math.sin(a);
+    let open=2.6; const tx=c.x+dx*open, tz=c.z+dz*open;
+    if(Math.abs(tx)>ROOM_W/2-0.2||Math.abs(tz)>ROOM_D/2-0.2) open=1.1;
+    const len=Math.min(open,1.9);
+    const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(c.x,0.5,c.z),new THREE.Vector3(c.x+dx*len,0.5,c.z+dz*len)]);
+    const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:0xCDBFAE})); line.userData={a,open}; rayFan.add(line);
+    if(open>bestOpen){bestOpen=open;bestDir8=a;}
+  }
+})();
+const bestRay = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+  new THREE.Vector3(FURN[TARGET8].center.x,0.5,FURN[TARGET8].center.z),
+  new THREE.Vector3(FURN[TARGET8].center.x+Math.cos(bestDir8)*1.9,0.5,FURN[TARGET8].center.z+Math.sin(bestDir8)*1.9)]),
+  new THREE.LineBasicMaterial({color:0xE0730F})); bestRay.visible=false; scene.add(bestRay);
 
-// ── 리드아웃 채우기 ──
-const f2 = v => `${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)}`;
-document.getElementById("vmin").textContent = f2(fullBox.min);
-document.getElementById("vmax").textContent = f2(fullBox.max);
-document.getElementById("vctr").textContent = f2(boxCtr);
+// 카메라 고스트(스텝 8: 28방향 중 best로 활공하는 시점) — 실제 카메라 대신 고스트만 이동(OrbitControls 충돌 회피)
+const camGhost = new THREE.Group(); camGhost.visible=false; scene.add(camGhost);
+(function(){
+  const body=new THREE.Mesh(new THREE.ConeGeometry(0.14,0.32,4), new THREE.MeshStandardMaterial({color:0xE0730F, emissive:0xB25400, emissiveIntensity:0.35}));
+  body.rotation.x=-Math.PI/2; camGhost.add(body);
+  const lens=new THREE.Mesh(new THREE.CircleGeometry(0.06,16), new THREE.MeshBasicMaterial({color:0x15B86B})); lens.position.z=-0.17; camGhost.add(lens);
+})();
 
-// ── 2D 투영 오버레이(4단계) ──
-const ov = document.getElementById("ov"); const og = ov.getContext("2d");
+// ── 2D 오버레이 ──
+const ov=document.getElementById("ov"), og=ov.getContext("2d");
+function rr(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function project(world){ const v=world.clone().project(camera); return { x:(v.x*0.5+0.5)*ov.width, y:(-v.y*0.5+0.5)*ov.height, vis:v.z<1 }; }
+function tag(world, text, dy, bg, fg){ const p=project(world); if(!p.vis) return;
+  og.font=`800 ${13*DPR}px Pretendard, sans-serif`; const w=og.measureText(text).width+18*DPR, h=24*DPR;
+  const x=p.x, y=p.y+dy*DPR; og.fillStyle=bg; rr(og,x-w/2,y-h/2,w,h,9*DPR); og.fill();
+  og.fillStyle=fg; og.textAlign="center"; og.textBaseline="middle"; og.fillText(text,x,y); }
+function numBadge(world, n){ const p=project(world); if(!p.vis) return; const x=p.x,y=p.y-44*DPR,r=13*DPR;
+  og.fillStyle="#E0730F"; og.beginPath(); og.arc(x,y,r,0,Math.PI*2); og.fill();
+  og.fillStyle="#fff"; og.font=`800 ${14*DPR}px Pretendard`; og.textAlign="center"; og.textBaseline="middle"; og.fillText(String(n),x,y); }
+
 function drawOverlay(){
-  const w = ov.width, h = ov.height; og.clearRect(0,0,w,h);
-  if (step !== 4) return;
-  const v = boxCtr.clone().project(camera);            // 3D 중심 → NDC
-  const sx = (v.x*0.5+0.5)*w, sy = (-v.y*0.5+0.5)*h;    // NDC → 화면 픽셀
-  const R = Math.min(w,h)*0.17;                          // 크롭 사각형 반폭
-  // 어둡게 + 크롭 구멍
-  og.fillStyle = "rgba(15,25,45,0.45)"; og.fillRect(0,0,w,h);
-  og.clearRect(sx-R, sy-R, 2*R, 2*R);
-  og.strokeStyle = "#fff"; og.lineWidth = 3; og.strokeRect(sx-R, sy-R, 2*R, 2*R);
-  // 빨간 십자선(중심 조준)
-  og.strokeStyle = "rgba(255,40,40,0.95)"; og.lineWidth = 2.4;
-  og.beginPath();
-  og.moveTo(sx-R*0.42, sy); og.lineTo(sx+R*0.42, sy);
-  og.moveTo(sx, sy-R*0.42); og.lineTo(sx, sy+R*0.42);
-  og.stroke();
-  og.beginPath(); og.arc(sx, sy, R*0.16, 0, Math.PI*2); og.stroke();
-  // 이름 카드 위치 갱신
-  const nc = document.getElementById("nameCard");
-  nc.style.left = Math.min(w-220, sx+R+14) + "px";
-  nc.style.top  = Math.max(80, sy-R) + "px";
+  og.clearRect(0,0,ov.width,ov.height);
+  const s=step;
+  if(s===6){
+    FURN.forEach((f)=>{ const amb=f.ai!==f.ko; const nm=(nameReveal||!amb)? f.ko : f.ai;
+      tag(f.center, nm, -44, (amb && !nameReveal) ? "rgba(224,115,15,.95)" : "rgba(255,255,255,.96)", (amb&&!nameReveal)? "#fff":"#191F28"); });
+    if(crossOn){
+      const p=project(FURN[4].center); if(p.vis){ const R=58*DPR;
+        og.fillStyle="rgba(20,16,10,0.42)"; og.fillRect(0,0,ov.width,ov.height); og.clearRect(p.x-R,p.y-R,2*R,2*R);
+        og.strokeStyle="#fff"; og.lineWidth=2.5*DPR; og.strokeRect(p.x-R,p.y-R,2*R,2*R);
+        og.strokeStyle="rgba(255,40,40,.95)"; og.lineWidth=2.2*DPR; og.beginPath();
+        og.moveTo(p.x-R*0.4,p.y); og.lineTo(p.x+R*0.4,p.y); og.moveTo(p.x,p.y-R*0.4); og.lineTo(p.x,p.y+R*0.4); og.stroke();
+        og.beginPath(); og.arc(p.x,p.y,R*0.16,0,Math.PI*2); og.stroke();
+        tag(FURN[4].center, "‘우산’ → 화분", 78, "rgba(21,184,107,.96)", "#fff");
+      }
+    }
+  } else if(s===7){ FURN.forEach((f,i)=> numBadge(f.center, orderOf[i])); }
+  else if(s===9){ FURN.forEach((f)=>{ tag(f.center, f.ko+" = "+f.concept, -46, "rgba(21,184,107,.96)", "#fff"); }); }
 }
 
 // ── 단계 상태기 ──
-let step = 1, raf;
-const lerp=(a,b,t)=>a+(b-a)*t, ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
-let anim = { box:0, marker:0 };  // 0..1 진행
+let step=1, nameReveal=false, crossOn=false, segT=0, fly8=0;
+const lerp=(a,b,t)=>a+(b-a)*t, ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+let cam8From=null, cam8To=null;
+
 const STEPS = {
-  1:{ no:"STEP 1", cls:"", h:"메쉬 = 3D 점(정점)들의 목록",
-      p:'GLB 안 의자는 좌판·등받이·다리 <b>6조각 메쉬</b>. 각 점마다 <span class="em">(x, y, z) 숫자</span>가 이미 들어 있어요 — 그리지 않아도 위치를 압니다.',
-      readout:false, hint:'노란 점 = 각 조각 메쉬의 정점. 이 점들이 곧 좌표.' },
-  2:{ no:"STEP 2", cls:"", h:"모든 점의 min~max = 딱 맞는 투명 상자",
-      p:'x·y·z 각 축의 <span class="em">최솟값과 최댓값</span>으로 사물을 감싸는 직육면체(바운딩 박스 · AABB)를 만듭니다. <b>Box3.setFromObject()</b> 한 줄.',
-      readout:true, hint:'min/max는 정점들에서 바로 나온 실제 숫자. 스크린샷 ✗.' },
-  3:{ no:"STEP 3", cls:"", h:"상자 한가운데 = 이 사물의 좌표",
-      p:'<span class="emg">center = (min + max) / 2</span>. 이 한 점이 마커를 박을 3D 좌표예요. <b>여기까지 스크린샷도 AI도 없이 산수로 끝.</b> (마커 높이는 표면 위로 snapY)',
-      readout:true, hint:'center = 상자의 정중앙. 마커가 여기에 박힙니다.' },
-  4:{ no:"STEP 4", cls:"s4", h:"이제야 스크린샷 — 이름만 붙이러",
-      p:'좌표는 끝났어요. 그 점을 <span class="emg">화면에 투영(project)</span>해 십자선으로 크롭 → <b>GPT-4.1</b>이 "의자"라고 <span class="emg">이름만</span> 답합니다. 위치는 기하학, 이름은 비전.',
-      readout:true, hint:'project(): 3D 점 → 2D 화면 좌표. 그 자리를 크롭해 AI에 전송.' },
-};
-function setStep(s){
-  step = s;
-  document.querySelectorAll(".chip").forEach(c=>{
-    const on = +c.dataset.s===s; c.classList.toggle("on", on);
-  });
-  const d = STEPS[s];
-  const sn = document.getElementById("stepNo"); sn.textContent = d.no; sn.className = "step-no " + d.cls;
-  document.getElementById("capH").innerHTML = d.h;
-  document.getElementById("capP").innerHTML = d.p;
-  document.getElementById("readout").classList.toggle("show", d.readout);
-  document.getElementById("rhint").textContent = d.hint;
-  ov.classList.toggle("show", s===4);
-  document.getElementById("nameCard").classList.toggle("show", s===4);
-  // 레이어 가시성(애니메이션은 루프에서 보간)
-  marker.visible = s>=3; centerDot.visible = s>=2;
-}
-document.querySelectorAll(".chip").forEach(c=> c.onclick = ()=> setStep(+c.dataset.s));
-document.getElementById("next").onclick = ()=> setStep(step%4+1);
-document.getElementById("prev").onclick = ()=> setStep((step+2)%4+1);
-let playing=false, playT;
-document.getElementById("play").onclick = (e)=>{
-  playing = !playing; e.target.textContent = playing ? "⏸ 정지" : "▶ 자동";
-  clearInterval(playT);
-  if (playing) playT = setInterval(()=>{ setStep(step%4+1); }, 3200);
+  1:{no:"STEP 1",h:"방 전체가 하나의 GLB",p:'벽·바닥·가구가 통째로 든 3D 파일. <b>GLTFLoader+DRACO</b>로 받아요.',
+     wt:"GLB · DRACO",wv:"300MB → 9MB",wd:"고폴리 방도 Draco로 압축해야 웹에서 가벼움. 디코더는 three 0.160 동일버전 CDN 고정(버전 불일치 실패 방지)."},
+  2:{no:"STEP 2",h:"정규화 — 가로 7.2 · 바닥 0",p:'어떤 방이든 <span class="em">가로(긴 변)를 7.2</span>로, 바닥을 0으로 맞춰요. 스캐너와 같은 자라 좌표가 호환돼요.',
+     wt:"정규화 폭",wv:"7.2 / max(x,z)",wd:"뷰어·스캐너 동일 공식 → 스캐너가 구운 핫스팟 좌표를 그대로 재사용. 가로만(y 제외) → 천장 높은 방 과축소 방지."},
+  3:{no:"STEP 3",h:"검출 — 가구만 골라내기",p:'가구는 <span class="emg">초록</span>(이름표 ‘Sofa’ 또는 모양·크기 게이트), 벽·바닥은 회색으로 제외.',
+     wt:"가구 인식 상한",wv:"최대 22개",wd:"한 방 한 바퀴 외울 정거장 상한. 게이트(방 7.2 비례 %): 3%↓소품·92%↑방·얇고 큰 면=벽·중심 72%↑=천장조명 제외."},
+  4:{no:"STEP 4",h:"좌표 — 바운딩 박스 중심",p:'가구마다 <span class="em">정점 min~max 상자</span>(AABB)의 <span class="emg">중심</span>이 위치. 스크린샷·AI 없이 오차 0.',
+     wt:"좌표 산출",wv:"Box3 center",wd:"메쉬 피벗은 모델러 임의라 기준 안 됨 → AABB 중심=부피 한가운데=사람이 느끼는 무게중심. 정점만 읽어 오차 0."},
+  5:{no:"STEP 5",h:"세그멘테이션 — 겹친 건 하나로",p:'소파가 여러 조각이면 마커가 겹쳐요. <span class="em">같은 자리(0.42m)</span>면 하나로 합쳐 ‘한 사물=한 마커’.',
+     wt:"겹침 컷(평면)",wv:"XZ 0.42m",wd:"높이 버리고 위에서 본 거리만 → 러그(바닥)+벽 그림(공중) 같은 자리 중복 해결. 의자 간격(≥0.5m)보다 좁게 잡아 떨어진 의자는 보존."},
+  6:{no:"STEP 6",h:"이름 — 4컷 배치 + 정밀",p:'네 모서리 4컷을 AI에 <span class="em">1번</span> → 번호별 이름. 애매한 건(우산?) <span class="em">512² 십자선</span>으로 ‘이 좌표’만 → 화분.',
+     wt:"명명 호출",wv:"4컷·1콜 + 정밀",wd:"4컷 묶어 1콜(비용↓)+GLB캐시. 정밀은 512² 클로즈업+빨간 십자(α0.95)로 옆 큰 가구 오명명 방지. temperature 0=정확·재현."},
+  7:{no:"STEP 7",h:"동선·번호 — 걷는 순서",p:'입장 시점(긴 축 끝)에서 <span class="em">가까움+직진</span>으로 한 바퀴. 걷는 순서 = 외우는 순서.',
+     wt:"순서 점수",wv:"−dist + turn×0.7",wd:"turn=진행·목표 방향 내적(직진+1/U턴−1). 0.7은 거리↔turn 환산 → 두 후보 거리차 1.4m 이내면 ‘덜 꺾이는 쪽’ 승(지그재그 억제)."},
+  8:{no:"STEP 8",h:"카메라 — 28방향 best로 활공",p:'번호를 누르면 <span class="em">28방향</span>을 따져 가장 트인 자리로 <span class="em">0.9초</span> 활공.',
+     wt:"카메라 평가",wv:"28방향 · 0.9초",wd:"360/28≈12.86° 해상도(적으면 틈 놓침/많으면 비쌈). 점수 open1.0+facing1.1+dist0.4+cont1.25 → 연속성 최대=휙 회전 멀미 억제. easeInOutCubic."},
+  9:{no:"STEP 9",h:"학습 — 위치에 개념 얹기",fin:true,p:'각 위치에 학습 개념을 묶어요(<span class="emg">entityId</span>). 위치가 곧 지식의 단서 — 장소법(method of loci).',
+     wt:"위치 = 지식",wv:"entityId 바인딩",wd:"가구 좌표에 학습 항목을 결합해 저장(내 서재 Cosmos+Blob). 다음 입장 때 같은 방·같은 자리에서 회상 단서가 재현."},
 };
 
-// ── 리사이즈 ──
-function resize(){
-  const w = innerWidth, h = innerHeight;
-  renderer.setSize(w,h,false); camera.aspect = w/h; camera.updateProjectionMatrix();
-  ov.width = w*Math.min(devicePixelRatio,2); ov.height = h*Math.min(devicePixelRatio,2);
-  ov.style.width = w+"px"; ov.style.height = h+"px";
+function setStep(s){
+  step=s; const d=STEPS[s];
+  document.querySelectorAll(".chip").forEach(c=> c.classList.toggle("on", +c.dataset.s===s));
+  const sn=document.getElementById("stepNo"); sn.textContent=d.no; sn.className="step-no"+(d.fin?" fin":"");
+  document.getElementById("capH").innerHTML=d.h; document.getElementById("capP").innerHTML=d.p;
+  document.getElementById("whyT").textContent=d.wt; document.getElementById("whyV").textContent=d.wv; document.getElementById("whyD").textContent=d.wd;
+
+  const detect = s>=3;
+  structMat.color.set(detect? 0xC4CAD2 : 0xDDE3EA);
+  furnMat.emissive.set(detect? 0x123d22 : 0x000000);
+  furnMat.emissiveIntensity = (s===3)?0.55:(detect?0.18:0);
+  furnMat.color.set(detect? 0xBFD7C7 : 0xC9CED6);
+
+  normGroup.visible = (s===2);
+  FURN.forEach(f=> f.pin.visible = s>=4);
+  ghosts.visible = (s===6);
+  routeLine.visible = (s>=7 && s<=9);
+  rayFan.visible = (s===8); bestRay.visible=(s===8);
+
+  nameReveal = (s>6); crossOn=false;
+  if(s===6){ nameReveal=false; setTimeout(()=>{ if(step===6) crossOn=true; }, 900); setTimeout(()=>{ if(step===6) nameReveal=true; }, 1900); }
+
+  camGhost.visible = (s===8);
+  if(s===8){ fly8=0; const c=FURN[TARGET8].center;
+    cam8From=new THREE.Vector3(c.x, 2.35, c.z+0.02);
+    cam8To=new THREE.Vector3(c.x+Math.cos(bestDir8)*2.2, 1.5, c.z+Math.sin(bestDir8)*2.2);
+  }
 }
+document.querySelectorAll(".chip").forEach(c=> c.onclick=()=> setStep(+c.dataset.s));
+document.getElementById("next").onclick=()=> setStep(step%9+1);
+document.getElementById("prev").onclick=()=> setStep((step+7)%9+1);
+let playing=false, playT;
+document.getElementById("play").onclick=(e)=>{ playing=!playing; e.target.textContent=playing?"⏸ 정지":"▶ 자동";
+  clearInterval(playT); if(playing) playT=setInterval(()=> setStep(step%9+1), 3600); };
+
+// ── 세그 병합 보조 마커 ──
+const segMarkA=makePin(0x15B86B), segMarkB=makePin(0x15B86B);
+segMarkA.scale.setScalar(0.7); segMarkB.scale.setScalar(0.7); segMarkA.visible=false; segMarkB.visible=false; scene.add(segMarkA); scene.add(segMarkB);
+const sofaC=FURN[0].center;
+
+function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+  ov.width=w*DPR; ov.height=h*DPR; ov.style.width=w+"px"; ov.style.height=h+"px"; }
 addEventListener("resize", resize); resize();
 
-// ── 렌더 루프 ──
 function tick(){
-  raf = requestAnimationFrame(tick);
-  // 단계별 목표 투명도/스케일 보간
-  const tBox = step>=2 ? 1 : 0, tMk = step>=3 ? 1 : 0;
-  const tDots = step===1 ? 1 : (step===2 ? 0.35 : 0);
-  anim.box   = lerp(anim.box, tBox, 0.08);
-  anim.marker= lerp(anim.marker, tMk, 0.1);
-  boxHelper.material.opacity = anim.box;
-  faceBox.material.opacity   = anim.box * 0.10;
-  faceBox.scale.setScalar(lerp(0.6,1,ease(anim.box)));
-  dotsGroup.children.forEach(d=> d.material.opacity = d.material.opacity); // (BasicMaterial 불투명 고정)
-  dotsGroup.visible = tDots>0.02; dotsGroup.scale.setScalar(lerp(0.85,1,Math.min(1,tDots*1.4)));
-  const mk = ease(anim.marker);
-  marker.scale.setScalar(lerp(0.2,1,mk));
-  marker.position.y = lerp(boxCtr.y+0.6, boxCtr.y, mk);   // 위에서 내려와 박힘
-  ring.scale.setScalar(1 + 0.12*Math.sin(performance.now()*0.004));
+  requestAnimationFrame(tick);
+  const tBox = step===4?1:0;
+  boxHelpers.forEach(h=>{ h.material.opacity = lerp(h.material.opacity, tBox, 0.12); });
+  FURN.forEach(f=>{ const t=f.pin.visible?1:0.01; f.pin.scale.setScalar(lerp(f.pin.scale.x, t, 0.2)); });
+  if(step===5){ segT=Math.min(1,segT+0.012); segMarkA.visible=segMarkB.visible=true;
+    const e=ease(segT);
+    segMarkA.position.set(lerp(sofaC.x-0.55,sofaC.x,e), sofaC.y, lerp(sofaC.z-0.18,sofaC.z,e));
+    segMarkB.position.set(lerp(sofaC.x+0.55,sofaC.x,e), sofaC.y, lerp(sofaC.z+0.10,sofaC.z,e));
+    if(segT<0.7){ FURN[0].pin.visible=false; } else { FURN[0].pin.visible=true; const k=(segT-0.7)/0.3; FURN[0].pin.scale.setScalar(k); segMarkA.scale.setScalar(lerp(0.7,0,k)); segMarkB.scale.setScalar(lerp(0.7,0,k)); }
+  } else { segT=0; segMarkA.visible=segMarkB.visible=false; }
+  if(step===8 && cam8To){ fly8=Math.min(1,fly8+0.016); const e=ease(fly8);
+    camGhost.position.lerpVectors(cam8From,cam8To,e); camGhost.lookAt(FURN[TARGET8].center);
+    bestRay.material.color.setHSL(0.07,0.9,0.45+0.08*Math.sin(performance.now()*0.005)); }
   controls.update();
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
   drawOverlay();
 }
 setStep(1); tick();
 </script>
+<script src="nav.js" defer></script>
 </body>
 </html>
