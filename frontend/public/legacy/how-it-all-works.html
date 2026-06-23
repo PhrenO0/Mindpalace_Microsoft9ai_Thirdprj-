@@ -81,6 +81,11 @@
   footer a{color:var(--orange-d);font-weight:700;text-decoration:none;}
   footer b{color:var(--gray7);}
 
+  .shot{width:100%;border-radius:16px;border:1px solid var(--gray3);box-shadow:var(--shadow);margin:8px 0 4px;display:block;}
+  .shotcap{font-size:12.5px;color:var(--gray5);font-weight:500;text-align:center;margin-top:8px;}
+  .markers{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 4px;}
+  .markers .mk{font-size:12.5px;font-weight:600;color:var(--gray7);background:var(--bg3);border-radius:9px;padding:6px 9px;}
+  .markers .mk.hl{background:#FCE3DE;color:#C0392B;font-weight:800;}
   svg{display:block;max-width:100%;height:auto;}
   .lbl{font:700 12px 'Pretendard',sans-serif;fill:var(--gray7);}
   .lbl-s{font:600 10.5px 'Pretendard',sans-serif;fill:var(--gray5);}
@@ -346,6 +351,28 @@
     <div class="row"><div class="t">핫스팟</div><div class="d">가구 위 번호표. 거기에 학습 개념을 얹음.</div></div>
     <div class="row"><div class="t">GraphRAG</div><div class="d">PDF를 의미로 분석해 방·개념으로 만드는 엔진.</div></div>
     <div class="row"><div class="t">장소법</div><div class="d">익숙한 공간 자리에 정보를 놓아 외우는 고전 기억술.</div></div>
+  </div>
+
+  <!-- 실제 작동 예시 -->
+  <div class="sechead"><div class="e">실제로 돌려봤어요</div><h2>경복궁 방 — 받자마자 자동 인식</h2></div>
+  <div class="step">
+    <p class="body" style="margin-top:0;">한국사 프리셋 <b>경복궁 방</b>(GLB)을 처음 열었을 때예요. 업로드·세팅 없이 <span class="o">가구 12개에 번호 마커가 자동으로</span> 박히고 동선까지 짜였어요. (학습 개념은 PDF를 분석하면 이 마커 위에 얹혀요.)</p>
+    <img class="shot" src="shots/02_room-markers.png" alt="경복궁 방 — 가구 12개에 자동 마커" loading="lazy">
+    <div class="shotcap">GLB를 처음 받은 직후 — 소파·식탁·노란 의자·화분·창문에 번호 마커가 자동 배치</div>
+    <div class="markers">
+      <span class="mk">1 식탁</span><span class="mk">2 뒤 왼쪽 화분</span><span class="mk">3 소파</span>
+      <span class="mk">4 뒤 오른쪽 창문</span><span class="mk hl">5 우산 🔴</span><span class="mk">6 뒤 왼쪽 의자2</span>
+      <span class="mk">7 뒤 왼쪽 의자</span><span class="mk">8 수납장</span><span class="mk">9 앞 왼쪽 창문</span>
+      <span class="mk">10 앞 오른쪽 의자</span><span class="mk">11 앞 오른쪽 화분</span><span class="mk">12 앞 오른쪽 의자2</span>
+    </div>
+    <p class="body" style="margin-top:14px;"><b>이 실제 결과에서 바로 보이는 것:</b></p>
+    <p class="body" style="margin-top:6px;">• <span class="o">시점 라벨</span> — "뒤 왼쪽", "앞 오른쪽"이 이름에 그대로(들어선 시점 기준)<br>• <span class="o">같은 의자 여럿</span> → "의자 / 의자2"로 구분(4코너 선별)<br>• <span class="o">5번 "우산" 🔴</span> — AI(Azure)가 화분을 'umbrella'로 잘못 잡은 것. <b>비전이 다시 보고 교정할 대상</b>(하이브리드 명명의 실제 사례!)<br>• <span class="o">동선</span> — 1식탁→2화분→3소파…12, 되돌아가지 않는 한붓</p>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 파일 하나 받았을 뿐인데 <b>가구를 알아보고 번호·동선까지 자동</b>. 'umbrella' 같은 오인식은 비전이 한 번 더 봐서 고쳐요.</span></div>
+  </div>
+  <div class="step">
+    <p class="body" style="margin-top:0;"><b>여기서 시작</b> — 도시·방을 고르는 화면. 한국사면 종로구(경복궁 등)를 고르면 그 명소 방에 학습을 배치해요.</p>
+    <img class="shot" src="shots/01_region-select.png" alt="도시·방 선택 화면" loading="lazy">
+    <div class="shotcap">2 · 공간 둘러보기 — 84개 도시 중 선택(또는 AI 추천)</div>
   </div>
 
   <footer>
