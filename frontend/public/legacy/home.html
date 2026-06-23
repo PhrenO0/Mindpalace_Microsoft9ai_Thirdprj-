@@ -7216,6 +7216,8 @@ end of keeper CSS */
     if (!phoneChat) return;
     phoneChat.classList.add('is-open');
     phoneChat.setAttribute('aria-hidden', 'false');
+    // 음성 엔진 미리 준비(SDK·토큰·연결) → '음성 안내' 누를 때 바로 재생
+    try { window.mpTTS && window.mpTTS.warmup && window.mpTTS.warmup(); } catch (e) {}
     if (phoneFab) {
       phoneFab.classList.add('is-hidden');
       phoneFab.setAttribute('aria-expanded', 'true');
@@ -7571,6 +7573,7 @@ end of keeper CSS */
       master.setAttribute('aria-label', window.__mpVoiceOn ? '음성 안내 끄기' : '음성 안내 켜기');
       if (options) options.hidden = !window.__mpVoiceOn;
       if (window.__mpVoiceOn && window.mpTTS) {
+        if (window.mpTTS.warmup) window.mpTTS.warmup();
         window.mpTTS.speak('음성 안내를 켰습니다. 도우미의 답변을 읽어 드릴게요.');
       } else if (window.mpTTS) {
         window.mpTTS.stop();

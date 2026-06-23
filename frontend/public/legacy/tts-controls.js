@@ -69,23 +69,49 @@
            '</voice></speak>';
   }
 
-  // text -> WAV(ArrayBuffer). audioConfig=null 이면 스피커로 자동재생하지 않고 데이터만 반환.
-  function synthesize(text){
+  // ── 토큰 캐싱(10분 유효 → 8분까지 재사용. 매 재생마다 재요청하던 지연 제거) ──
+  var tokenCache = null, tokenExpiry = 0;
+  function getToken(force){
+    if (!force && tokenCache && Date.now() < tokenExpiry) return Promise.resolve(tokenCache);
     return fetch(tokenUrl()).then(function (r){
       if (!r.ok) throw new Error("토큰 발급 실패(" + r.status + ")");
       return r.json();
-    }).then(function (tok){
-      return loadSDK().then(function (SDK){
+    }).then(function (tok){ tokenCache = tok; tokenExpiry = Date.now() + 8 * 60 * 1000; return tok; });
+  }
+
+  // ── 합성기 재사용(연결 유지 → 매번 핸드셰이크 안 함). 토큰 바뀌면 재생성 ──
+  var synth = null, synthForToken = null;
+  function getSynth(){
+    return loadSDK().then(function (SDK){
+      return getToken().then(function (tok){
+        if (synth && synthForToken === tok.token) return synth;
+        if (synth){ try { synth.close(); } catch (e){} synth = null; }
         var cfg = SDK.SpeechConfig.fromAuthorizationToken(tok.token, tok.region);
-        cfg.speechSynthesisOutputFormat = SDK.SpeechSynthesisOutputFormat.Riff24Khz16BitMonoPcm; // WAV → decodeAudioData 가능
-        var synth = new SDK.SpeechSynthesizer(cfg, null); // null = 자동재생 안 함, result.audioData 로 반환
-        return new Promise(function (resolve, reject){
-          synth.speakSsmlAsync(buildSsml(text), function (res){
-            try { synth.close(); } catch (e){}
-            if (res && res.audioData && res.audioData.byteLength) resolve(res.audioData);
-            else reject(new Error("합성 결과 없음"));
-          }, function (err){ try { synth.close(); } catch (e){} reject(err); });
-        });
+        cfg.speechSynthesisOutputFormat = SDK.SpeechSynthesisOutputFormat.Riff24Khz16BitMonoPcm;
+        synth = new SDK.SpeechSynthesizer(cfg, null); // null = 자동재생 안 함, audioData 반환
+        synthForToken = tok.token;
+        // 연결을 미리 열어 첫 합성 핸드셰이크 제거
+        try { var conn = SDK.Connection.fromSynthesizer(synth); if (conn && conn.openConnection) conn.openConnection(); } catch (e){}
+        return synth;
+      });
+    });
+  }
+
+  // 미리 준비: SDK 로드 + 토큰 + 오디오컨텍스트 + 연결 오픈 (사용자 동작 시점에 호출)
+  function warmup(){
+    if (forceBrowser()) return Promise.resolve();
+    try { getCtx(); } catch (e){}
+    return getSynth().then(function(){}).catch(function (e){ console.warn("[mpTTS] warmup:", e && e.message ? e.message : e); });
+  }
+
+  // text -> WAV(ArrayBuffer). 재사용 합성기로 합성(닫지 않음).
+  function synthesize(text){
+    return getSynth().then(function (sy){
+      return new Promise(function (resolve, reject){
+        sy.speakSsmlAsync(buildSsml(text), function (res){
+          if (res && res.audioData && res.audioData.byteLength) resolve(res.audioData);
+          else reject(new Error("합성 결과 없음"));
+        }, function (err){ reject(err); });
       });
     });
   }
@@ -170,6 +196,7 @@
   window.mpTTS = {
     speak: speak,
     stop: stop,
+    warmup: warmup,
     toggleGender: function(){ gender = (gender === "female") ? "male" : "female"; set(LS_GENDER, gender); return { gender: gender, label: VOICES[gender].label }; },
     setGender: function(g){ if (VOICES[g]){ gender = g; set(LS_GENDER, g); } return { gender: gender, label: VOICES[gender].label }; },
     setSpeed: function(s){ if (SPEEDS[s]){ speed = s; set(LS_SPEED, s); } return { speed: speed, label: SPEEDS[speed].label }; },
