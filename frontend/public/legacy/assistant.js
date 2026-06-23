@@ -45,7 +45,15 @@
     var css = ":root{"; for (var k in p){ if (!SKIP_VAR[k]) css += "--" + k + ":" + p[k] + ";"; } css += "}";
     s.textContent = css;
   }
-  function applyZoom(z){ document.documentElement.style.zoom = z || ""; }
+  // 글씨 크기(#3): 화면 전체에 zoom을 걸되(가로 오버플로 방지), 챗봇 위젯은 역배율로 원래 크기 유지
+  //   → 챗봇이 함께 커지지 않고 본문만 커지는 효과. (본문 래퍼에 직접 zoom 시 풀폭 레이아웃이 가로로 넘쳐 이 방식 채택)
+  //   ※ 컨테이너만 역배율(자식은 상속) — 중복 적용 시 이중 축소되므로 위젯 루트만 지정.
+  var ZOOM_FIXED_SEL = "#mp-asst, .phone-fab, .phone-chat";
+  function applyZoom(z){
+    document.documentElement.style.zoom = z || "";
+    var inv = z ? String(1 / parseFloat(z)) : "";
+    try { document.querySelectorAll(ZOOM_FIXED_SEL).forEach(function (el) { el.style.zoom = inv; }); } catch (e) {}
+  }
   function applyLite(on){
     var s = document.getElementById("mp-lite-style");
     if (on && !s){ s = document.createElement("style"); s.id = "mp-lite-style";
@@ -151,6 +159,7 @@
         '<div class="mp-foot"><input id="mpInput" placeholder="테마를 바꾸거나 질문하세요" /><button id="mpSend" aria-label="보내기">➤</button></div>' +
       '</section>';
     document.body.appendChild(wrap);
+    applyZoom(get(LS_ZOOM, ""));   // 방금 만든 챗봇 위젯에 글씨크기 역배율 반영(저장된 값으로 로드된 경우)
 
     var panel = document.getElementById("mpPanel"), body = document.getElementById("mpBody"), input = document.getElementById("mpInput");
     function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c]; }); }
@@ -288,7 +297,7 @@
       if (/지도|3d|map|둘러/.test(t)){ addMsg("3D 지도에서 도시의 랜드마크를 둘러볼 수 있어요.", "bot"); return addChips([{label:"3D 지도 열기",act:"go",v:"vworld_map.html",say:1}]); }
       if (/업로드|pdf|학습|자료/.test(t)){ addMsg("학습 PDF는 외부에서 palace.json으로 변환돼요. 올리면 '구성' 화면에서 장소·방을 추천해 드려요.", "bot"); return addChips([{label:"구성 화면으로",act:"go",v:"compose.html",say:1}]); }
       if (/구성|추천|장소|방 골/.test(t)){ addMsg("'구성' 화면에서 챕터마다 어울리는 장소와 방을 고를 수 있어요.", "bot"); return addChips([{label:"구성 화면으로",act:"go",v:"compose.html",say:1}]); }
-      if (/입장|시작|걷|walk|방으로/.test(t)){ addMsg("첫 챕터의 방으로 입장할게요.", "bot"); return act({act:"enterFirst"}); }
+      if (/입장|시작|걷|walk|방으로/.test(t)){ addMsg("방으로 입장할까요? 아래 버튼을 누르면 이동해요.", "bot"); return addChips([{label:"▶ 방으로 입장", act:"enterFirst", say:1}]); }
       addMsg("테마·글씨 크기 변경, 화면 이동을 도와드려요.", "bot");
       themeChips(); navChips();
     }
@@ -317,8 +326,11 @@
     document.getElementById("mpLaunch").onclick = function(){ toggle(!panel.classList.contains("open")); };
     document.getElementById("mpClose").onclick = function(){ toggle(false); };
     document.getElementById("mpSend").onclick = function(){ var v = input.value.trim(); if (!v) return; addMsg(v, "me"); input.value = ""; setTimeout(function(){ getReply(v); }, 120); };
+    // 챗봇 입력 중 키가 페이지로 새지 않게 차단 — 방 WASD 이동·지도 단축키가 같이 실행되거나(방) 입력이 막히던(지도) 문제 해결.
     // 한글 IME 조합 중 Enter는 '조합 확정'이므로 전송하지 않음(Mac에서 마지막 글자 중복 전송 방지)
-    input.addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) document.getElementById("mpSend").click(); });
+    input.addEventListener("keydown", function(e){ e.stopPropagation(); if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) document.getElementById("mpSend").click(); });
+    input.addEventListener("keyup", function(e){ e.stopPropagation(); });
+    input.addEventListener("keypress", function(e){ e.stopPropagation(); });
 
     // ── 푸터 도구 아코디언(테마·글씨 / 화면 이동 / 음성 안내) — 한 번에 하나만 펼쳐 공간 절약 ──
     var TOOLS = [

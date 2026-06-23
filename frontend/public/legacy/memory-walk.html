@@ -334,6 +334,31 @@
       </div>
     </div>
   </div>
+  <style id="quizStyle">
+    #quizBody .qz-q{margin:0 0 14px;padding:14px 15px;border:1px solid rgba(51,46,40,.12);border-radius:13px;background:#fff;}
+    #quizBody .qz-q:last-child{margin-bottom:0;}
+    #quizBody .qz-qhead{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+    #quizBody .qz-num{font-weight:900;font-size:13px;color:var(--accent,#b5552f);letter-spacing:.02em;}
+    #quizBody .qz-badge{font-size:11px;font-weight:800;color:#7a7066;background:rgba(51,46,40,.07);border-radius:999px;padding:2px 9px;}
+    #quizBody .qz-question{font-weight:700;font-size:14.5px;line-height:1.7;color:#2a241d;white-space:pre-line;margin-bottom:12px;word-break:keep-all;}
+    #quizBody .qz-opts{display:flex;flex-direction:column;gap:8px;}
+    #quizBody .qz-opt{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1.5px solid rgba(51,46,40,.16);border-radius:11px;cursor:pointer;font-size:13.5px;line-height:1.55;color:#2a241d;transition:border-color .12s,background .12s;word-break:keep-all;}
+    #quizBody .qz-opt:hover{border-color:rgba(181,85,47,.5);background:rgba(181,85,47,.045);}
+    #quizBody .qz-opt:has(input:checked){border-color:var(--accent,#b5552f);background:rgba(181,85,47,.1);font-weight:700;}
+    #quizBody .qz-opt input{accent-color:var(--accent,#b5552f);width:16px;height:16px;flex:0 0 auto;margin:0;}
+    #quizBody .qz-in{width:100%;box-sizing:border-box;padding:11px 13px;border:1.5px solid rgba(51,46,40,.2);border-radius:11px;font-size:14px;color:#2a241d;background:#fff;outline:none;}
+    #quizBody .qz-in:focus{border-color:var(--accent,#b5552f);}
+    #quizBody .qz-res{margin-top:10px;font-size:13px;line-height:1.6;}
+    #quizBody .qz-res:empty{display:none;}
+    #quizBody .qz-res{padding:9px 11px;border-radius:9px;}
+    #quizBody .qz-res.ok{color:#27734a;background:rgba(47,143,78,.1);}
+    #quizBody .qz-res.no{color:#b23a32;background:rgba(192,70,62,.09);}
+    #quizBody .qz-res .qz-explain{margin-top:5px;color:#6b6258;font-weight:500;}
+    #quizBody .qz-review{color:var(--accent,#b5552f);font-weight:700;cursor:pointer;display:inline-block;margin-top:6px;}
+    #quizActions .qz-submit{padding:11px 20px;border:0;border-radius:11px;background:var(--accent,#b5552f);color:#fff;font-weight:800;font-size:13.5px;cursor:pointer;}
+    #quizActions .qz-submit:disabled{opacity:.62;cursor:wait;}
+    #quizActions .qz-scoretxt{font-weight:900;font-size:14px;color:#2a241d;}
+  </style>
 
   <div class="status" id="status">로드 중…</div>
 
@@ -2000,8 +2025,9 @@
       let job=null; try { job=JSON.parse(localStorage.getItem("mp_rag_job")||"null"); } catch(_){}
       const snapshot = (job && job.jobId) ? job.jobId : (MW_PALACE_ID || "korean_history");
       try {
+        // 문제 수·유형 등 생성 기본값은 백엔드(/quiz/json)가 정한다 — 프론트는 주제·스냅샷만 넘기고 UI만 담당.
         const r = await fetch(MNEMO_BASE+"/quiz/json", { method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ topic: quizTopic(), count: 6, snapshot }) });
+          body: JSON.stringify({ topic: quizTopic(), snapshot }) });
         if (!r.ok){ $("quizBody").innerHTML = `<div style="color:#b06a3a">퀴즈 기능이 아직 백엔드에 연결되지 않았어요 (${r.status}). graphrag에 /quiz/json 추가 후 작동합니다.</div>`; return; }
         const j = await r.json(); quizData = j;
         trackUsage("quiz", j.usage);   // 퀴즈 생성에 쓴 토큰 누적
@@ -2009,18 +2035,36 @@
         renderQuizQuestions(j.questions);
       } catch(_){ $("quizBody").innerHTML = `<div style="color:#b03636">퀴즈 생성 실패 — 잠시 후 다시 시도하세요.</div>`; }
     }
+    const QZ_TYPE_LABEL = { multiple_choice:"객관식", true_false:"OX", short_answer:"단답형" };
+    // 보기 라벨 — OX는 밋밋한 'O/X' 대신 의미를 함께 보여 가독성↑(채점 값은 그대로 index).
+    function qzOptLabel(q, c){
+      if (q.type === "true_false"){
+        const t = String(c).trim().toUpperCase();
+        if (t === "O") return "⭕  맞다 (O)";
+        if (t === "X") return "❌  틀리다 (X)";
+      }
+      return esc2(c);
+    }
     function renderQuizQuestions(qs){
       $("quizBody").innerHTML = qs.map((q,i)=>{
-        let input;
-        if (q.type === "short_answer"){
-          input = `<input data-qi="${i}" class="qz-in" style="width:100%;padding:8px;border:1px solid rgba(51,46,40,.2);border-radius:8px;font-size:13px;margin-top:6px" placeholder="답 입력">`;
+        const type = q.type || (q.choices && q.choices.length ? "multiple_choice" : "short_answer");
+        const badge = QZ_TYPE_LABEL[type] || "문제";
+        let body;
+        if (type === "short_answer"){
+          body = `<input data-qi="${i}" class="qz-in" placeholder="정답 입력" autocomplete="off">`;
         } else {
-          const ch = q.choices || (q.type==="true_false" ? ["O (맞다)","X (틀리다)"] : []);
-          input = ch.map((c,ci)=>`<label style="display:block;padding:6px 9px;margin-top:5px;border:1px solid rgba(51,46,40,.15);border-radius:8px;cursor:pointer;font-size:13px"><input type="radio" name="qz${i}" data-qi="${i}" value="${ci}" style="margin-right:7px">${esc2(c)}</label>`).join("");
+          const ch = (q.choices && q.choices.length) ? q.choices : (type==="true_false" ? ["O","X"] : []);
+          body = `<div class="qz-opts">` + ch.map((c,ci)=>
+            `<label class="qz-opt"><input type="radio" name="qz${i}" data-qi="${i}" value="${ci}"><span>${qzOptLabel(q,c)}</span></label>`
+          ).join("") + `</div>`;
         }
-        return `<div class="qz-q" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(51,46,40,.08)"><div style="font-weight:800;font-size:13.5px"><span style="color:var(--accent,#b5552f)">Q${i+1}.</span> ${esc2(q.question)}</div>${input}<div class="qz-res" data-qi="${i}" style="margin-top:7px;font-size:12.5px"></div></div>`;
+        return `<div class="qz-q">`
+          + `<div class="qz-qhead"><span class="qz-num">Q${i+1}</span><span class="qz-badge">${badge}</span></div>`
+          + `<div class="qz-question">${esc2(q.question||"")}</div>`
+          + body
+          + `<div class="qz-res" data-qi="${i}"></div></div>`;
       }).join("");
-      $("quizActions").innerHTML = `<button id="quizSubmit" style="padding:9px 16px;border:0;border-radius:10px;background:var(--accent,#b5552f);color:#fff;font-weight:800;font-size:13px;cursor:pointer">채점하기</button><span id="quizScore" style="font-weight:800;color:#2a241d"></span>`;
+      $("quizActions").innerHTML = `<button id="quizSubmit" class="qz-submit">채점하기</button><span id="quizScore" class="qz-scoretxt"></span>`;
       $("quizSubmit").onclick = gradeQuiz;
     }
     function collectAnswers(){ const ans={};
@@ -2036,12 +2080,13 @@
         const j = await r.json();
         (j.results||[]).forEach(res=>{
           const box = document.querySelector(`#quizBody .qz-res[data-qi="${res.index}"]`); if(!box) return;
-          box.innerHTML = (res.correct ? '<span style="color:#2f8f4e;font-weight:800">✓ 정답</span>' : '<span style="color:#c0463e;font-weight:800">✗ 오답</span>')
+          box.className = "qz-res " + (res.correct ? "ok" : "no");
+          box.innerHTML = `<b>${res.correct ? "✓ 정답" : "✗ 오답"}</b>`
             + (res.answerText ? ` · 정답: <b>${esc2(res.answerText)}</b>` : "")
-            + (res.explanation ? `<br><span style="color:#7a7066">${esc2(res.explanation)}</span>` : "");
+            + (res.explanation ? `<div class="qz-explain">${esc2(res.explanation)}</div>` : "");
           if (!res.correct){ const q=quizData.questions[res.index]; const idx=findMarkerForText(((q&&q.question)||"")+" "+(res.answerText||""));
-            if (idx>=0){ const a=document.createElement("a"); a.textContent="📍 관련 마커로 복습"; a.style.cssText="color:#b5552f;font-weight:700;cursor:pointer;display:inline-block;margin-top:5px";
-              a.onclick=()=>{ $("quizModal").style.display="none"; goTo(idx); }; box.appendChild(document.createElement("br")); box.appendChild(a); } }
+            if (idx>=0){ const a=document.createElement("a"); a.textContent="📍 관련 마커로 복습"; a.className="qz-review";
+              a.onclick=()=>{ $("quizModal").style.display="none"; goTo(idx); }; box.appendChild(a); } }
         });
         $("quizScore").textContent = `  ${j.score}/${j.total} 정답`; sb.textContent="다시 채점";
         saveQuizResult(j);   // 결과를 계정에 기록(마이페이지 '내 퀴즈 기록') — 비로그인/실패는 조용히 무시
