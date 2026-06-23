@@ -131,6 +131,12 @@
     $("quizBody").querySelectorAll("#qzCount button").forEach(function (b) {
       b.addEventListener("click", function () { $("quizBody").querySelectorAll("#qzCount button").forEach(function (x) { x.classList.toggle("sel", x === b); }); });
     });
+    // 주제 입력란: 키가 페이지(지도 단축키)로 새지 않게 차단 + Enter로 퀴즈 생성(방 입장으로 빠지던 문제 해결).
+    var topicInp = $("qzTopic");
+    if (topicInp) topicInp.addEventListener("keydown", function (e) {
+      e.stopPropagation();
+      if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); generateQuiz(); }
+    });
     $("quizActions").innerHTML = '<button id="quizGenBtn" class="qz-submit">📝 퀴즈 만들기</button>';
     $("quizGenBtn").onclick = generateQuiz;
   }
