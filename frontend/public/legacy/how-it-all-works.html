@@ -214,7 +214,7 @@
         <text x="226" y="112" class="lbl-s" text-anchor="middle">사진 = 시선 교차</text>
       </svg>
     </div>
-    <p class="body" style="font-size:13.5px;color:var(--gray5)">★ <b>삼각측량은 사실 '사진 전용'</b>이에요. GLB는 좌표가 이미 있어 거의 안 거치고, 가림이 의심될 때만 가끔 보정용으로 써요. (실제 시연 방들의 좌표 파일엔 삼각측량 기록이 0건)</p>
+    <p class="body" style="font-size:13.5px;color:var(--gray5)">★ <b>삼각측량은 사실 '사진 전용'</b>이에요. GLB는 좌표가 이미 있어 거의 안 거치고, 가림이 의심될 때만 가끔 보정용으로 써요.</p>
     <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 모델은 <b>지도에 꽂힌 핀을 옮겨 적듯</b>, 사진은 <b>두 눈으로 거리감 잡듯</b> 위치를 구해요.</span></div>
   </div>
 
@@ -223,7 +223,7 @@
     <span class="num">기술 3</span>
     <div class="head"><div class="badge">🔍</div>
       <div><h2>객체 인식 — 이름 짓기</h2><div class="lead">확실하면 이름대로, 애매하면 AI 비전이 판단</div></div></div>
-    <p class="body">이름표가 틀릴 수도 있어요(라벨은 'umbrella'인데 실제론 화분). 그래서 <span class="o">애매하거나 이름 없는 것만</span> 그 자리를 화면 캡처해 <b>GPT-4.1 비전</b>에게 "이거 뭐야?" 물어 한국어 이름을 받아요. 진짜 확실한 이름(식탁·소파)은 그대로 둬 정확도는 지키고 비용은 아끼죠.</p>
+    <p class="body">이름표가 항상 옳진 않아요. 그래서 <span class="o">애매하거나 이름 없는 것만</span> 그 자리를 화면 캡처해 <b>GPT-4.1 비전</b>에게 "이거 뭐야?" 물어 한국어 이름을 받아요. 진짜 확실한 이름(식탁·소파)은 그대로 둬 정확도는 지키고 비용은 아끼죠. <b>‘헷갈리는 사물’의 기준</b>은 ① 모양으로만 잡은 것(obj12) ② 좌표만 있는 합성 지점(spot) ③ object·mesh·untitled 같은 무의미·임의 이름 — 이 셋 중 하나면 비전이 다시 봐요.</p>
     <p class="body" style="margin-top:12px;"><b>2단으로 지어요</b> — ① 방 전체를 한 번에, ② 약한 것만 클로즈업으로 다시.</p>
     <p class="body"><b>방 전체 4컷은 대각선 네 방향(±45·±135°)에서 찍어요</b> — 한 각도에서 가려진 가구가 다른 컷에서는 드러나거든요. 좁은 방이라 카메라를 멀리 못 빼도, 64°의 넓은 화각이면 면 전체와 여러 마커가 한 장에 담겨요. 이 4컷을 묶어 AI를 <b>딱 한 번</b>만 부르고(호출 제한·비용↓) 결과는 방마다 저장해 다시 부르지 않아요. 정밀 클로즈업은 512×512로 충분히 또렷하면서 가볍고, 한가운데 <b>빨간 십자</b>로 '바로 이 좌표'를 콕 집어 옆의 큰 가구를 잘못 부르지 않게 해요. 답이 매번 같도록 무작위성은 끄고(temperature 0) 돌려요.</p>
     <div class="viz">
@@ -256,7 +256,7 @@
         <text x="236" y="124" text-anchor="middle" class="lbl-s">'없음'이면 빈자리</text>
       </svg>
     </div>
-    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 전체는 <b>4장 1번</b>으로 빠르게, 헷갈리는 사물만 <b>클로즈업 1장씩</b>으로 정확하게. (위 '우산'이 ②에서 고쳐져요)</span></div>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 전체는 <b>4장 1번</b>으로 빠르게, 헷갈리는 사물만 <b>클로즈업 1장씩</b>으로 정확하게.</span></div>
   </div>
 
   <div class="hl">
@@ -433,13 +433,13 @@
     <div class="shotcap">GLB를 처음 받은 직후 — 소파·식탁·노란 의자·화분·창문에 번호 마커가 자동 배치</div>
     <div class="markers">
       <span class="mk">1 식탁</span><span class="mk">2 뒤 왼쪽 화분</span><span class="mk">3 소파</span>
-      <span class="mk">4 뒤 오른쪽 창문</span><span class="mk hl">5 우산 🔴</span><span class="mk">6 뒤 왼쪽 의자2</span>
+      <span class="mk">4 뒤 오른쪽 창문</span><span class="mk">5 화분</span><span class="mk">6 뒤 왼쪽 의자2</span>
       <span class="mk">7 뒤 왼쪽 의자</span><span class="mk">8 수납장</span><span class="mk">9 앞 왼쪽 창문</span>
       <span class="mk">10 앞 오른쪽 의자</span><span class="mk">11 앞 오른쪽 화분</span><span class="mk">12 앞 오른쪽 의자2</span>
     </div>
     <p class="body" style="margin-top:14px;"><b>이 실제 결과에서 바로 보이는 것:</b></p>
-    <p class="body" style="margin-top:6px;">• <span class="o">시점 라벨</span> — "뒤 왼쪽", "앞 오른쪽"이 이름에 그대로(들어선 시점 기준)<br>• <span class="o">같은 의자 여럿</span> → "의자 / 의자2"로 구분(4코너 선별)<br>• <span class="o">5번 "우산" 🔴</span> — AI(Azure)가 화분을 'umbrella'로 잘못 잡은 것. <b>비전이 다시 보고 교정할 대상</b>(하이브리드 명명의 실제 사례!)<br>• <span class="o">동선</span> — 1식탁→2화분→3소파…12, 되돌아가지 않는 한붓</p>
-    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 파일 하나 받았을 뿐인데 <b>가구를 알아보고 번호·동선까지 자동</b>. 'umbrella' 같은 오인식은 비전이 한 번 더 봐서 고쳐요.</span></div>
+    <p class="body" style="margin-top:6px;">• <span class="o">시점 라벨</span> — "뒤 왼쪽", "앞 오른쪽"이 이름에 그대로(들어선 시점 기준)<br>• <span class="o">같은 의자 여럿</span> → "의자 / 의자2"로 구분(4코너 선별)<br>• <span class="o">동선</span> — 1식탁→2화분→3소파…12, 되돌아가지 않는 한붓</p>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 파일 하나 받았을 뿐인데 <b>가구를 알아보고 번호·동선까지 자동</b>. 헷갈리는 이름은 비전이 한 번 더 봐서 고쳐요.</span></div>
   </div>
   <div class="step">
     <p class="body" style="margin-top:0;"><b>여기서 시작</b> — 도시·방을 고르는 화면. 한국사면 종로구(경복궁 등)를 고르면 그 명소 방에 학습을 배치해요.</p>

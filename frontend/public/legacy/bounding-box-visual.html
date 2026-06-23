@@ -46,7 +46,7 @@
   .caption .em{color:var(--orange); font-weight:700;} .caption .emg{color:var(--green); font-weight:700;}
 
   /* 단계 바(하단) */
-  .bar{left:50%; bottom:18px; transform:translateX(-50%); display:flex; gap:5px; align-items:center;
+  .bar{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); display:flex; gap:4px; align-items:center; max-width:calc(100vw - 20px); flex-wrap:wrap; justify-content:center;
     background:rgba(255,255,255,.95); backdrop-filter:blur(8px); border:1px solid var(--line);
     border-radius:999px; padding:6px 7px; box-shadow:0 8px 26px rgba(60,40,20,.14); pointer-events:auto; z-index:6;}
   .bar button{font-family:inherit; cursor:pointer; border:none; background:none; color:var(--gray);
@@ -97,7 +97,8 @@
   <button class="chip" data-s="6">6</button>
   <button class="chip" data-s="7">7</button>
   <button class="chip" data-s="8">8</button>
-  <button class="chip fin" data-s="9">9</button>
+  <button class="chip" data-s="9">9</button>
+  <button class="chip fin" data-s="10">10</button>
   <button class="nav" id="next" title="다음">›</button>
   <span class="sep"></span>
   <button class="play" id="play">▶ 자동</button>
@@ -233,7 +234,15 @@ const ghosts = new THREE.Group(); ghosts.visible=false; scene.add(ghosts);
   cone.position.set(px,1.5,pz); cone.lookAt(0,0.8,0); cone.rotateX(Math.PI/2); ghosts.add(cone);
 });
 
-// ── 동선 라인(스텝 7) ──
+// ── 레이캐스트 시연(스텝 6): 위→아래 광선이 가구 윗면을 맞혀 마커를 표면에 앉힘 ──
+const rayGroup = new THREE.Group(); rayGroup.visible=false; scene.add(rayGroup);
+FURN.forEach(f=>{ const b=new THREE.Box3().setFromObject(f.g); const topY=b.max.y, x=f.center.x, z=f.center.z;
+  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x, topY+0.8, z), new THREE.Vector3(x, topY, z)]);
+  rayGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:0xE0730F})));
+  const hit=new THREE.Mesh(new THREE.SphereGeometry(0.042,10,10), new THREE.MeshBasicMaterial({color:0xE0730F})); hit.position.set(x,topY,z); rayGroup.add(hit);
+});
+
+// ── 동선 라인(스텝 8) ──
 let routeOrder = [];
 const routeLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color:0xE0730F, transparent:true, opacity:0.85}));
 routeLine.visible=false; scene.add(routeLine);
@@ -300,7 +309,8 @@ function numBadge(world, n){ const p=project(world); if(!p.vis) return; const x=
 function drawOverlay(){
   og.clearRect(0,0,ov.width,ov.height);
   const s=step;
-  if(s===6){
+  if(s===6){ tag(FURN[5].center, "광선 ↓ 표면에 앉힘", 70, "rgba(224,115,15,.95)", "#fff"); }
+  else if(s===7){
     FURN.forEach((f)=>{ const weak=f.weak; const nm=(weak && !nameReveal)? "정밀 확인…" : f.ko;
       tag(f.center, nm, -44, (weak && !nameReveal) ? "rgba(224,115,15,.95)" : "rgba(255,255,255,.96)", (weak&&!nameReveal)? "#fff":"#191F28"); });
     if(crossOn){
@@ -313,8 +323,8 @@ function drawOverlay(){
         tag(FURN[4].center, "화분 ✓", 78, "rgba(21,184,107,.96)", "#fff");
       }
     }
-  } else if(s===7){ FURN.forEach((f,i)=> numBadge(f.center, orderOf[i])); }
-  else if(s===9){ FURN.forEach((f)=>{ tag(f.center, f.ko+" = "+f.concept, -46, "rgba(21,184,107,.96)", "#fff"); }); }
+  } else if(s===8){ FURN.forEach((f,i)=> numBadge(f.center, orderOf[i])); }
+  else if(s===10){ FURN.forEach((f)=>{ tag(f.center, f.ko+" = "+f.concept, -46, "rgba(21,184,107,.96)", "#fff"); }); }
 }
 
 // ── 단계 상태기 ──
@@ -333,13 +343,15 @@ const STEPS = {
      wt:"좌표 산출",wv:"Box3 center",wd:"메쉬 피벗은 모델러 임의라 기준 안 됨 → AABB 중심=부피 한가운데=사람이 느끼는 무게중심. 정점만 읽어 오차 0."},
   5:{no:"STEP 5",h:"세그멘테이션 — 겹친 건 하나로",p:'소파가 여러 조각이면 마커가 겹쳐요. <span class="em">같은 자리(0.42m)</span>면 하나로 합쳐 ‘한 사물=한 마커’.',
      wt:"겹침 컷(평면)",wv:"XZ 0.42m",wd:"높이 버리고 위에서 본 거리만 → 러그(바닥)+벽 그림(공중) 같은 자리 중복 해결. 의자 간격(≥0.5m)보다 좁게 잡아 떨어진 의자는 보존."},
-  6:{no:"STEP 6",h:"이름 — 4컷 배치 + 정밀",p:'네 모서리 4컷을 AI에 <span class="em">1번</span> → 번호별 이름. 작거나 가린 <span class="em">약한 마커</span>는 <span class="em">512² 십자선</span>으로 그 자리만 정밀 확인.',
+  6:{no:"STEP 6",h:"레이캐스트 — 광선으로 표면에 앉히기",p:'보이지 않는 <span class="em">광선(ray)</span>을 위→아래로 쏴 <span class="em">처음 맞는 면</span>을 읽어요. 마커를 가구 윗면에 정확히 앉히고, 같은 원리로 카메라가 설 트인 곳도 찾아요.',
+     wt:"레이캐스트",wv:"위→아래 1발 + 둘레 다발",wd:"표면 부착: 천장 위에서 아래로 쏴 첫 표면(가구 윗면) 높이를 얻음(옆에서 쏘면 벽부터 맞음). 스캐너는 사물당 안쪽 3×3=9점을 쏴 가장 가까운 앞면만 평균(뒤벽 안 끌림)."},
+  7:{no:"STEP 7",h:"이름 — 4컷 배치 + 정밀",p:'네 모서리 4컷을 AI에 <span class="em">1번</span> → 번호별 이름. 작거나 가린 <span class="em">약한 마커</span>는 <span class="em">512² 십자선</span>으로 그 자리만 정밀 확인.',
      wt:"명명 호출",wv:"4컷·1콜 + 정밀",wd:"4컷 묶어 1콜(비용↓)+GLB캐시. 정밀은 512² 클로즈업+빨간 십자(α0.95)로 옆 큰 가구 오명명 방지. temperature 0=정확·재현."},
-  7:{no:"STEP 7",h:"동선·번호 — 걷는 순서",p:'입장 시점(긴 축 끝)에서 <span class="em">가까움+직진</span>으로 한 바퀴. 걷는 순서 = 외우는 순서.',
+  8:{no:"STEP 8",h:"동선·번호 — 걷는 순서",p:'입장 시점(긴 축 끝)에서 <span class="em">가까움+직진</span>으로 한 바퀴. 걷는 순서 = 외우는 순서.',
      wt:"순서 점수",wv:"−dist + turn×0.7",wd:"turn=진행·목표 방향 내적(직진+1/U턴−1). 0.7은 거리↔turn 환산 → 두 후보 거리차 1.4m 이내면 ‘덜 꺾이는 쪽’ 승(지그재그 억제)."},
-  8:{no:"STEP 8",h:"카메라 — 28방향 best로 활공",p:'번호를 누르면 <span class="em">28방향</span>을 따져 가장 트인 자리로 <span class="em">0.9초</span> 활공.',
+  9:{no:"STEP 9",h:"카메라 — 28방향 best로 활공",p:'번호를 누르면 <span class="em">28방향</span>을 따져 가장 트인 자리로 <span class="em">0.9초</span> 활공.',
      wt:"카메라 평가",wv:"28방향 · 0.9초",wd:"360/28≈12.86° 해상도(적으면 틈 놓침/많으면 비쌈). 점수 open1.0+facing1.1+dist0.4+cont1.25 → 연속성 최대=휙 회전 멀미 억제. easeInOutCubic."},
-  9:{no:"STEP 9",h:"학습 — 위치에 개념 얹기",fin:true,p:'각 위치에 학습 개념을 묶어요(<span class="emg">entityId</span>). 위치가 곧 지식의 단서 — 장소법(method of loci).',
+  10:{no:"STEP 10",h:"학습 — 위치에 개념 얹기",fin:true,p:'각 위치에 학습 개념을 묶어요(<span class="emg">entityId</span>). 위치가 곧 지식의 단서 — 장소법(method of loci).',
      wt:"위치 = 지식",wv:"entityId 바인딩",wd:"가구 좌표에 학습 항목을 결합해 저장(내 서재 Cosmos+Blob). 다음 입장 때 같은 방·같은 자리에서 회상 단서가 재현."},
 };
 
@@ -358,25 +370,26 @@ function setStep(s){
 
   normGroup.visible = (s===2);
   FURN.forEach(f=> f.pin.visible = s>=4);
-  ghosts.visible = (s===6);
-  routeLine.visible = (s>=7 && s<=9);
-  rayFan.visible = (s===8); bestRay.visible=(s===8);
+  rayGroup.visible = (s===6);
+  ghosts.visible = (s===7);
+  routeLine.visible = (s>=8 && s<=10);
+  rayFan.visible = (s===9); bestRay.visible=(s===9);
 
-  nameReveal = (s>6); crossOn=false;
-  if(s===6){ nameReveal=false; setTimeout(()=>{ if(step===6) crossOn=true; }, 900); setTimeout(()=>{ if(step===6) nameReveal=true; }, 1900); }
+  nameReveal = (s>7); crossOn=false;
+  if(s===7){ nameReveal=false; setTimeout(()=>{ if(step===7) crossOn=true; }, 900); setTimeout(()=>{ if(step===7) nameReveal=true; }, 1900); }
 
-  camGhost.visible = (s===8);
-  if(s===8){ fly8=0; const c=FURN[TARGET8].center;
+  camGhost.visible = (s===9);
+  if(s===9){ fly8=0; const c=FURN[TARGET8].center;
     cam8From=new THREE.Vector3(c.x, 2.35, c.z+0.02);
     cam8To=new THREE.Vector3(c.x+Math.cos(bestDir8)*2.2, 1.5, c.z+Math.sin(bestDir8)*2.2);
   }
 }
 document.querySelectorAll(".chip").forEach(c=> c.onclick=()=> setStep(+c.dataset.s));
-document.getElementById("next").onclick=()=> setStep(step%9+1);
-document.getElementById("prev").onclick=()=> setStep((step+7)%9+1);
+document.getElementById("next").onclick=()=> setStep(step%10+1);
+document.getElementById("prev").onclick=()=> setStep((step+8)%10+1);
 let playing=false, playT;
 document.getElementById("play").onclick=(e)=>{ playing=!playing; e.target.textContent=playing?"⏸ 정지":"▶ 자동";
-  clearInterval(playT); if(playing) playT=setInterval(()=> setStep(step%9+1), 3600); };
+  clearInterval(playT); if(playing) playT=setInterval(()=> setStep(step%10+1), 3600); };
 
 // ── 세그 병합 보조 마커 ──
 const segMarkA=makePin(0x15B86B), segMarkB=makePin(0x15B86B);
@@ -398,7 +411,7 @@ function tick(){
     segMarkB.position.set(lerp(sofaC.x+0.55,sofaC.x,e), sofaC.y, lerp(sofaC.z+0.10,sofaC.z,e));
     if(segT<0.7){ FURN[0].pin.visible=false; } else { FURN[0].pin.visible=true; const k=(segT-0.7)/0.3; FURN[0].pin.scale.setScalar(k); segMarkA.scale.setScalar(lerp(0.7,0,k)); segMarkB.scale.setScalar(lerp(0.7,0,k)); }
   } else { segT=0; segMarkA.visible=segMarkB.visible=false; }
-  if(step===8 && cam8To){ fly8=Math.min(1,fly8+0.016); const e=ease(fly8);
+  if(step===9 && cam8To){ fly8=Math.min(1,fly8+0.016); const e=ease(fly8);
     camGhost.position.lerpVectors(cam8From,cam8To,e); camGhost.lookAt(FURN[TARGET8].center);
     bestRay.material.color.setHSL(0.07,0.9,0.45+0.08*Math.sin(performance.now()*0.005)); }
   controls.update();

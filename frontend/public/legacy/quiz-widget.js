@@ -140,7 +140,9 @@
       b.addEventListener("click", function () { $("quizBody").querySelectorAll("#qzCount button").forEach(function (x) { x.classList.toggle("sel", x === b); }); });
     });
     // 주제 입력 후 Enter 는 '퀴즈 만들기'로 연결(한글 IME 조합 중 Enter 오발 방지: isComposing/keyCode 229 가드).
-    $("qzTopic").addEventListener("keydown", function (e) {
+    //   키가 페이지 단축키(지도)로 새는 건 ensureDom 의 모달 레벨 stopPropagation 이 이미 막는다.
+    var topicInp = $("qzTopic");
+    if (topicInp) topicInp.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); generateQuiz(); }
     });
     $("quizActions").innerHTML = '<button id="quizGenBtn" class="qz-submit">📝 퀴즈 만들기</button>';
