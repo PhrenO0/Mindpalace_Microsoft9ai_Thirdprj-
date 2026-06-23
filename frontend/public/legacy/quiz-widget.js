@@ -140,9 +140,11 @@
       b.addEventListener("click", function () { $("quizBody").querySelectorAll("#qzCount button").forEach(function (x) { x.classList.toggle("sel", x === b); }); });
     });
     // 주제 입력 후 Enter 는 '퀴즈 만들기'로 연결(한글 IME 조합 중 Enter 오발 방지: isComposing/keyCode 229 가드).
-    //   키가 페이지 단축키(지도)로 새는 건 ensureDom 의 모달 레벨 stopPropagation 이 이미 막는다.
+    //   stopPropagation 은 모달 레벨 가드(ensureDom)와 중복이지만, Enter 시 generateQuiz 가
+    //   입력칸을 즉시 제거해 버블링이 모달까지 못 닿는 경우에도 페이지 단축키로 새지 않게 여기서도 막는다.
     var topicInp = $("qzTopic");
     if (topicInp) topicInp.addEventListener("keydown", function (e) {
+      e.stopPropagation();
       if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); generateQuiz(); }
     });
     $("quizActions").innerHTML = '<button id="quizGenBtn" class="qz-submit">📝 퀴즈 만들기</button>';
