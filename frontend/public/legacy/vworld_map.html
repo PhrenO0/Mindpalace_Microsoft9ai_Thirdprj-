@@ -286,11 +286,11 @@
         color: var(--accent);
       }
 
-      /* 우하단 미니맵 — Leaflet 2D 지도(실시간 길거리·현위치) */
+      /* 좌상단 미니맵 — Leaflet 2D 지도(실시간 길거리·현위치) */
       .minimap {
         position: absolute;
-        right: 14px;
-        bottom: 14px;
+        left: 14px;
+        top: 115px;
         width: 150px;
         height: 150px;
         z-index: 4;
@@ -300,6 +300,10 @@
         box-shadow: var(--shadow);
         background: #eee9df;
       }
+      /* 도우미 위젯(assistant.js 전역 좌하단 배치)을 이 페이지에서만 하단 정보바 높이에 맞춰 내림.
+         id + !important 로 assistant.js 의 인라인 bottom 값을 덮어씀(다른 페이지는 영향 없음). */
+      #mpLaunch { bottom: 100px !important; }
+      #mpPanel  { bottom: 156px !important; }
       .minimap .leaflet-container {
         width: 100%;
         height: 100%;
