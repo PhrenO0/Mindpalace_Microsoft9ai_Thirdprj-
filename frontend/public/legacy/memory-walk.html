@@ -710,6 +710,9 @@
     let route = [];             // 경로 순 핫스팟 [{pos, entity, number, marker, related:[]}]
     let activeIdx = -1;
     const UP = new THREE.Vector3(0,1,0);
+    // 공간음향의 기준 프레임. 방에 처음 생성되는 위치와 그때 바라보는 방향을 고정한다.
+    // 이후 카메라가 각 사물을 정면 중앙에 놓더라도 이 프레임은 변경하지 않는다.
+    let entryAudioFrame = null;
     let occluders = [];                       // 방 메쉬(가시성 레이캐스트 대상)
     const _viewRay = new THREE.Raycaster();   // 마커가 다른 가구에 가려졌는지 검사용
     let CONTENT_LOCKED = false;               // PDF 미업로드 = 데모 콘텐츠 잠금(방·가구 둘러보기 O, 학습 마커는 PDF 후 해금)
@@ -1748,25 +1751,25 @@
       $("card").style.display = "block";
     }
 
-    // ── 🔊 엔티티 설명 듣기(시각 접근성) + 공간음향 pan ───────────────────────
+    // ── 🔊 엔티티 설명 듣기(시각 접근성) + 입장점 기준 3D 공간음향 ─────────────
     //   · 음성 안내(assistant.js 의 window.__mpVoiceOn)가 켜져 있을 때만 카드에 버튼 노출.
-    //   · 공간음향 ON → 엔티티 월드좌표(h.eye)와 카메라 방향으로 pan(-1왼~+1오) 계산, OFF → 0(중앙).
+    //   · 공간음향 ON → 방 진입 위치·최초 시선 기준으로 엔티티의 좌/우·앞/뒤·위/아래·거리를 계산.
     //   · 재생 중 '■ 읽기 중지', 엔티티 변경/음성 끄기 시 이전 음성 중지(토큰으로 콜백 무효화).
     //   · 목소리·속도는 mpTTS 의 기존 설정을 그대로 사용. 토큰 엔드포인트도 기존 것 재사용.
     let _ttsToken = 0, _ttsPlaying = false;
     function ttsAnnounce(msg){ const l = $("cTtsLive"); if (l) l.textContent = msg; }   // 스크린리더 안내(aria-live)
-    function panForSpot(h){
+    function spatialForSpot(h){
       try {
-        if (!(window.mpTTS && window.mpTTS.isSpatial && window.mpTTS.isSpatial())) return 0;   // 공간음향 OFF → 중앙
-        if (!h || !h.eye) return 0;
-        const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0;             // 카메라 시선(수평)
-        if (fwd.lengthSq() < 1e-6) return 0; fwd.normalize();
-        const right = new THREE.Vector3().crossVectors(fwd, UP);                                // 카메라 우측축 = forward × up
-        if (right.lengthSq() < 1e-6) return 0; right.normalize();
-        const toObj = h.eye.clone().sub(camera.position); toObj.y = 0;                          // 카메라→엔티티(수평)
-        if (toObj.lengthSq() < 1e-6) return 0; toObj.normalize();
-        return Math.max(-1, Math.min(1, toObj.dot(right)));                                     // +오른쪽 / -왼쪽
-      } catch (_) { return 0; }
+        if (!(window.mpTTS && window.mpTTS.isSpatial && window.mpTTS.isSpatial())) return {};
+        if (!h || !h.eye || !entryAudioFrame) return { pan: 0 };
+        const delta = h.eye.clone().sub(entryAudioFrame.origin).multiplyScalar(entryAudioFrame.scale);
+        const x = delta.dot(entryAudioFrame.right);              // +오른쪽 / -왼쪽
+        const y = delta.dot(UP);                                 // +위 / -아래
+        const z = -delta.dot(entryAudioFrame.forward);           // Web Audio: 정면은 -Z, 뒤는 +Z
+        const horizontal = Math.hypot(x, z);
+        const pan = horizontal > 1e-5 ? Math.max(-1, Math.min(1, x / horizontal)) : 0;
+        return { position: { x, y, z }, pan, refDistance: 1.15, maxDistance: 18, rolloffFactor: 0.72 };
+      } catch (_) { return { pan: 0 }; }
     }
     function cardReadText(h){
       if (!h) return "";
@@ -1816,7 +1819,7 @@
         const myToken = ++_ttsToken;
         setListenPlaying(); ttsAnnounce("설명을 읽습니다.");
         try { window.mpTTS.warmup && window.mpTTS.warmup(); } catch (_) {}
-        window.mpTTS.speak(text, { pan: panForSpot(h) })
+        window.mpTTS.speak(text, spatialForSpot(h))
           .then(function(){ if (myToken === _ttsToken){ setListenIdle(); ttsAnnounce("읽기를 마쳤습니다."); } })
           .catch(function(){ if (myToken === _ttsToken) setListenIdle(); });
       });
@@ -3214,6 +3217,14 @@
       camera.position.copy(pos);
       const center = bounds.getCenter(new THREE.Vector3());
       controls.target.set(center.x, pos.y, center.z); controls.update();
+      // 최초 위치와 수평 시선을 고정 좌표계로 저장한다. 큰 GLB 방만 최대 약 8m 범위로
+      // 완만하게 축소하고, 일반적인 실측 크기 방은 원래 거리감을 그대로 유지한다.
+      const forward = new THREE.Vector3(center.x-pos.x, 0, center.z-pos.z);
+      if (forward.lengthSq() < 1e-6) forward.set(0, 0, -1); else forward.normalize();
+      const right = new THREE.Vector3().crossVectors(forward, UP).normalize();
+      const roomSize = bounds.getSize(new THREE.Vector3());
+      const horizontalExtent = Math.max(roomSize.x, roomSize.z, 1);
+      entryAudioFrame = { origin: pos.clone(), forward, right, scale: Math.min(1, 8 / horizontalExtent) };
     }
 
     // ── 방 껍데기(텍스처 벽·바닥·천장) — room-viewer와 동일 규격 ──
