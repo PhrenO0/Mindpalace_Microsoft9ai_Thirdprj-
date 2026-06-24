@@ -598,6 +598,9 @@
     // 데모 모드(스위치): ON 이면 도시 무관 한국사 오버레이(콘텐츠 공개), OFF 면 실제 자료(없으면 빈/잠금).
     function mpDemoOn(){ try{ return localStorage.getItem("mp_demo")==="1"; }catch(_){ return false; } }
     function mpDemoStr(){ try{ return localStorage.getItem("mp_demo_palace")||sessionStorage.getItem("mp_demo_palace")||null; }catch(_){ return null; } }
+    // 데모는 '구성→입장' 경로로 활성화(mp_demo_entered)됐을 때만 방에 적용 — '전체 보기'(둘러보기) 진입엔 미적용.
+    function mpDemoEntered(){ try{ return localStorage.getItem("mp_demo_entered")==="1"; }catch(_){ return false; } }
+    function mpDemoShow(){ return mpDemoOn() && mpDemoEntered(); }
     const ENV = P.get("env");
     const CEIL = parseFloat(P.get("ceil")) || 2.7;
     // 저사양(내장그래픽) 자동 감지 — URL ?lite=1/0 우선, 없으면 GPU/CPU/메모리 단서로 추정.
@@ -1028,7 +1031,7 @@
       let palace = SAMPLE_PALACE;
       // 우선순위: 데모 ON(한국사 오버레이) > 업로드한 학습자료 > ?palace= 명시 > 랜드마크 테마 콘텐츠 > 내장 샘플
       let fromUpload = false, demoMode = false;
-      if (mpDemoOn()) {
+      if (mpDemoShow()) {
         try { const ds = mpDemoStr(); if (ds) { palace = JSON.parse(ds); demoMode = true; } } catch(_) {}
         if (!demoMode) { try { palace = await (await fetch("public/data/korean_history.palace.json")).json(); demoMode = true; } catch(e){} }
       } else {
@@ -2421,7 +2424,7 @@
       // 현재 도시의 랜드마크 + 활성 학습자료(업로드 PDF) 기반으로 구성 — 종로·korean_history 하드코딩 제거.
       (async function build(){
         try {
-          let pal = null; try { const sp = mpDemoOn() ? mpDemoStr() : mpCityPalaceStr(CUR_CITY); if (sp) pal = JSON.parse(sp); } catch(_){}
+          let pal = null; try { const sp = mpDemoShow() ? mpDemoStr() : mpCityPalaceStr(CUR_CITY); if (sp) pal = JSON.parse(sp); } catch(_){}
           // 데모 OFF + 미업로드 시 korean_history 데모를 끌어오지 않음 — 방 목록만 표시, 개념은 "(아직 내용 없음)".
           const isJongno = CUR_CITY === "jongno";
           const cityData = isJongno

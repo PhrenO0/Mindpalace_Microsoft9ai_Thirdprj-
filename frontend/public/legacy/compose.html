@@ -337,6 +337,18 @@
   $("startBtn").addEventListener("click", () => {
     try { (chapState || []).forEach(st => st && saveStudioDesign(lmNameOf(st.lmId), st.designId)); } catch(_){}
   });
+  // 데모 '입장' 확정: 구성(compose)에서 3D 지도/방으로 들어갈 때만 데모를 활성화(mp_demo_entered).
+  //   region-select '전체 보기'(compose 미경유) 로는 데모가 적용되지 않게 — '구성 시작 → 입장' 경로 강제.
+  document.addEventListener("click", (e) => {
+    try {
+      if (!mpDemoOn()) return;
+      const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+      if (!a) return;
+      if (/vworld_map\.html|memory-walk\.html/.test(a.getAttribute("href") || "")) {
+        try { localStorage.setItem("mp_demo_entered", "1"); } catch (_) {}
+      }
+    } catch (_) {}
+  }, true);
 
   function persistPalace(){ try { const s=JSON.stringify(PAL); const ck="mp_palace:"+CITY; localStorage.setItem(ck, s); sessionStorage.setItem(ck, s); } catch(_){} }
   function render(){

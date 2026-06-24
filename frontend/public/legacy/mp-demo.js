@@ -15,10 +15,10 @@
       fetch("public/data/korean_history.palace.json").then(function (r) { return r.json(); }).then(function (pal) {
         var ok = false;
         try { var s = JSON.stringify(pal); localStorage.setItem("mp_demo_palace", s); sessionStorage.setItem("mp_demo_palace", s); ok = !!localStorage.getItem("mp_demo_palace"); } catch (_) {}
-        if (!ok) { try { localStorage.removeItem("mp_demo"); sessionStorage.removeItem("mp_demo"); } catch (_) {} }
+        if (!ok) { try { localStorage.removeItem("mp_demo"); localStorage.removeItem("mp_demo_entered"); sessionStorage.removeItem("mp_demo"); sessionStorage.removeItem("mp_demo_entered"); } catch (_) {} }
         location.reload();
       }).catch(function () {
-        try { localStorage.removeItem("mp_demo"); sessionStorage.removeItem("mp_demo"); } catch (_) {}
+        try { localStorage.removeItem("mp_demo"); localStorage.removeItem("mp_demo_entered"); sessionStorage.removeItem("mp_demo"); sessionStorage.removeItem("mp_demo_entered"); } catch (_) {}
         location.reload();
       });
       return;   // 곧 새로고침 — 배지 마운트 보류
@@ -39,7 +39,7 @@
       var b = document.createElement("div"); b.id = "mpDemoBadge";
       b.innerHTML = '<span class="mdb-dot"></span><span>🎬 데모 모드</span><button class="mdb-off" type="button">끄기</button>';
       b.querySelector(".mdb-off").onclick = function () {
-        try { localStorage.removeItem("mp_demo"); sessionStorage.removeItem("mp_demo"); } catch (_) {}
+        try { localStorage.removeItem("mp_demo"); localStorage.removeItem("mp_demo_entered"); sessionStorage.removeItem("mp_demo"); sessionStorage.removeItem("mp_demo_entered"); } catch (_) {}
         location.reload();
       };
       document.body.appendChild(b);

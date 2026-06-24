@@ -1070,8 +1070,11 @@
       // 데모 모드(스위치): ON 이면 도시 무관 한국사 오버레이, OFF 면 실제 자료(없으면 빈 상태).
       function mpDemoOn(){ try{ return localStorage.getItem("mp_demo")==="1"; }catch(_){ return false; } }
       function mpDemoStr(){ try{ return localStorage.getItem("mp_demo_palace")||sessionStorage.getItem("mp_demo_palace")||null; }catch(_){ return null; } }
+      // 데모는 '구성→입장' 경로로 활성화(mp_demo_entered)됐을 때만 3D 지도에 적용 — '전체 보기'(둘러보기) 진입엔 미적용.
+      function mpDemoEntered(){ try{ return localStorage.getItem("mp_demo_entered")==="1"; }catch(_){ return false; } }
+      function mpDemoShow(){ return mpDemoOn() && mpDemoEntered(); }
       let PAL = null;
-      if (mpDemoOn()) {
+      if (mpDemoShow()) {
         try { const ds = mpDemoStr(); if (ds) PAL = JSON.parse(ds); } catch(e){}
         if (!PAL) PAL = loadJsonSync("data/korean_history.palace.json") || loadJsonSync("public/data/korean_history.palace.json");
       } else {
