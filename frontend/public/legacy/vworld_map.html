@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <!-- 크롬/엣지 등 브라우저 텍스트 자동확대 방지 — 글자 크기 통일 -->
+    <style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>
     <title>VWorld 3D 광화문 기억궁전</title>
     <style>
       :root {
@@ -284,11 +286,11 @@
         color: var(--accent);
       }
 
-      /* 우하단 미니맵 — Leaflet 2D 지도(실시간 길거리·현위치) */
+      /* 좌상단 미니맵 — Leaflet 2D 지도(실시간 길거리·현위치) */
       .minimap {
         position: absolute;
-        right: 14px;
-        bottom: 14px;
+        left: 14px;
+        top: 115px;
         width: 150px;
         height: 150px;
         z-index: 4;
@@ -298,6 +300,10 @@
         box-shadow: var(--shadow);
         background: #eee9df;
       }
+      /* 도우미 위젯(assistant.js 전역 좌하단 배치)을 이 페이지에서만 하단 정보바 높이에 맞춰 내림.
+         id + !important 로 assistant.js 의 인라인 bottom 값을 덮어씀(다른 페이지는 영향 없음). */
+      #mpLaunch { bottom: 100px !important; }
+      #mpPanel  { bottom: 156px !important; }
       .minimap .leaflet-container {
         width: 100%;
         height: 100%;
@@ -451,7 +457,7 @@
 
       .left-panel h1,
       .study-panel h2 {
-        margin: 6px 0 8px;
+        margin: 9px 0 11px;
         font-size: 22px;
         line-height: 1.22;
         letter-spacing: 0;
@@ -574,9 +580,9 @@
       .study-panel {
         position: absolute;
         right: 20px;
-        top: 96px;
+        top: 120px;
         width: min(300px, calc(100vw - 40px));
-        padding: 12px;
+        padding: 16px;
         z-index: 4;
         transform: scale(0.92);
         transform-origin: top right;
@@ -597,15 +603,15 @@
 
       .concept-list {
         display: grid;
-        gap: 8px;
-        margin-top: 14px;
+        gap: 12px;
+        margin-top: 18px;
       }
 
       .concept-card {
         border: 1px solid rgba(51, 46, 40, 0.12);
         border-radius: 7px;
         background: rgba(51, 46, 40, 0.05);
-        padding: 11px 12px;
+        padding: 13px 14px;
       }
 
       .concept-card strong {
@@ -926,9 +932,10 @@
         box-shadow:0 8px 22px rgba(40,34,26,.14); transition:transform .14s, border-color .14s, background .14s;}
       .dash-dock a:hover{transform:translateY(-2px); border-color:rgba(181, 85, 47,.4); background:color-mix(in srgb, var(--accent) 12%, transparent);}
       .dash-dock a .di{font-size:14px;}
-      @media(max-width:980px){ .dash-dock a span.tx{display:none;} .dash-dock a{padding:9px;} }
+      @media(max-width:980px){ .dash-dock a{padding:7px 9px;} .dash-dock a .tx{font-size:11px;} }
     </style>
     <nav class="dash-dock" aria-label="대시보드 바로가기">
+      <a id="dashQuiz" href="#" title="이 도시 학습 내용으로 퀴즈 풀기" onclick="if(window.mpOpenQuiz)window.mpOpenQuiz();return false;"><span class="di">📝</span><span class="tx">퀴즈</span></a>
       <a id="dashCompose" href="compose.html" title="학습 내용에 어울리는 방 고르기"><span class="di">🛍</span><span class="tx">방 디자인</span></a>
       <a id="dashStudio" href="glb-customizer.html" title="방 GLB 모델 커스터마이즈"><span class="di">🧩</span><span class="tx">GLB 커스텀</span></a>
     </nav>
@@ -1120,6 +1127,64 @@
         if (!m.room) return null;
         const u = m.room, lm = m.lmId || "";
         return (!lm || u.includes("lm=")) ? u : u + (u.includes("?") ? "&" : "?") + "lm=" + lm;
+      };
+
+      // ── 지도 화면 RAG 챗봇: assistant.js 의 자유 질문을 graphrag /query 로 라우팅 ──
+      //   memory-walk 의 window.mpAssistantAsk 와 동일 구조. 방(route) 컨텍스트가 없으므로
+      //   관련 개념 칩은 그 개념이 속한 챕터의 랜드마크 '입장' 칩으로 만든다(매칭 실패 시 칩 없음).
+      const MAP_PALACE_ID = (PAL && PAL.palace && PAL.palace.id) || "korean_history";
+      // 쇼케이스(데모 스냅샷) 질의는 항상 고정 백엔드로 보낸다.
+      //   (잡 서버 base 로 보내면 /query+snapshot 이 없어 404 가 났음 — 퀴즈 위젯과 동일한 이슈.)
+      const MNEMO_BASE = "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net";
+      window.mpAssistantAsk = async (text, ctx) => {
+        const q = (text || "").trim();
+        if (!q) return null;
+        let job = null;
+        try { job = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); } catch (_) {}
+        // 데모(한국사 등 쇼케이스 콘텐츠)면 진행 중 업로드 잡을 무시하고 항상 쇼케이스로 — PDF 처리 중 데모로 둘러볼 때 잡 query 가 404나던 문제(방안 memory-walk 와 동일).
+        const _demo = /korean_history|sample|demo/i.test(MAP_PALACE_ID || "");
+        // 쇼케이스(데모 스냅샷) 질의 — 잡이 없거나, 잡 질의가 실패하면 이걸로 폴백.
+        const showcase = { url: MNEMO_BASE + "/query", body: { question: q, snapshot: MAP_PALACE_ID, method: "local" } };
+        // 업로드 PDF(라이브 잡)가 유효하면 그 잡으로 먼저 질의(local 이라야 sources.entities 동반→개념 칩). 데모면 건너뜀.
+        const primary = (!_demo && job && job.base && job.jobId && job.done !== false)
+          ? { url: job.base + "/jobs/" + encodeURIComponent(job.jobId) + "/query", body: { question: q, method: "local" } }
+          : showcase;
+        async function askOnce(spec) {
+          const ctrl = new AbortController();
+          const to = setTimeout(() => ctrl.abort(), 25000);
+          try {
+            return await fetch(spec.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(spec.body), signal: ctrl.signal });
+          } catch (_) { return null; } finally { clearTimeout(to); }
+        }
+        // 이미 분석이 끝났던 잡(done===true)이 만료·삭제(404 등)된 경우에만 데모 스냅샷으로 폴백.
+        //   (아직 분석 중인 잡은 폴백하지 않고 "분석 끝났는지 확인" 안내를 유지 → 엉뚱한 데모 답변 방지.)
+        const jobWasDone = !!(job && job.done === true);
+        let r = await askOnce(primary);
+        if ((!r || !r.ok) && primary !== showcase && jobWasDone) r = await askOnce(showcase);
+        if (!r) return { text: "요청이 지연됐어요. 잠시 후 다시 물어봐 주세요." };
+        if (!r.ok)
+          return { text: "학습 답변을 가져오지 못했어요 (" + r.status + "). 분석이 끝났는지 확인해 주세요." };
+        try {
+          const j = await r.json();
+          const ans = (j.answer || "").replace(/\s*\[Data:[^\]]*\]/g, "").trim(); // GraphRAG 인용 토큰 정리
+          // 관련 개념 → 그 개념이 배정된 챕터의 랜드마크 '입장' 칩(act:"go" = 그 방으로 이동)
+          const chips = [], seen = new Set();
+          for (const e of (j.sources && j.sources.entities) || []) {
+            const t = e && e.title;
+            if (!t || seen.has(t)) continue;
+            seen.add(t);
+            const idx = PAL_ROOMS.findIndex((rm) =>
+              rm && (rm.title === t || (rm.entities || []).some((x) => (x && (x.title || x)) === t)));
+            if (idx >= 0) {
+              const nm = ((CITY.landmarks || [])[idx] || {}).name || t;
+              const u = roomFor(idx, nm);
+              if (u) { chips.push({ label: "📍 " + nm + " 입장", act: "go", v: u }); if (chips.length >= 4) break; }
+            }
+          }
+          return { text: ans || "관련 내용을 찾지 못했어요.", chips };
+        } catch (_) {
+          return { text: "요청이 지연됐어요. 잠시 후 다시 물어봐 주세요." };
+        }
       };
 
       // 시작/중심 좌표가 데이터에 없으면 랜드마크 평균 위치로 자동 계산.
@@ -1951,7 +2016,15 @@
       let initLock = 0;        // >0이면 초기 카메라 매 프레임 강제 적용
       let userMoved = false;   // 사용자가 입력하면 초기 락 해제
       const releaseLock = () => { userMoved = true; initLock = 0; };
+      // 입력란/퀴즈 모달에 포커스가 있으면 지도 키 조작 차단 — 입력 띄어쓰기·타이핑이 막히고 라벨이 토글되던 문제(특히 Windows) 해결.
+      const mapKeyBlocked = (ev) => {
+        var t = ev.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return true;
+        var qm = document.getElementById("quizModal");
+        return !!(qm && qm.style.display === "block");
+      };
       window.addEventListener("keydown", (e) => {
+        if (mapKeyBlocked(e)) return;
         const k = e.key.toLowerCase();
         if (["w", "a", "s", "d"].includes(k)) { keyMove[k] = true; releaseLock(); e.preventDefault(); }
       });
@@ -2090,6 +2163,9 @@
         }, { passive: false });
 
         window.addEventListener("keydown", (event) => {
+          // 입력란/퀴즈 모달 포커스 시 지도 단축키(화살표·Enter·Space) 차단
+          var _t = event.target, _qm = document.getElementById("quizModal");
+          if ((_t && (_t.tagName === "INPUT" || _t.tagName === "TEXTAREA" || _t.tagName === "SELECT" || _t.isContentEditable)) || (_qm && _qm.style.display === "block")) return;
           if (event.key === "ArrowRight") {
             stopTour(false);
             flyToAnchor(activeIndex + 1);
@@ -2244,6 +2320,7 @@
       attachEvents();
       boot();
     </script>
+  <script src="quiz-widget.js" defer></script>
   <script src="nav.js" defer></script>
   <script src="mp-demo.js" defer></script>
   <script src="assistant.js" defer></script>

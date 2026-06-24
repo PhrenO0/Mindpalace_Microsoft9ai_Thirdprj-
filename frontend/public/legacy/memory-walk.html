@@ -91,6 +91,15 @@
     .cmore:hover{text-decoration:underline;}
     .card .rel{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
     .card .rel .lab{font-size:11px;color:var(--muted);margin-right:2px;}
+    /* 🔊 엔티티 설명 듣기(접근성) — 음성 안내 ON일 때만 노출 */
+    .card .tts-listen{margin-top:12px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      border:1px solid var(--line);border-radius:9px;background:rgba(51,46,40,.05);color:var(--text);
+      font-size:13px;font-weight:700;padding:9px 12px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
+    .card .tts-listen:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);}
+    .card .tts-listen:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+    .card .tts-listen.playing{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent);}
+    .card .tts-listen[hidden]{display:none;}   /* display:inline-flex 가 hidden 속성을 덮으므로 명시 */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
     .card .cardacts{margin-top:14px;display:flex;gap:8px;}
     .card .cact{flex:1;border:1px solid var(--line);border-radius:9px;background:rgba(51,46,40,.05);color:var(--text);font-size:12.5px;font-weight:700;padding:8px 10px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
     .card .cact:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);}
@@ -293,6 +302,8 @@
       <button class="cmore" id="cMore" hidden></button>
       <div class="desc" id="cDesc"></div>
       <div class="rel" id="cRel"></div>
+      <button type="button" class="tts-listen" id="cListen" hidden aria-label="엔티티 설명 듣기">🔊 설명 듣기</button>
+      <div id="cTtsLive" class="sr-only" aria-live="polite" role="status"></div>
       <div class="cardacts">
         <button class="cact" id="cMnemo" title="이 사물에 학습 개념을 연결해 기억 장면을 만들기" hidden>✨ 의미부여</button>
         <button class="cact mw-edit-only" id="cMove" title="이 마커를 화면에서 클릭한 자리로 옮기기">✥ 옮기기</button>
@@ -334,15 +345,107 @@
       </div>
     </div>
   </div>
+  <style id="quizStyle">
+    #quizBody .qz-q{margin:0 0 14px;padding:14px 15px;border:1px solid rgba(51,46,40,.12);border-radius:13px;background:#fff;}
+    #quizBody .qz-q:last-child{margin-bottom:0;}
+    #quizBody .qz-qhead{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+    #quizBody .qz-num{font-weight:900;font-size:13px;color:var(--accent,#b5552f);letter-spacing:.02em;}
+    #quizBody .qz-badge{font-size:11px;font-weight:800;color:#7a7066;background:rgba(51,46,40,.07);border-radius:999px;padding:2px 9px;}
+    #quizBody .qz-question{font-weight:700;font-size:14.5px;line-height:1.7;color:#2a241d;white-space:pre-line;margin-bottom:12px;word-break:keep-all;}
+    #quizBody .qz-opts{display:flex;flex-direction:column;gap:8px;}
+    #quizBody .qz-opt{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1.5px solid rgba(51,46,40,.16);border-radius:11px;cursor:pointer;font-size:13.5px;line-height:1.55;color:#2a241d;transition:border-color .12s,background .12s;word-break:keep-all;}
+    #quizBody .qz-opt:hover{border-color:rgba(181,85,47,.5);background:rgba(181,85,47,.045);}
+    #quizBody .qz-opt:has(input:checked){border-color:var(--accent,#b5552f);background:rgba(181,85,47,.1);font-weight:700;}
+    #quizBody .qz-opt input{accent-color:var(--accent,#b5552f);width:16px;height:16px;flex:0 0 auto;margin:0;}
+    #quizBody .qz-in{width:100%;box-sizing:border-box;padding:11px 13px;border:1.5px solid rgba(51,46,40,.2);border-radius:11px;font-size:14px;color:#2a241d;background:#fff;outline:none;}
+    #quizBody .qz-in:focus{border-color:var(--accent,#b5552f);}
+    #quizBody .qz-res{margin-top:10px;font-size:13px;line-height:1.6;}
+    #quizBody .qz-res:empty{display:none;}
+    #quizBody .qz-res{padding:9px 11px;border-radius:9px;}
+    #quizBody .qz-res.ok{color:#27734a;background:rgba(47,143,78,.1);}
+    #quizBody .qz-res.no{color:#b23a32;background:rgba(192,70,62,.09);}
+    #quizBody .qz-res .qz-explain{margin-top:5px;color:#6b6258;font-weight:500;}
+    #quizBody .qz-review{color:var(--accent,#b5552f);font-weight:700;cursor:pointer;display:inline-block;margin-top:6px;}
+    #quizActions .qz-submit{padding:11px 20px;border:0;border-radius:11px;background:var(--accent,#b5552f);color:#fff;font-weight:800;font-size:13.5px;cursor:pointer;}
+    #quizActions .qz-submit:disabled{opacity:.62;cursor:wait;}
+    #quizActions .qz-scoretxt{font-weight:900;font-size:14px;color:#2a241d;}
+    #quizActions .qz-ghost{padding:11px 14px;border:1.5px solid rgba(51,46,40,.2);border-radius:11px;background:none;color:#6b6258;font-weight:700;font-size:13px;cursor:pointer;}
+    #quizActions .qz-ghost:hover{border-color:var(--accent,#b5552f);color:var(--accent,#b5552f);}
+    #quizBody .qz-setup{display:flex;flex-direction:column;gap:16px;}
+    #quizBody .qz-field{display:flex;flex-direction:column;gap:8px;}
+    #quizBody .qz-flabel{font-weight:800;font-size:12.5px;color:#6b6258;}
+    #quizBody .qz-seg{display:flex;gap:7px;flex-wrap:wrap;}
+    #quizBody .qz-seg button{min-width:46px;padding:9px 13px;border:1.5px solid rgba(51,46,40,.16);border-radius:10px;background:#fff;color:#2a241d;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;}
+    #quizBody .qz-seg button:hover{border-color:rgba(181,85,47,.5);}
+    #quizBody .qz-seg button.sel{background:var(--accent,#b5552f);color:#fff;border-color:var(--accent,#b5552f);}
+    #quizBody .qz-types{display:flex;gap:8px;flex-wrap:wrap;}
+    #quizBody .qz-type{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border:1.5px solid rgba(51,46,40,.16);border-radius:10px;background:#fff;font-size:13.5px;font-weight:700;color:#2a241d;cursor:pointer;}
+    #quizBody .qz-type:has(input:checked){border-color:var(--accent,#b5552f);background:rgba(181,85,47,.1);}
+    #quizBody .qz-type input{accent-color:var(--accent,#b5552f);width:16px;height:16px;margin:0;}
+    #quizBody .qz-head{margin-bottom:14px;display:flex;flex-direction:column;gap:5px;}
+    #quizBody .qz-mode{align-self:flex-start;font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 11px;}
+    #quizBody .qz-mode.ok{color:#27734a;background:rgba(47,143,78,.12);}
+    #quizBody .qz-mode.warn{color:#9a6a1e;background:rgba(196,140,40,.16);}
+    #quizBody .qz-meta{font-size:12px;color:#6b6258;}
+    #quizBody .qz-q.r-ok{border-color:rgba(47,143,78,.55);}
+    #quizBody .qz-q.r-no{border-color:rgba(192,70,62,.55);}
+    #quizBody .qz-check{margin-top:11px;padding:7px 15px;border:1.5px solid var(--accent,#b5552f);border-radius:9px;background:none;color:var(--accent,#b5552f);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;}
+    #quizBody .qz-check:hover{background:rgba(181,85,47,.08);}
+    #quizBody .qz-check:disabled{opacity:.55;cursor:wait;}
+    #quizBody .qz-evi{margin-top:16px;border-top:1px dashed rgba(51,46,40,.2);padding-top:12px;}
+    #quizBody .qz-evi-toggle{border:0;background:none;color:#6b6258;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;padding:0;}
+    #quizBody .qz-evi-toggle:hover{color:var(--accent,#b5552f);}
+    #quizBody .qz-evi-list{margin-top:10px;display:flex;flex-direction:column;gap:9px;}
+    #quizBody .qz-evi-list[hidden]{display:none;}
+    #quizBody .qz-evi-card{border:1px solid rgba(51,46,40,.12);border-radius:10px;padding:10px 12px;background:#fff;}
+    #quizBody .qz-evi-card .ec-meta{font-size:11px;color:#9a8f82;font-weight:700;margin-bottom:3px;}
+    #quizBody .qz-evi-card h4{margin:0 0 3px;font-size:13px;color:#2a241d;}
+    #quizBody .qz-evi-card .ec-text{font-size:12px;color:#6b6258;line-height:1.55;margin:0;}
+    #quizBody .qz-evi-empty{font-size:12px;color:#9a8f82;margin-top:8px;line-height:1.5;}
+    /* 방 입장 중 AI 검수 안내 — 하단 중앙 고정 */
+    #aiDisclaimer{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9000;
+      max-width:calc(100vw - 28px);padding:9px 18px;border-radius:999px;text-align:center;
+      background:rgba(20,16,12,.80);color:#fff;font-size:12.5px;font-weight:600;line-height:1.45;
+      box-shadow:0 8px 24px rgba(0,0,0,.34);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
+      pointer-events:none;opacity:1;transition:opacity .55s ease;}
+    #aiDisclaimer.hide{opacity:0;}
+    #aiDisclaimer .ic{margin-right:5px;}
+    @media(max-width:520px){ #aiDisclaimer{white-space:normal;font-size:11.5px;bottom:14px;} }
+  </style>
 
   <div class="status" id="status">로드 중…</div>
+
+  <!-- 방 입장 중 AI 검수 안내(하단 중앙) — 방이 준비되거나 사용자가 화면을 만지면 사라짐 -->
+  <div id="aiDisclaimer"><span class="ic">⚠️</span>AI의 답변은 달라질 수 있습니다. 사용자의 검수를 권고드립니다.</div>
+  <script>
+    (function(){
+      var P = new URLSearchParams(location.search);
+      var el = document.getElementById("aiDisclaimer"); if(!el) return;
+      // 미리보기 4컷 캡처·대시보드 임베드에선 표시하지 않음(스크린샷 오염 방지)
+      if (P.get("capture") || P.get("dash")){ el.remove(); return; }
+      var shownAt = Date.now(), hidden = false;
+      function hide(){ if(hidden) return; hidden = true;
+        var wait = Math.max(0, 2200 - (Date.now() - shownAt));   // 최소 노출 보장(빠른 로드 시 깜빡임 방지)
+        setTimeout(function(){ el.classList.add("hide"); setTimeout(function(){ try{ el.style.display="none"; }catch(_){} }, 650); }, wait);
+      }
+      // 방이 준비되면(상태 텍스트가 '다음 →'/'투어 시작' 등 완료 신호) 숨김
+      try {
+        var st = document.getElementById("status");
+        if (st){ var mo = new MutationObserver(function(){ var t = st.textContent || "";
+          if (/다음\s*→|투어 시작|방이 없습니다|로드 실패/.test(t)){ hide(); mo.disconnect(); } });
+          mo.observe(st, { childList:true, subtree:true, characterData:true }); }
+      } catch(_){}
+      // 사용자가 화면을 만지면(=입장 완료) 숨김
+      ["pointerdown","keydown","wheel"].forEach(function(ev){ window.addEventListener(ev, hide, { once:true, passive:true }); });
+      setTimeout(hide, 15000);   // 안전망: 무슨 일이 있어도 자동 숨김
+    })();
+  </script>
 
   <nav class="panel nav" id="nav" style="display:none">
     <button class="btn ghost" id="homeBtn" title="모든 핫스팟이 잘 보이는 전체 조망">⌂ 홈</button>
     <button class="btn ghost" id="prevBtn">← 이전</button>
     <div class="dots" id="dots"></div>
     <button class="btn primary" id="nextBtn">다음 →</button>
-    <button class="btn ghost" id="quizBtn" title="이 방 학습 내용으로 퀴즈 풀기" hidden>📝 퀴즈</button>
     <button class="btn ghost mw-edit-only" id="addBtn" title="화면에서 사물을 클릭해 그 자리에 핫스팟 추가">➕ 지점</button>
     <button class="btn ghost mw-edit-only" id="moveBtn" title="선택한 핫스팟을 화면에서 클릭한 자리로 이동">✥ 이동</button>
     <button class="btn ghost mw-edit-only" id="undoBtn" title="마지막 변경(이동·추가·삭제·순서)을 되돌리기">↶</button>
@@ -665,6 +768,9 @@
     let route = [];             // 경로 순 핫스팟 [{pos, entity, number, marker, related:[]}]
     let activeIdx = -1;
     const UP = new THREE.Vector3(0,1,0);
+    // 공간음향의 기준 프레임. 방에 처음 생성되는 위치와 그때 바라보는 방향을 고정한다.
+    // 이후 카메라가 각 사물을 정면 중앙에 놓더라도 이 프레임은 변경하지 않는다.
+    let entryAudioFrame = null;
     let occluders = [];                       // 방 메쉬(가시성 레이캐스트 대상)
     const _viewRay = new THREE.Raycaster();   // 마커가 다른 가구에 가려졌는지 검사용
     let CONTENT_LOCKED = false;               // PDF 미업로드 = 데모 콘텐츠 잠금(방·가구 둘러보기 O, 학습 마커는 PDF 후 해금)
@@ -988,7 +1094,6 @@
       if (!CONTENT_LOCKED) { try { await visionLabelRoom(); } catch(_) {}   // 입장 전(동기): 방 4각도→GPT-4.1 비전으로 번호별 사물명 1차 교정
         try { autoPrecision(); } catch(_) {} }                              // 입장 후(배경·논블로킹): 사물별 오프스크린 close-up으로 정밀 보강(미정밀분만, 캐시)
       if (CONTENT_LOCKED) lockContentUI();   // 학습 편집·추가 비활성 + "아직 내용 없음" 안내
-      { const qb = $("quizBtn"); if (qb) qb.hidden = CONTENT_LOCKED || !(entities && entities.length); }   // 학습 내용 있을 때만 퀴즈 노출
     }
     // PDF 분석 전: 학습 마커 추가/편집 비활성 + 하단 안내 배너(분석하러 가기).
     function lockContentUI(){
@@ -1705,8 +1810,91 @@
       // ✨ 의미부여: 학습 개념이 있을 때(PDF 분석 후)만 노출 — 사물에 개념을 연결해 기억 장면 생성.
       const mn = $("cMnemo"); if (mn) { mn.hidden = !(!CONTENT_LOCKED && (!!e || (window.__mwEntities||[]).length > 0));
         if (!mn.hidden) mn.textContent = findMnemoForSpot(h) ? "✨ 의미 부여 다시 보기" : "✨ 의미부여"; }   // 이미 만든 게 있으면 '다시 보기'
+      stopListen(); syncListenBtn();   // 엔티티 변경 시 이전 음성 중지 + 음성 안내 ON일 때만 듣기 버튼 노출
       $("card").style.display = "block";
     }
+
+    // ── 🔊 엔티티 설명 듣기(시각 접근성) + 입장점 기준 3D 공간음향 ─────────────
+    //   · 음성 안내(assistant.js 의 window.__mpVoiceOn)가 켜져 있을 때만 카드에 버튼 노출.
+    //   · 공간음향 ON → 방 진입 위치·최초 시선 기준으로 엔티티의 좌/우·앞/뒤·위/아래·거리를 계산.
+    //   · 재생 중 '■ 읽기 중지', 엔티티 변경/음성 끄기 시 이전 음성 중지(토큰으로 콜백 무효화).
+    //   · 목소리·속도는 mpTTS 의 기존 설정을 그대로 사용. 토큰 엔드포인트도 기존 것 재사용.
+    let _ttsToken = 0, _ttsPlaying = false;
+    function ttsAnnounce(msg){ const l = $("cTtsLive"); if (l) l.textContent = msg; }   // 스크린리더 안내(aria-live)
+    function spatialForSpot(h){
+      try {
+        if (!(window.mpTTS && window.mpTTS.isSpatial && window.mpTTS.isSpatial())) return {};
+        if (!h || !h.eye || !entryAudioFrame) return { pan: 0 };
+        const delta = h.eye.clone().sub(entryAudioFrame.origin).multiplyScalar(entryAudioFrame.scale);
+        const x = delta.dot(entryAudioFrame.right);              // +오른쪽 / -왼쪽
+        const y = delta.dot(UP);                                 // +위 / -아래
+        const z = -delta.dot(entryAudioFrame.forward);           // Web Audio: 정면은 -Z, 뒤는 +Z
+        const horizontal = Math.hypot(x, z);
+        const pan = horizontal > 1e-5 ? Math.max(-1, Math.min(1, x / horizontal)) : 0;
+        return { position: { x, y, z }, pan, refDistance: 1.15, maxDistance: 18, rolloffFactor: 0.72 };
+      } catch (_) { return { pan: 0 }; }
+    }
+    function cardReadText(h){
+      if (!h) return "";
+      const e = h.entity;
+      if (e){
+        const t = (e.title || "").trim();
+        const body = (e.description || e.summary || e.caption || "").trim();
+        return body ? (t + ". " + body) : t;
+      }
+      const nm = dispName(h);
+      const d = (($("cDesc") && $("cDesc").textContent) || "").trim();
+      return d ? (nm + ". " + d) : nm;
+    }
+    function listenAriaLabel(){
+      const sp = !!(window.mpTTS && window.mpTTS.isSpatial && window.mpTTS.isSpatial());
+      return (sp ? "공간음향으로 " : "") + "엔티티 설명 듣기";
+    }
+    function setListenIdle(){
+      _ttsPlaying = false; const b = $("cListen"); if (!b) return;
+      b.textContent = "🔊 설명 듣기"; b.classList.remove("playing");
+      b.setAttribute("aria-label", listenAriaLabel());
+    }
+    function setListenPlaying(){
+      _ttsPlaying = true; const b = $("cListen"); if (!b) return;
+      b.textContent = "■ 읽기 중지"; b.classList.add("playing");
+      b.setAttribute("aria-label", "설명 읽기 중지");
+    }
+    function stopListen(){
+      _ttsToken++;                                       // 진행 중 재생 콜백 무효화
+      try { window.mpTTS && window.mpTTS.stop(); } catch (_) {}
+      setListenIdle();
+    }
+    function syncListenBtn(){
+      const b = $("cListen"); if (!b) return;
+      const on = !!window.__mpVoiceOn;
+      b.hidden = !on;                                    // 음성 안내 ON일 때만 노출
+      if (!on){ stopListen(); return; }                 // 끄면 즉시 숨김 + 진행 음성 중지
+      if (!_ttsPlaying) setListenIdle();                // 라벨/공간음향 상태 갱신
+    }
+    (function wireListen(){
+      const b = $("cListen"); if (!b) return;
+      b.addEventListener("click", function(){
+        if (!window.mpTTS){ ttsAnnounce("음성 엔진을 불러오는 중입니다."); return; }
+        if (_ttsPlaying){ stopListen(); ttsAnnounce("읽기를 멈췄습니다."); return; }
+        const h = (activeIdx >= 0) ? route[activeIdx] : null;
+        const text = cardReadText(h); if (!text) return;
+        const myToken = ++_ttsToken;
+        setListenPlaying(); ttsAnnounce("설명을 읽습니다.");
+        try { window.mpTTS.warmup && window.mpTTS.warmup(); } catch (_) {}
+        window.mpTTS.speak(text, spatialForSpot(h))
+          .then(function(){ if (myToken === _ttsToken){ setListenIdle(); ttsAnnounce("읽기를 마쳤습니다."); } })
+          .catch(function(){ if (myToken === _ttsToken) setListenIdle(); });
+      });
+    })();
+    // 음성 안내 토글(assistant.js) → 버튼 표시/숨김(+끌 때 진행 음성 중지)
+    window.addEventListener("mp-voice-toggle", function(e){
+      syncListenBtn();
+      if (e && e.detail && e.detail.on === false) stopListen();
+    });
+    // 공간음향 토글 → 듣기 버튼 aria-label 즉시 갱신
+    window.addEventListener("mp-spatial-toggle", function(){ if (!_ttsPlaying) setListenIdle(); });
+
     let _quizPrompted = false;
     function goTo(i, instant) {
       if (i<0 || i>=route.length) return;
@@ -1716,23 +1904,6 @@
       // 카메라가 사물 정면으로 "걸어가" 바라본다(방 중심 쪽에서). 단, 다른 가구에 가리면 시점을 돌려 뚫린 곳에서.
       const camPos = clearViewPos(h.eye);
       flyTo(camPos, h.eye.clone(), instant ? 0 : 900);   // 900ms easeInOutCubic — 다음 이동을 더 부드럽게
-      // 투어 끝(마지막 지점 도달) → 1회 "퀴즈로 복습?" 프롬프트(학습 내용 있을 때만).
-      if (!CONTENT_LOCKED && !_quizPrompted && i === route.length - 1 && i > 0 && (window.__mwEntities||[]).length) {
-        _quizPrompted = true; setTimeout(showQuizPrompt, 800);
-      }
-    }
-    function showQuizPrompt() {
-      if (document.getElementById("mwQuizPrompt")) return;
-      const b = document.createElement("div"); b.id = "mwQuizPrompt";
-      b.innerHTML = `<span>🎉 모든 지점을 다 봤어요! 외운 내용을 퀴즈로 확인해 볼까요?</span>` +
-                    `<button id="mwQuizGo" style="border:0;border-radius:9px;background:var(--accent,#b5552f);color:#fff;font-weight:800;font-size:13px;padding:8px 15px;cursor:pointer;white-space:nowrap">📝 퀴즈 풀기</button>` +
-                    `<button id="mwQuizX" style="border:0;background:none;color:rgba(245,240,232,.65);font-size:16px;cursor:pointer;padding:0 2px">✕</button>`;
-      b.style.cssText = "position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:8600;display:flex;align-items:center;gap:13px;" +
-        "background:rgba(42,36,29,.94);color:#f5f0e8;padding:12px 16px;border-radius:13px;font-size:13.5px;font-weight:600;" +
-        "box-shadow:0 8px 26px rgba(0,0,0,.32);font-family:'Pretendard','Malgun Gothic',sans-serif;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);";
-      document.body.appendChild(b);
-      document.getElementById("mwQuizGo").onclick = () => { b.remove(); openQuiz(); };
-      document.getElementById("mwQuizX").onclick = () => b.remove();
     }
     // 마커(eye)가 다른 가구·벽에 안 가리는 카메라 위치 — 삼각측량(가시성 샘플링).
     //   눈높이 평면에서 마커를 중심으로 N방향으로 레이를 쏴 "열린 거리"를 잰다(어디가 트였나).
@@ -1785,6 +1956,10 @@
     // ✨ 의미부여(mnemonic) — graphrag /mnemonic: 사물 + 학습개념 → "어거지로" 연결한 기억 장면(마크다운).
     const MNEMO_BASE = (function(){ try { const j=JSON.parse(localStorage.getItem("mp_rag_job")||"null"); if(j&&j.base) return j.base; } catch(_){}
       return "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net"; })();
+    // 퀴즈는 항상 고정 백엔드로 — 작업서버(mp_rag_job.base)엔 /quiz/* 가 없어 404가 났음(공유 quiz-widget.js와 동일).
+    const QUIZ_API = "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net";
+    // 데모(미등록 snapshot)·stale 잡 id로 404가 나면 준비된 샘플 코퍼스로 폴백.
+    const QUIZ_FALLBACK_SNAPSHOT = "korean_history";
     function mdLite(md){   // 가벼운 마크다운 → HTML(헤더·표·목록·굵게)
       const e = s => String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
       const lines = String(md||"").split(/\r?\n/); let html="", inTbl=false;
@@ -2024,60 +2199,162 @@
     window.mpOpenMnemonic = () => { if (activeIdx < 0 || !route[activeIdx]) { const i = route.findIndex(h => h.entity); goTo(i >= 0 ? i : 0); } openMnemo(); };
 
     // ── 📝 인룸 퀴즈 — graphrag /quiz/json 로 이 방 학습내용 퀴즈 생성, /quiz/grade 채점, 오답은 마커로 복습 ──
-    let quizData = null;
+    let quizData = null, lastQuizTopic = "";
     function quizTopic(){ const t = (window.__mwEntities||[]).map(e=>e&&e.title).filter(Boolean); return t.slice(0,12).join(", ") || (THEME&&THEME.name) || ""; }
-    async function openQuiz(){
-      $("quizModal").style.display="block"; $("quizActions").innerHTML="";
-      $("quizBody").innerHTML = `<div style="color:#7a7066">📝 이 방의 학습 내용으로 퀴즈를 만드는 중…</div>`;
+    function openQuiz(){ $("quizModal").style.display="block"; renderQuizSetup(); }
+    // 퀴즈 설정 화면 — 주제·문제 수·유형 선택(백엔드 /quiz/json 파라미터 topic/count/quiz_types로 전달).
+    function renderQuizSetup(){
+      $("quizBody").innerHTML =
+        `<div class="qz-setup">`
+        + `<div class="qz-field"><span class="qz-flabel">주제</span>`
+          + `<input id="qzTopic" class="qz-in" placeholder="주제 입력 (비우면 전체)" autocomplete="off"></div>`
+        + `<div class="qz-field"><span class="qz-flabel">문제 수</span><div class="qz-seg" id="qzCount">`
+          + [3,5,8,10].map(n=>`<button type="button" data-count="${n}"${n===5?' class="sel"':''}>${n}</button>`).join("")
+          + `</div></div>`
+        + `<div class="qz-field"><span class="qz-flabel">문제 유형</span><div class="qz-types" id="qzTypes">`
+          + Object.keys(QZ_TYPE_LABEL).map(k=>`<label class="qz-type"><input type="checkbox" value="${k}" checked>${QZ_TYPE_LABEL[k]}</label>`).join("")
+          + `</div></div>`
+        + `</div>`;
+      $("quizBody").querySelectorAll("#qzCount button").forEach(b=>b.addEventListener("click",()=>{   // 문제 수 단일 선택
+        $("quizBody").querySelectorAll("#qzCount button").forEach(x=>x.classList.toggle("sel", x===b)); }));
+      $("quizActions").innerHTML = `<button id="quizGenBtn" class="qz-submit">📝 퀴즈 만들기</button>`;
+      $("quizGenBtn").onclick = generateQuiz;
+    }
+    function quizBackBtn(){ $("quizActions").innerHTML = `<button id="quizBackBtn" class="qz-ghost">← 설정으로</button>`; $("quizBackBtn").onclick = renderQuizSetup; }
+    async function generateQuiz(){
+      const topic = ($("qzTopic") ? $("qzTopic").value : "").trim();
+      const cBtn = $("quizBody").querySelector("#qzCount button.sel");
+      const count = cBtn ? parseInt(cBtn.dataset.count,10) : null;
+      const types = [].map.call($("quizBody").querySelectorAll("#qzTypes input:checked"), el=>el.value);
+      if (!types.length){ alert("문제 유형을 하나 이상 선택해 주세요."); return; }
+      lastQuizTopic = topic;   // 메타 라인(주제 · N문항)에 사용
+      $("quizBody").innerHTML = `<div style="color:#7a7066">📝 퀴즈를 만드는 중…</div>`; $("quizActions").innerHTML="";
       let job=null; try { job=JSON.parse(localStorage.getItem("mp_rag_job")||"null"); } catch(_){}
-      const snapshot = (job && job.jobId) ? job.jobId : (MW_PALACE_ID || "korean_history");
+      // 데모(쇼케이스 콘텐츠)면 진행 중 업로드 잡을 무시하고 데모 스냅샷으로 — PDF 처리 중 데모 입장 시 잡 snapshot 이 404나던 문제.
+      const _demo = /korean_history|sample|demo/i.test(MW_PALACE_ID || "");
+      const snapshot = (!_demo && job && job.jobId) ? job.jobId : (MW_PALACE_ID || QUIZ_FALLBACK_SNAPSHOT);
+      await requestQuiz(snapshot, topic, count, types, false);
+    }
+    // /quiz/json 호출 — 미등록 snapshot(404)이면 준비된 샘플 코퍼스로 1회 폴백 재시도.
+    async function requestQuiz(snapshot, topic, count, types, isFallback){
       try {
-        const r = await fetch(MNEMO_BASE+"/quiz/json", { method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ topic: quizTopic(), count: 6, snapshot }) });
-        if (!r.ok){ $("quizBody").innerHTML = `<div style="color:#b06a3a">퀴즈 기능이 아직 백엔드에 연결되지 않았어요 (${r.status}). graphrag에 /quiz/json 추가 후 작동합니다.</div>`; return; }
-        const j = await r.json(); quizData = j;
+        const body = { topic, snapshot, quiz_types: types };
+        if (count) body.count = count;
+        const r = await fetch(QUIZ_API+"/quiz/json", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) });
+        if (r.status === 404 && !isFallback && snapshot !== QUIZ_FALLBACK_SNAPSHOT){
+          return requestQuiz(QUIZ_FALLBACK_SNAPSHOT, topic, count, types, true);   // 데모: 샘플 코퍼스로 재시도
+        }
+        if (!r.ok){
+          $("quizBody").innerHTML = `<div style="color:#b06a3a">${r.status===404
+            ? "이 자료로는 아직 퀴즈를 만들 수 없어요. 잠시 후 다시 시도해 주세요."
+            : `퀴즈를 만들지 못했어요 (${r.status}). 잠시 후 다시 시도해 주세요.`}</div>`;
+          quizBackBtn(); return;
+        }
+        let j=null; try { j = await r.json(); } catch(_){ j=null; }
+        if (!j || !j.questions || !j.questions.length){ $("quizBody").innerHTML = `<div style="color:#b06a3a">이 방에서 만들 퀴즈가 없어요. 유형이나 주제를 바꿔보세요.</div>`; quizBackBtn(); return; }
+        if (isFallback) j.__fallback = true;
+        quizData = j;
         trackUsage("quiz", j.usage);   // 퀴즈 생성에 쓴 토큰 누적
-        if (!j.questions || !j.questions.length){ $("quizBody").innerHTML = `<div style="color:#b06a3a">이 방에서 만들 퀴즈가 없어요.</div>`; return; }
         renderQuizQuestions(j.questions);
-      } catch(_){ $("quizBody").innerHTML = `<div style="color:#b03636">퀴즈 생성 실패 — 잠시 후 다시 시도하세요.</div>`; }
+      } catch(_){ $("quizBody").innerHTML = `<div style="color:#b03636">퀴즈 생성 실패 — 잠시 후 다시 시도하세요.</div>`; quizBackBtn(); }
+    }
+    const QZ_TYPE_LABEL = { multiple_choice:"객관식", true_false:"OX", short_answer:"단답형" };
+    // 보기 라벨 — OX는 밋밋한 'O/X' 대신 의미를 함께 보여 가독성↑(채점 값은 그대로 index).
+    function qzOptLabel(q, c){
+      if (q.type === "true_false"){
+        const t = String(c).trim().toUpperCase();
+        if (t === "O") return "⭕  맞다 (O)";
+        if (t === "X") return "❌  틀리다 (X)";
+      }
+      return esc2(c);
     }
     function renderQuizQuestions(qs){
-      $("quizBody").innerHTML = qs.map((q,i)=>{
-        let input;
-        if (q.type === "short_answer"){
-          input = `<input data-qi="${i}" class="qz-in" style="width:100%;padding:8px;border:1px solid rgba(51,46,40,.2);border-radius:8px;font-size:13px;margin-top:6px" placeholder="답 입력">`;
+      const j = quizData || {};
+      const modeBadge = (j.mode === "llm_verified")
+        ? `<span class="qz-mode ok">✓ LLM 검증 통과</span>`
+        : `<span class="qz-mode warn">⚠ 대체(fallback) 모드${j.warning ? `: ${esc2(j.warning)}` : ""}</span>`;
+      const fbNote = j.__fallback ? " · 샘플(한국사) 자료로 출제" : "";
+      const header = `<div class="qz-head">${modeBadge}<div class="qz-meta">주제: ${esc2(lastQuizTopic || "전체")} · ${qs.length}문항${fbNote}</div></div>`;
+      const cards = qs.map((q,i)=>{
+        const type = q.type || (q.choices && q.choices.length ? "multiple_choice" : "short_answer");
+        const badge = QZ_TYPE_LABEL[type] || "문제";
+        let body;
+        if (type === "short_answer"){
+          body = `<input data-qi="${i}" class="qz-in" placeholder="정답 입력" autocomplete="off">`;
         } else {
-          const ch = q.choices || (q.type==="true_false" ? ["O (맞다)","X (틀리다)"] : []);
-          input = ch.map((c,ci)=>`<label style="display:block;padding:6px 9px;margin-top:5px;border:1px solid rgba(51,46,40,.15);border-radius:8px;cursor:pointer;font-size:13px"><input type="radio" name="qz${i}" data-qi="${i}" value="${ci}" style="margin-right:7px">${esc2(c)}</label>`).join("");
+          const ch = (q.choices && q.choices.length) ? q.choices : (type==="true_false" ? ["O","X"] : []);
+          body = `<div class="qz-opts">` + ch.map((c,ci)=>
+            `<label class="qz-opt"><input type="radio" name="qz${i}" data-qi="${i}" value="${ci}"><span>${qzOptLabel(q,c)}</span></label>`
+          ).join("") + `</div>`;
         }
-        return `<div class="qz-q" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(51,46,40,.08)"><div style="font-weight:800;font-size:13.5px"><span style="color:var(--accent,#b5552f)">Q${i+1}.</span> ${esc2(q.question)}</div>${input}<div class="qz-res" data-qi="${i}" style="margin-top:7px;font-size:12.5px"></div></div>`;
+        return `<div class="qz-q" data-qi="${i}">`
+          + `<div class="qz-qhead"><span class="qz-num">Q${i+1}</span><span class="qz-badge">${badge}</span></div>`
+          + `<div class="qz-question">${esc2(q.question||"")}</div>`
+          + body
+          + `<button type="button" class="qz-check" data-qi="${i}">채점</button>`
+          + `<div class="qz-res" data-qi="${i}"></div></div>`;
       }).join("");
-      $("quizActions").innerHTML = `<button id="quizSubmit" style="padding:9px 16px;border:0;border-radius:10px;background:var(--accent,#b5552f);color:#fff;font-weight:800;font-size:13px;cursor:pointer">채점하기</button><span id="quizScore" style="font-weight:800;color:#2a241d"></span>`;
-      $("quizSubmit").onclick = gradeQuiz;
+      $("quizBody").innerHTML = header + cards + renderEvidence();
+      $("quizBody").querySelectorAll(".qz-check").forEach(btn=>btn.addEventListener("click",()=>{   // 문제별 채점
+        const qi = btn.dataset.qi, a = collectOne(qi);
+        if (a == null){ btn.textContent="답을 선택/입력해 주세요"; setTimeout(()=>{ btn.textContent="채점"; },1200); return; }
+        gradeAnswers({ [qi]: a }, [btn], false);
+      }));
+      const et = $("quizBody").querySelector(".qz-evi-toggle");   // 근거 토글
+      if (et) et.onclick = ()=>{ const l=$("quizBody").querySelector(".qz-evi-list"); if(l) l.hidden=!l.hidden; };
+      $("quizActions").innerHTML = `<button id="quizSubmit" class="qz-submit">전체 채점</button><button id="quizResetBtn" class="qz-ghost">⚙ 다시 설정</button><span id="quizScore" class="qz-scoretxt"></span>`;
+      $("quizSubmit").onclick = ()=>gradeAnswers(collectAnswers(), [$("quizSubmit")], true);
+      $("quizResetBtn").onclick = renderQuizSetup;
+    }
+    // 근거(Evidence) — 백엔드가 /quiz/json 응답에 evidence를 포함하면 자동 표시. 템플릿 quiz.html의 근거 서랍 대응(현재 미포함 → 안내).
+    function renderEvidence(){
+      const ev = quizData && quizData.evidence;
+      if (!ev || !ev.length){
+        return `<div class="qz-evi"><div class="qz-evi-empty">📎 근거 자료는 백엔드(/quiz/json)가 evidence를 제공하면 여기에 표시됩니다.</div></div>`;
+      }
+      const cards = ev.map((it,i)=>`<div class="qz-evi-card"><div class="ec-meta">${i+1} · ${esc2(it.source||"")}</div><h4>${esc2(it.title||"")}</h4><p class="ec-text">${esc2(it.text||"")}</p></div>`).join("");
+      return `<div class="qz-evi"><button type="button" class="qz-evi-toggle">📎 사용된 근거 ${ev.length}건 ▾</button><div class="qz-evi-list" hidden>${cards}</div></div>`;
+    }
+    function collectOne(qi){
+      const inp = document.querySelector(`#quizBody .qz-in[data-qi="${qi}"]`);
+      if (inp) return inp.value.trim() || null;
+      const radio = document.querySelector(`#quizBody input[type=radio][data-qi="${qi}"]:checked`);
+      return radio ? radio.value : null;
     }
     function collectAnswers(){ const ans={};
       document.querySelectorAll("#quizBody .qz-in").forEach(el=>{ if(el.value.trim()) ans[el.dataset.qi]=el.value.trim(); });
       document.querySelectorAll('#quizBody input[type=radio]:checked').forEach(el=>{ ans[el.dataset.qi]=el.value; });
       return ans; }
-    async function gradeQuiz(){
+    function applyOneResult(res){
+      const card = document.querySelector(`#quizBody .qz-q[data-qi="${res.index}"]`);
+      if (card){ card.classList.remove("r-ok","r-no"); card.classList.add(res.correct?"r-ok":"r-no"); }
+      const box = document.querySelector(`#quizBody .qz-res[data-qi="${res.index}"]`); if(!box) return;
+      box.className = "qz-res " + (res.correct ? "ok" : "no");
+      box.innerHTML = `<b>${res.correct ? "✓ 정답" : "✗ 오답"}</b>`
+        + (res.answerText ? ` · 정답: <b>${esc2(res.answerText)}</b>` : "")
+        + (res.explanation ? `<div class="qz-explain">${esc2(res.explanation)}</div>` : "");
+      if (!res.correct){ const q=quizData.questions[res.index]; const idx=findMarkerForText(((q&&q.question)||"")+" "+(res.answerText||""));
+        if (idx>=0){ const a=document.createElement("a"); a.textContent="📍 관련 마커로 복습"; a.className="qz-review";
+          a.onclick=()=>{ $("quizModal").style.display="none"; goTo(idx); }; box.appendChild(a); } }
+    }
+    function updateQuizScore(){
+      const graded = document.querySelectorAll("#quizBody .qz-q.r-ok, #quizBody .qz-q.r-no").length;
+      const ok = document.querySelectorAll("#quizBody .qz-q.r-ok").length;
+      const sc = $("quizScore"); if (sc) sc.textContent = graded ? `  ${ok}/${graded} 정답` : "";
+    }
+    // 문제별/전체 채점 공통 — answers 부분집합 채점 가능(템플릿 quiz.html의 check-btn/grade-btn 동작). 점수는 채점된 카드로 누적.
+    async function gradeAnswers(answers, btns, isAll){
       if (!quizData || !quizData.quiz_id) return;
-      const answers = collectAnswers(); if (!Object.keys(answers).length) return;
-      const sb=$("quizSubmit"); sb.disabled=true; sb.textContent="채점 중…";
+      if (!Object.keys(answers).length) return;
+      btns.forEach(b=>{ if(b) b.disabled=true; });
+      const sub = isAll ? $("quizSubmit") : null; if (sub) sub.textContent="채점 중…";
       try {
-        const r = await fetch(MNEMO_BASE+"/quiz/grade", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ quiz_id: quizData.quiz_id, answers }) });
+        const r = await fetch(QUIZ_API+"/quiz/grade", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ quiz_id: quizData.quiz_id, answers }) });
         const j = await r.json();
-        (j.results||[]).forEach(res=>{
-          const box = document.querySelector(`#quizBody .qz-res[data-qi="${res.index}"]`); if(!box) return;
-          box.innerHTML = (res.correct ? '<span style="color:#2f8f4e;font-weight:800">✓ 정답</span>' : '<span style="color:#c0463e;font-weight:800">✗ 오답</span>')
-            + (res.answerText ? ` · 정답: <b>${esc2(res.answerText)}</b>` : "")
-            + (res.explanation ? `<br><span style="color:#7a7066">${esc2(res.explanation)}</span>` : "");
-          if (!res.correct){ const q=quizData.questions[res.index]; const idx=findMarkerForText(((q&&q.question)||"")+" "+(res.answerText||""));
-            if (idx>=0){ const a=document.createElement("a"); a.textContent="📍 관련 마커로 복습"; a.style.cssText="color:#b5552f;font-weight:700;cursor:pointer;display:inline-block;margin-top:5px";
-              a.onclick=()=>{ $("quizModal").style.display="none"; goTo(idx); }; box.appendChild(document.createElement("br")); box.appendChild(a); } }
-        });
-        $("quizScore").textContent = `  ${j.score}/${j.total} 정답`; sb.textContent="다시 채점";
-        saveQuizResult(j);   // 결과를 계정에 기록(마이페이지 '내 퀴즈 기록') — 비로그인/실패는 조용히 무시
-      } catch(_){ $("quizScore").textContent=" 채점 실패"; } finally { sb.disabled=false; }
+        (j.results||[]).forEach(applyOneResult);
+        updateQuizScore();
+        if (isAll){ if (sub) sub.textContent="다시 채점"; saveQuizResult(j); }
+      } catch(_){ if (sub) sub.textContent="채점 실패"; } finally { btns.forEach(b=>{ if(b) b.disabled=false; }); }
     }
     // 채점 결과를 Mindpalace 백엔드(quiz_results)에 저장. 정답은 graphrag 만 알고, 여기엔 점수·오답 문항만.
     function saveQuizResult(graded){
@@ -2090,12 +2367,11 @@
         fetch("/api/quiz/result", { method:"POST", credentials:"include",
           headers:{ "Content-Type":"application/json" },
           body: JSON.stringify({ quizId: quizData.quiz_id, score: graded.score||0, total: graded.total||0,
-            palaceId: MW_PALACE_ID||"", topic: quizTopic(), wrong }) }).catch(()=>{});
+            palaceId: MW_PALACE_ID||"", topic: lastQuizTopic||quizTopic(), wrong }) }).catch(()=>{});
       } catch(_){}
     }
     function findMarkerForText(text){ const t=String(text||""); let best=-1; (route||[]).forEach((h,i)=>{ if(h.entity&&h.entity.title&&t.includes(h.entity.title)) best=i; }); return best; }
     window.mpOpenQuiz = openQuiz;
-    { const qb=$("quizBtn"); if (qb) qb.onclick = openQuiz; }   // 하단 nav '📝 퀴즈' 버튼(인룸 진입점)
     $("quizClose").onclick = ()=>{ $("quizModal").style.display="none"; };
     $("quizModal").addEventListener("click", e=>{ if(e.target===$("quizModal")) $("quizModal").style.display="none"; });
     // ✎ 편집 모드 토글 — 편집 도구(지점·이동·되돌리기·옮기기·삭제)를 필요할 때만 노출(기본은 보기·학습만).
@@ -2929,14 +3205,27 @@
     window.mpAssistantAsk = async (text, ctx) => {
       const q = (text || "").trim(); if (!q) return null;
       let job = null; try { job = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); } catch(_){}
-      let url, body;
-      if (job && job.base && job.jobId && job.done !== false) { url = job.base + "/jobs/" + encodeURIComponent(job.jobId) + "/query"; body = { question: q, method: "auto" }; }
-      else { url = MNEMO_BASE + "/query"; body = { question: q, snapshot: MW_PALACE_ID || "korean_history", method: "auto" }; }
-      try {
+      // 데모(한국사 등 쇼케이스 콘텐츠)면 진행 중인 업로드 잡을 무시하고 항상 쇼케이스로 — PDF 처리 중 데모로 입장하면 아직 인덱싱 안 된 잡 /query 가 404나던 문제.
+      const _demo = /korean_history|sample|demo/i.test(MW_PALACE_ID || "");
+      // 쇼케이스(데모 스냅샷) 질의 — 항상 고정 백엔드(QUIZ_API)로. 잡 서버 base 로 보내면 /query+snapshot 이 없어 404가 났음(퀴즈 위젯과 동일 이슈).
+      const showcase = { url: QUIZ_API + "/query", body: { question: q, snapshot: MW_PALACE_ID || "korean_history", method: "local" } };
+      // 업로드 PDF(라이브 잡)가 유효하면 그 잡으로 먼저 질의(local 이라야 sources.entities 동반→개념 칩). 데모면 건너뜀.
+      const primary = (!_demo && job && job.base && job.jobId && job.done !== false)
+        ? { url: job.base + "/jobs/" + encodeURIComponent(job.jobId) + "/query", body: { question: q, method: "local" } }
+        : showcase;
+      async function askOnce(spec){
         const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 25000);
-        const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal });
-        clearTimeout(to);
-        if (!r.ok) return { text: "학습 답변을 가져오지 못했어요 (" + r.status + "). 분석이 끝났는지 확인해 주세요." };
+        try { return await fetch(spec.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(spec.body), signal: ctrl.signal }); }
+        catch(_) { return null; } finally { clearTimeout(to); }
+      }
+      // 이미 분석이 끝났던 잡(done===true)이 만료·삭제(404 등)된 경우에만 데모 스냅샷으로 폴백.
+      //   (아직 분석 중인 잡은 폴백하지 않고 "분석 끝났는지 확인" 안내를 유지 → 엉뚱한 데모 답변 방지.)
+      const jobWasDone = !!(job && job.done === true);
+      let r = await askOnce(primary);
+      if ((!r || !r.ok) && primary !== showcase && jobWasDone) r = await askOnce(showcase);
+      if (!r) return { text: "요청이 지연됐어요. 잠시 후 다시 물어봐 주세요." };
+      if (!r.ok) return { text: "학습 답변을 가져오지 못했어요 (" + r.status + "). 분석이 끝났는지 확인해 주세요." };
+      try {
         const j = await r.json();
         trackUsage("chat", j.usage);   // 이 질의가 쓴 토큰을 사용자 계정에 누적(마이페이지 표시용)
         const ans = (j.answer || "").replace(/\s*\[Data:[^\]]*\]/g, "").trim();   // GraphRAG 인용 토큰 정리
@@ -2995,6 +3284,14 @@
       camera.position.copy(pos);
       const center = bounds.getCenter(new THREE.Vector3());
       controls.target.set(center.x, pos.y, center.z); controls.update();
+      // 최초 위치와 수평 시선을 고정 좌표계로 저장한다. 큰 GLB 방만 최대 약 8m 범위로
+      // 완만하게 축소하고, 일반적인 실측 크기 방은 원래 거리감을 그대로 유지한다.
+      const forward = new THREE.Vector3(center.x-pos.x, 0, center.z-pos.z);
+      if (forward.lengthSq() < 1e-6) forward.set(0, 0, -1); else forward.normalize();
+      const right = new THREE.Vector3().crossVectors(forward, UP).normalize();
+      const roomSize = bounds.getSize(new THREE.Vector3());
+      const horizontalExtent = Math.max(roomSize.x, roomSize.z, 1);
+      entryAudioFrame = { origin: pos.clone(), forward, right, scale: Math.min(1, 8 / horizontalExtent) };
     }
 
     // ── 방 껍데기(텍스처 벽·바닥·천장) — room-viewer와 동일 규격 ──
@@ -3092,6 +3389,7 @@
   </script>
 <script src="nav.js" defer></script>
 <script src="mp-demo.js" defer></script>
+<script src="tts-controls.js" defer></script>
 <script src="assistant.js" defer></script>
 
 <script>

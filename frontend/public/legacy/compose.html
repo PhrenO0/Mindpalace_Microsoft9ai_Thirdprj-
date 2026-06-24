@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 크롬/엣지 등 브라우저 텍스트 자동확대 방지 — 글자 크기 통일 -->
+<style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>
 <title>구성 — 기억의 궁전</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css" />
@@ -83,7 +85,7 @@
 </head>
 <body>
   <div class="top">
-    <div class="brand"><span class="e">記憶 · Memory Palace</span>기억의 궁전</div>
+    <div class="brand"><span class="e">MIND PALACE</span>기억의 궁전</div>
     <div class="stepper" aria-label="진행 단계">
       <div class="st done"><span class="n">✓</span>업로드</div>
       <div class="bar done"></div>
@@ -338,13 +340,15 @@
 
   function persistPalace(){ try { const s=JSON.stringify(PAL); const ck="mp_palace:"+CITY; localStorage.setItem(ck, s); sessionStorage.setItem(ck, s); } catch(_){} }
   function render(){
-    // 제목이 플레이스홀더(hex / "기억의 궁전:")면 PDF 파일명으로 기본 세팅(✎로 수정 가능)
-    try {
+    // 데모(데모 데이터로 체험)는 제목을 항상 '한국사.PDF'로 고정 — 진행 중 PDF 파일명/플레이스홀더가 새지 않게.
+    const _demo = (P.get("demo")==="1") || /korean_history|sample|demo/i.test((PAL.palace&&PAL.palace.id)||"");
+    // 제목이 플레이스홀더(hex / "기억의 궁전:")면 PDF 파일명으로 기본 세팅(✎로 수정 가능) — 데모는 건너뜀
+    if(!_demo) try {
       const _t=(PAL.palace&&PAL.palace.title)||"", _pid=(PAL.palace&&PAL.palace.id)||"";
       const _ph=!_t||(_pid&&_t.indexOf(_pid)>=0)||/^기억의 궁전\s*[:：]/.test(_t);
       if(_ph&&PAL.palace){ let _fn=""; try{ const j=JSON.parse(localStorage.getItem("mp_rag_job")||"null"); if(j&&j.filename) _fn=String(j.filename).replace(/\.[^.]+$/,"").trim(); }catch(_){} if(_fn){ PAL.palace.title=_fn; persistPalace(); } }
     } catch(_){}
-    const _pt=(PAL.palace&&PAL.palace.title)||"학습 콘텐츠";
+    const _pt = _demo ? "한국사.PDF" : ((PAL.palace&&PAL.palace.title)||"학습 콘텐츠");
     $("title").innerHTML = `${esc(_pt)} <button id="editTitleBtn" title="궁전 이름 수정" style="border:0;background:none;cursor:pointer;font-size:.6em;color:var(--accent,#b5552f);vertical-align:middle">✎</button>를 <span class="g">기억의 궁전</span>으로 구성`;
     { const _e=document.getElementById("editTitleBtn"); if(_e) _e.onclick=()=>{ const nv=(prompt("궁전 이름:", (PAL.palace&&PAL.palace.title)||"")||"").trim(); if(nv&&PAL.palace){ PAL.palace.title=nv; persistPalace(); render(); } }; }
     const corpus=(PAL.palace?.source?.corpus)||"";

@@ -9,7 +9,9 @@
           페이지에서 window.MP_TTS_TOKEN_URL 로 절대 URL 지정.
    사용:  <script src="tts-controls.js" defer></script>
    음성: graphrag/tts/presets.json 과 동일(SunHi/Hyunsu HD).
-   공간음향: Web Audio StereoPanner 로 좌/우/중앙(수평)만. (브라우저 폴백 시 좌우 제한적) */
+   공간음향: 방 진입 위치·시선 기준 3D 좌표를 Web Audio HRTF PannerNode 로 재생.
+     좌우·앞뒤·위아래와 거리를 반영하며, PannerNode 미지원 시 StereoPanner 로 폴백.
+     브라우저 내장 TTS는 PCM 버퍼를 제공하지 않아 공간음향을 적용할 수 없음. */
 (function () {
   "use strict";
   var LS_GENDER = "mp_tts_gender", LS_SPEED = "mp_tts_speed", LS_SPATIAL = "mp_tts_spatial";
@@ -122,7 +124,13 @@
     try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e){}
   }
 
-  // opts.pan: -1(왼)~+1(오). spatial ON 이고 pan 이 주어지면 좌우 배치, 아니면 중앙.
+  function setAudioParam(param, value){
+    if (param && typeof param.setValueAtTime === "function") param.setValueAtTime(value, actx.currentTime);
+    else if (param) param.value = value;
+  }
+
+  // opts.position: 방 진입 위치·시선 기준 {x,y,z}. listener=(0,0,0), 정면=-Z.
+  // opts.pan: 구형 호출 호환용 -1(왼)~+1(오). 3D PannerNode 미지원 시에도 사용.
   function speakAzure(text, opts){
     return synthesize(text).then(function (buf){
       var ctx = getCtx();
@@ -130,8 +138,31 @@
       return ctx.decodeAudioData(buf.slice(0)).then(function (audioBuf){
         stop();
         var src = ctx.createBufferSource(); src.buffer = audioBuf;
-        var pan = (typeof opts.pan === "number") ? Math.max(-1, Math.min(1, opts.pan)) : 0;
-        if (spatial && ctx.createStereoPanner && pan !== 0){
+        var pos = opts && opts.position;
+        var has3D = spatial && pos && Number.isFinite(pos.x) && Number.isFinite(pos.y) && Number.isFinite(pos.z) && ctx.createPanner;
+        var pan = (opts && typeof opts.pan === "number") ? Math.max(-1, Math.min(1, opts.pan)) : 0;
+        if (has3D){
+          // 이 AudioContext는 TTS 전용이다. listener를 방 진입점의 로컬 원점에 고정하고
+          // memory-walk가 변환한 사물 좌표만 움직여, 이후 카메라가 사물을 중앙에 둬도 음상이 유지된다.
+          var listener = ctx.listener;
+          if (listener.positionX){
+            setAudioParam(listener.positionX, 0); setAudioParam(listener.positionY, 0); setAudioParam(listener.positionZ, 0);
+            setAudioParam(listener.forwardX, 0); setAudioParam(listener.forwardY, 0); setAudioParam(listener.forwardZ, -1);
+            setAudioParam(listener.upX, 0); setAudioParam(listener.upY, 1); setAudioParam(listener.upZ, 0);
+          } else {
+            listener.setPosition(0, 0, 0); listener.setOrientation(0, 0, -1, 0, 1, 0);
+          }
+          var p3 = ctx.createPanner();
+          p3.panningModel = "HRTF"; p3.distanceModel = "inverse";
+          p3.refDistance = Number.isFinite(opts.refDistance) ? opts.refDistance : 1.15;
+          p3.maxDistance = Number.isFinite(opts.maxDistance) ? opts.maxDistance : 18;
+          p3.rolloffFactor = Number.isFinite(opts.rolloffFactor) ? opts.rolloffFactor : 0.72;
+          p3.coneInnerAngle = 360; p3.coneOuterAngle = 360; p3.coneOuterGain = 1;
+          if (p3.positionX){
+            setAudioParam(p3.positionX, pos.x); setAudioParam(p3.positionY, pos.y); setAudioParam(p3.positionZ, pos.z);
+          } else p3.setPosition(pos.x, pos.y, pos.z);
+          src.connect(p3); p3.connect(ctx.destination);
+        } else if (spatial && ctx.createStereoPanner && pan !== 0){
           var panner = ctx.createStereoPanner(); panner.pan.value = pan;
           src.connect(panner); panner.connect(ctx.destination);
         } else {

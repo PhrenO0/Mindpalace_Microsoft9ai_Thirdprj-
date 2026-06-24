@@ -99,6 +99,7 @@
     <span class="eyebrow">기억의 궁전 · 전체 기술 설명</span>
     <h1>방 하나가 <b>기억의 집</b>이<br>되기까지, 전부</h1>
     <p class="sub">3D 방이나 사진을 넣으면 — 가구를 찾고, 위치를 잡고, 이름을 붙이고,<br>걷는 순서로 번호를 매겨, 외울 내용을 얹습니다.<br>그 모든 기술을 <b>쉬운 말로 한 페이지</b>에 담았어요.</p>
+    <a href="bounding-box-visual.html" style="display:inline-flex;align-items:center;gap:8px;margin-top:18px;background:linear-gradient(135deg,#E0730F,#B25400);color:#fff;font-weight:800;font-size:15px;text-decoration:none;padding:13px 22px;border-radius:12px;box-shadow:0 10px 26px rgba(224,115,15,.32);">🧊 3D로 직접 체험하기 <span style="opacity:.85;">→</span></a>
   </section>
 
   <!-- 목차 -->
@@ -157,7 +158,7 @@
   <div class="hl" id="s0">
     <div class="tag">① 두 갈래 입력 · 하나의 좌표계</div>
     <h2>좌표는 '읽거나' '복원'하고,<br>이름만 AI로 판정합니다</h2>
-    <p>위치를 얻는 길은 둘이에요. <b>3D 모델(GLB)</b>은 좌표가 이미 들어 있어 <b>그냥 읽고</b>(오차 0), <b>사진</b>은 깊이가 없어 <b>여러 각도로 삼각측량해 복원</b>해요. 둘 다 <b>같은 자(가로 7.2·바닥 0)</b>로 맞춰, 결과를 서로 갈아끼울 수 있죠.</p>
+    <p>위치를 얻는 길은 둘이에요. <b>3D 모델(GLB)</b>은 좌표가 이미 들어 있어 <b>그냥 읽고</b>(오차 0), <b>사진</b>은 깊이가 없어 <b>여러 각도로 삼각측량해 복원</b>해요. 둘 다 <b>같은 자(가로 7.2·바닥 0)</b>로 맞춰, 결과를 서로 갈아끼울 수 있죠. 뷰어와 스캐너가 똑같은 공식(7.2÷가로폭)을 쓰기 때문에, 스캐너가 미리 구운 좌표를 뷰어가 그대로 다시 써도 어긋나지 않아요.</p>
     <div class="viz">
       <svg viewBox="0 0 300 96" aria-label="두 입력 경로가 같은 좌표계로">
         <rect x="8" y="14" width="118" height="30" rx="8" fill="rgba(255,255,255,.16)"/>
@@ -186,7 +187,17 @@
     <span class="num">기술 1</span>
     <div class="head"><div class="badge">📦</div>
       <div><h2>GLB 처리 — 이름표가 있냐 없냐</h2><div class="lead">라벨 있으면 믿고, 없으면 모양으로 가려내기</div></div></div>
-    <p class="body">3D 방 파일(GLB)을 열면 수많은 조각 중 '가구'만 추려요. <span class="o">이름표</span>가 있으면('Sofa', 'Chair') 그대로 믿고, <span class="o">없거나 'Object_12'처럼 모호</span>하면 <b>크기·모양</b>으로 가려내요. 얇고 큰 면은 벽, 납작하고 거대하면 바닥, 천장에 붙은 건 조명으로 보고 빼죠. 그래서 어떤 방 파일이든 자동으로 처리돼요.</p>
+    <p class="body">3D 방 파일(GLB)을 열면 수많은 조각 중 '가구'만 추려요. <span class="o">이름표</span>가 있으면('Sofa', 'Chair') 그대로 믿고, <span class="o">없거나 'Object_12'처럼 모호</span>하면 <b>크기·모양</b>으로 가려내요. 노드 이름은 공짜로 딸려 오는 정보라, '가구' 단어만 보이면 AI를 한 번도 안 부르고 이름·위치를 얻을 수 있어요.</p>
+    <p class="body">크기·모양 판별은 절대 길이가 아니라 <b>방 기준(가로 7.2≈7.2m)에 대한 비율</b>로 재요 — 방이 커도 작아도 같은 잣대가 통하죠. <b>7.2m 방으로 환산하면 이런 뜻이에요:</b></p>
+    <ul style="margin:10px 0 4px;padding-left:2px;list-style:none;font-size:14px;line-height:1.75;color:#4E5968;">
+      <li>🔹 <b>소품 컷</b> — 가장 긴 변이 <b>7.2의 3%(≈22cm)</b>도 안 되면 컵·리모컨 같은 소품 → 외울 ‘정거장’으론 너무 작아 제외.</li>
+      <li>🔹 <b>방 자체 컷</b> — 장변이 <b>92%(≈6.6m)</b>를 넘으면 가구가 아니라 방 바닥·전체 덩어리 → 제외.</li>
+      <li>🔹 <b>벽</b> — 두께(가장 짧은 변)가 <b>20cm 미만</b>으로 얇은데 키가 방 높이 절반↑이거나 폭이 <b>2.2m↑</b>로 넓으면 → 세워진 벽·칸막이.</li>
+      <li>🔹 <b>바닥</b> — 높이가 <b>9cm 미만</b>으로 납작한데 폭이 <b>3.2m↑</b>로 거대하면 → 바닥·천장 슬래브(러그는 이보다 작아 살아남음).</li>
+      <li>🔹 <b>기둥</b> — 높이가 <b>방 높이의 82%↑</b>면 바닥~천장을 잇는 기둥·두꺼운 벽 → 제외(전체 높이 가구는 드물어서).</li>
+      <li>🔹 <b>천장 조명</b> — 사물 한가운데 높이가 <b>방 높이 72%↑</b>면 천장에 붙은 조명·실링팬 → 제외.</li>
+    </ul>
+    <p class="body"><b>천장 조명을 왜 빼냐면</b> — 천장에 번호가 찍히면 걸으면서 올려다볼 수 없어 ‘걷는 순서로 외우기’가 깨지거든요. 이렇게 비율 잣대 하나로 어떤 방 파일이든 자동으로 가구만 골라내요.</p>
     <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 이름표가 있으면 그대로, 없으면 <b>모양으로 가구만</b> 골라내요.</span></div>
   </div>
 
@@ -195,8 +206,8 @@
     <span class="num">기술 2</span>
     <div class="head"><div class="badge">📐</div>
       <div><h2>위치·좌표 잡기</h2><div class="lead">같은 자로 맞추고 · 모델은 읽고 · 사진은 삼각측량</div></div></div>
-    <p class="body">먼저 방마다 다른 크기를 <span class="o">같은 자(가로 7.2)</span>로 맞춰요(바닥은 0). 그래야 "0.5m 안이면 같은 가구" 같은 기준을 모든 방에 똑같이 써요.</p>
-    <p class="body"><b>모델(GLB)</b>은 가구를 감싸는 <b>상자(바운딩박스)의 중심</b>을 읽으면 끝 — 화면에 안 그리고 좌표만 읽어 오차 0. <b>사진</b>은 깊이가 없어, <b>여러 각도 시선이 만나는 점</b>(삼각측량)으로 위치를 복원해요.</p>
+    <p class="body">먼저 방마다 다른 크기를 <span class="o">같은 자(가로 7.2)</span>로 맞춰요. 가로(폭)만 기준 삼는 건, 천장 높은 방까지 높이로 줄이면 너무 작아져 버리기 때문이에요. 바닥은 한가운데가 아니라 <b>가장 낮은 면을 0</b>에 맞춰요 — 그래야 눈높이(바닥+1.6m)·그림자·바닥이 늘 들어맞아 발이 뜨거나 파묻히지 않죠. 이렇게 통일해야 "0.5m 안이면 같은 가구" 같은 기준을 모든 방에 똑같이 써요.</p>
+    <p class="body"><b>모델(GLB)</b>은 가구를 감싸는 <b>상자(바운딩박스)의 중심</b>을 읽으면 끝 — 화면에 안 그리고 좌표만 읽어 오차 0. 메쉬에 박힌 중심점은 모델러 마음대로라 못 믿으니, 상자 한가운데(=부피의 무게중심)를 기준 삼아요. <b>사진</b>은 깊이가 없어, <b>여러 각도 시선이 만나는 점</b>(삼각측량)으로 위치를 복원해요. 이때 시선들이 한 점에 모이는 정도(평균 이탈)가 0.5m 안쪽이어야 '하나의 사물'로 인정하고, 그보다 벌어지면 다른 사물을 본 광선으로 보고 버려요.</p>
     <div class="viz">
       <svg viewBox="0 0 300 120" aria-label="모델은 상자 중심 읽기, 사진은 삼각측량">
         <rect x="14" y="20" width="120" height="80" rx="10" fill="#fff" stroke="#DCD2C4"/>
@@ -213,7 +224,7 @@
         <text x="226" y="112" class="lbl-s" text-anchor="middle">사진 = 시선 교차</text>
       </svg>
     </div>
-    <p class="body" style="font-size:13.5px;color:var(--gray5)">★ <b>삼각측량은 사실 '사진 전용'</b>이에요. GLB는 좌표가 이미 있어 거의 안 거치고, 가림이 의심될 때만 가끔 보정용으로 써요. (실제 시연 방들의 좌표 파일엔 삼각측량 기록이 0건)</p>
+    <p class="body" style="font-size:13.5px;color:var(--gray5)">★ <b>삼각측량은 사실 '사진 전용'</b>이에요. GLB는 좌표가 이미 있어 거의 안 거치고, 가림이 의심될 때만 가끔 보정용으로 써요.</p>
     <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 모델은 <b>지도에 꽂힌 핀을 옮겨 적듯</b>, 사진은 <b>두 눈으로 거리감 잡듯</b> 위치를 구해요.</span></div>
   </div>
 
@@ -222,8 +233,25 @@
     <span class="num">기술 3</span>
     <div class="head"><div class="badge">🔍</div>
       <div><h2>객체 인식 — 이름 짓기</h2><div class="lead">확실하면 이름대로, 애매하면 AI 비전이 판단</div></div></div>
-    <p class="body">이름표가 틀릴 수도 있어요(라벨은 'umbrella'인데 실제론 화분). 그래서 <span class="o">애매하거나 이름 없는 것만</span> 그 자리를 화면 캡처해 <b>GPT-4.1 비전</b>에게 "이거 뭐야?" 물어 한국어 이름을 받아요. 진짜 확실한 이름(식탁·소파)은 그대로 둬 정확도는 지키고 비용은 아끼죠.</p>
+    <p class="body">이름표가 항상 옳진 않아요. 그래서 <span class="o">애매하거나 이름 없는 것만</span> 그 자리를 화면 캡처해 <b>GPT-4.1 비전</b>에게 "이거 뭐야?" 물어 한국어 이름을 받아요. 진짜 확실한 이름(식탁·소파)은 그대로 둬 정확도는 지키고 비용은 아끼죠. <b>‘헷갈리는 사물’의 기준</b>은 ① 모양으로만 잡은 것(obj12) ② 좌표만 있는 합성 지점(spot) ③ object·mesh·untitled 같은 무의미·임의 이름 — 이 셋 중 하나면 비전이 다시 봐요.</p>
     <p class="body" style="margin-top:12px;"><b>2단으로 지어요</b> — ① 방 전체를 한 번에, ② 약한 것만 클로즈업으로 다시.</p>
+    <p class="body"><b>방 전체 4컷은 대각선 네 방향(±45·±135°)에서 찍어요</b> — 한 각도에서 가려진 가구가 다른 컷에서는 드러나거든요. 좁은 방이라 카메라를 멀리 못 빼도, 64°의 넓은 화각이면 면 전체와 여러 마커가 한 장에 담겨요. 이 4컷을 묶어 AI를 <b>딱 한 번</b>만 부르고(호출 제한·비용↓) 결과는 방마다 저장해 다시 부르지 않아요. 정밀 클로즈업은 512×512로 충분히 또렷하면서 가볍고, 한가운데 <b>빨간 십자</b>로 '바로 이 좌표'를 콕 집어 옆의 큰 가구를 잘못 부르지 않게 해요. 답이 매번 같도록 무작위성은 끄고(temperature 0) 돌려요.</p>
+    <div class="viz">
+      <svg viewBox="0 0 300 158" aria-label="네 모서리(대각 ±45·±135°)에서 방 중심을 4컷 촬영">
+        <rect x="64" y="32" width="172" height="90" rx="10" fill="#FBF5EC" stroke="#E7D9C2"/>
+        <g fill="#E0730F" opacity=".12">
+          <path d="M40 24 L150 77 L66 12 Z"/><path d="M260 24 L150 77 L234 12 Z"/>
+          <path d="M40 130 L150 77 L66 142 Z"/><path d="M260 130 L150 77 L234 142 Z"/>
+        </g>
+        <g stroke="#E0730F" stroke-width="1" opacity=".5">
+          <line x1="40" y1="24" x2="150" y2="77"/><line x1="260" y1="24" x2="150" y2="77"/>
+          <line x1="40" y1="130" x2="150" y2="77"/><line x1="260" y1="130" x2="150" y2="77"/>
+        </g>
+        <g font-size="17" text-anchor="middle"><text x="40" y="30">📷</text><text x="260" y="30">📷</text><text x="40" y="138">📷</text><text x="260" y="138">📷</text></g>
+        <g class="lbl-s" fill="#B25400" text-anchor="middle"><text x="40" y="15">+135°</text><text x="260" y="15">+45°</text><text x="40" y="153">−135°</text><text x="260" y="153">−45°</text></g>
+        <circle cx="150" cy="77" r="4" fill="#C9B89E"/><text x="150" y="93" text-anchor="middle" class="lbl-s">방 중심</text>
+      </svg>
+    </div>
     <div class="viz">
       <svg viewBox="0 0 300 142" aria-label="2단 비전 명명 과정">
         <text x="8" y="14" font="800 11px Pretendard" fill="#B25400">① 배치 — 방 전체 1번</text>
@@ -254,7 +282,7 @@
         <text x="236" y="124" text-anchor="middle" class="lbl-s">'없음'이면 빈자리</text>
       </svg>
     </div>
-    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 전체는 <b>4장 1번</b>으로 빠르게, 헷갈리는 사물만 <b>클로즈업 1장씩</b>으로 정확하게. (위 '우산'이 ②에서 고쳐져요)</span></div>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 전체는 <b>4장 1번</b>으로 빠르게, 헷갈리는 사물만 <b>클로즈업 1장씩</b>으로 정확하게.</span></div>
   </div>
 
   <div class="hl">
@@ -273,7 +301,7 @@
     <span class="num">기술 4</span>
     <div class="head"><div class="badge">🚶</div>
       <div><h2>번호·동선 설계</h2><div class="lead">번호는 '걷는 순서' · 시점 부채꼴로 설계</div></div></div>
-    <p class="body">번호는 검출 순서가 아니라 <b>사람이 한 바퀴 걷는 동선</b>으로 매겨요. 핵심은 <span class="o">방에 들어선 시점의 '부채꼴&nbsp;시야'</span>를 기준 삼는 것 — 거기서 <b>앞뒤·좌우</b>를 재고, 같은 종류가 많으면 <b>네 모서리 대표</b>를 뽑아 방 구석구석을 담고, <b>가까움 + 가던 방향 유지</b>로 순서를 이어요(지그재그·되돌아감 방지).</p>
+    <p class="body">번호는 검출 순서가 아니라 <b>사람이 한 바퀴 걷는 동선</b>으로 매겨요. 핵심은 <span class="o">방에 들어선 시점의 '부채꼴&nbsp;시야'</span>를 기준 삼는 것 — 입장 지점은 <b>긴 축의 끝(눈높이 1.6m)</b>으로 잡아요. 거기 서야 방을 가장 깊게 내다보는 '설정샷'이 나오고, 짧은 축 가운데에 서서 옆벽을 비스듬히 보는 일이 없거든요. 거기서 <b>앞뒤·좌우</b>를 재고, 같은 종류가 많으면 <b>네 모서리 대표</b>를 뽑아 방 구석구석을 담아요 — 그냥 '가까운 네 개'를 고르면 가운데로 쏠려 방 끝(가장 강한 공간 단서)이 비니까, 대각선으로 가장 튀어나온 항목을 골라 네 모서리를 채우죠. 순서는 <b>가까움 + 가던 방향 유지</b>로 이어요(지그재그·되돌아감 방지). 두 후보의 거리 차가 작을 때(약 1.4m 이내)는 덜 꺾이는 쪽을 골라 U턴을 억눌러요.</p>
     <div class="viz">
       <svg viewBox="0 0 300 120" aria-label="입장 시점 부채꼴 + 동선">
         <rect x="30" y="14" width="240" height="92" rx="8" fill="#fff" stroke="#DCD2C4"/>
@@ -298,7 +326,7 @@
     <span class="num">기술 5</span>
     <div class="head"><div class="badge">🎥</div>
       <div><h2>핫스팟 클릭 → 카메라</h2><div class="lead">잘 보이고 · 방 안쪽 보고 · 안 어지럽게</div></div></div>
-    <p class="body">번호를 누르면 그 가구를 <b>가장 잘 보는 자리</b>를 골라 부드럽게 날아가요. 자리를 고르는 기준 셋: <span class="o">① 잘 보이나</span>(다른 가구에 안 가려지나) <span class="o">② 방 안쪽을 보나</span>(벽 보고 끝나지 않게) <span class="o">③ 직전 시선과 비슷한가</span>(화면이 홱 돌아 멀미 안 나게 — 이걸 제일 중요하게). 그리고 약 <b>0.9초</b> 가속→감속으로 활공해요.</p>
+    <p class="body">번호를 누르면 그 가구 둘레 <b>28방향</b>을 따져 <b>가장 잘 보는 자리</b>를 골라 부드럽게 날아가요. 28방향이면 약 12.86°마다 한 번 — 더 적으면 트인 틈을 놓치고, 더 많으면 마커마다 28번씩 광선 쏘기가 비싸져 딱 그 사이예요. 자리를 고르는 기준 셋: <span class="o">① 잘 보이나</span>(다른 가구에 안 가려지나) <span class="o">② 방 안쪽을 보나</span>(벽 보고 끝나지 않게) <span class="o">③ 직전 시선과 비슷한가</span>. ③에 가장 큰 가중치를 줘요 — 화면이 홱 돌면 멀미가 나고 맥락도 끊기니까요. 그리고 약 <b>0.9초</b>에 걸쳐 시작·끝 속도가 0인 곡선으로 가속→감속하며 활공해요(0.3초면 맥락을 놓치고 2초↑면 클릭이 지치며, 등속이면 멀미가 나거든요). 이동 경로 자체를 봐야 가구들의 공간 관계가 머리에 새겨지죠.</p>
     <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 드론이 미끄러지듯, <b>멀미 없이</b> 가장 잘 보이는 자리로 데려다줘요.</span></div>
   </div>
 
@@ -307,7 +335,7 @@
     <span class="num">기술 6</span>
     <div class="head"><div class="badge">🗂️</div>
       <div><h2>위치 관리·저장</h2><div class="lead">3단 우선순위 + 내 서재(서버) 영속화</div></div></div>
-    <p class="body">가구 위치는 <b>3단 우선순위</b>로 관리돼요 — <span class="o">① 사람이 직접 손본 것</span> &gt; <span class="o">② 스캐너로 구운 좌표</span> &gt; <span class="o">③ 모델 모양 추정</span>. 각 가구는 학습 개념과 묶여, 순서 바꾸거나 다시 들어와도 "이 사물 = 이 개념"이 유지돼요.</p>
+    <p class="body">가구 위치는 <b>3단 우선순위</b>로 관리돼요 — <span class="o">① 사람이 직접 손본 것</span> &gt; <span class="o">② 스캐너로 구운 좌표</span> &gt; <span class="o">③ 모델 모양 추정</span>. 이 순서는 '무회귀 원칙'이에요 — 나중에 돌린 자동 추정이 사람이 손으로 고친 결과를 절대 덮어쓰지 못하게 막죠. 각 가구는 학습 개념과 묶여, 순서 바꾸거나 다시 들어와도 "이 사물 = 이 개념"이 유지돼요.</p>
     <p class="body"><b>최신 기능</b> — 내가 만든 궁전·편집·의미부여를 <span class="o">'내 서재'(서버 DB)</span>에 저장해요(클라우드 Cosmos+Blob). 로그인하면 다시 들어와도 그대로 복원되죠.</p>
     <div class="viz">
       <svg viewBox="0 0 300 84" aria-label="3단 우선순위">
@@ -330,7 +358,7 @@
     <span class="num">기술 7</span>
     <div class="head"><div class="badge">🛠️</div>
       <div><h2>백엔드·검증·한계</h2><div class="lead">검출·이름·저장을 맡는 서버 + 솔직한 한계</div></div></div>
-    <p class="body">서버는 사물 검출(Azure Vision), 이름 짓기(GPT-4.1 비전), 내 서재 저장(Cosmos+Blob)을 맡아요. 쓰는 AI 모델은 코드가 아니라 <b>설정값</b>으로 정해지죠. 그리고 학습 자료(PDF)는 <b>GraphRAG</b>가 의미로 분석해 방·개념으로 만들어요.</p>
+    <p class="body">서버는 사물 검출(Azure Vision), 이름 짓기(GPT-4.1 비전), 내 서재 저장(Cosmos+Blob)을 맡아요. 쓰는 AI 모델은 코드에 박혀 있지 않고 <b>설정값(배포 이름)</b>으로 정해져요 — 그 이름이 곧 모델이라 요청에 모델명을 따로 적지 않고, Azure가 안 될 땐 더 가벼운 모델로 자동 대체돼요. 무거운 방 파일(GLB)은 <b>Draco</b> 압축으로 300MB를 9MB까지 줄여 빠르게 띄우는데, 압축을 푸는 도구를 3D 라이브러리와 <b>같은 버전</b>으로 못 박아 둬요(버전이 어긋나면 풀다 실패하거든요). 그리고 학습 자료(PDF)는 <b>GraphRAG</b>가 의미로 분석해 방·개념으로 만들어요.</p>
     <p class="body"><b>솔직한 한계</b> — 얇은 사물 뒤에 큰 배경(커튼)이 있으면 비전이 배경을 잡을 수 있어요. 그땐 그 사물만 <b>'정밀' 버튼</b>으로 다시 잡고, 자동이 어긋난 방은 <b>손편집</b>으로 받쳐요(①계층).</p>
     <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 똑똑한 AI도 가끔 틀리니, <b>정밀 버튼·손편집</b>이라는 안전장치를 같이 뒀어요.</span></div>
   </div>
@@ -340,19 +368,49 @@
     <span class="num">기술 8</span>
     <div class="head"><div class="badge">🧩</div>
       <div><h2>세그멘테이션 &amp; 바운딩 박스</h2><div class="lead">'어디까지가 한 사물'인가 + 상자로 좌표 잡기</div></div></div>
-    <p class="body"><b>바운딩 박스</b> — 가구 조각의 <span class="o">모든 점을 감싸는 가장 작은 상자</span>를 씌워, 그 <b>한가운데를 위치</b>로, <b>상자 모양</b>을 '가구냐 벽이냐' 단서로 써요(렌더링 없이 점만 읽어 오차 0). 사진일 땐 AI가 화면에 <b>2D 박스</b>를 그리고 거기로 광선을 쏴 3D로 바꿔요.</p>
-    <p class="body"><b>세그멘테이션</b> — "어떤 조각들이 한 사물인가"를 묶는 문제예요(부정확은 좌표가 아니라 대부분 여기서). <span class="o">한 가구가 여러 조각</span>이면 마커가 겹쳐 → 가까운 건 합치고(0.5~1.0m·위에서 본 0.42m), <span class="o">여러 가구가 한 덩어리</span>면 좌표가 뭉쳐 → 통짜 메쉬는 빼고 사진·손편집으로 받쳐요(점이 한 덩어리라 기하학만으론 못 쪼갬).</p>
+    <p class="body"><b>바운딩 박스</b> — 가구 조각의 <span class="o">모든 점을 감싸는 가장 작은 상자</span>를 씌워, 그 <b>한가운데를 위치</b>로, <b>상자 모양</b>을 '가구냐 벽이냐' 단서로 써요(렌더링 없이 점만 읽어 오차 0). 상자 한가운데를 쓰는 건, 모델에 박힌 중심점이 모델러 손에 달려 못 믿는 반면 상자 가운데는 부피의 진짜 무게중심이라 사람이 느끼는 자리와 같기 때문이에요. 사진일 땐 AI가 화면에 <b>2D 박스</b>를 그리고 거기로 광선을 쏴 3D로 바꿔요. 이때 한 점만 쏘면 가구 틈으로 빠져 뒤벽을 맞히니, <b>3×3=9곳</b>에 쏴 가장 가까운 앞면 무리만 평균 내요.</p>
+    <p class="body"><b>세그멘테이션</b> — "어떤 조각들이 한 사물인가"를 묶는 문제예요(부정확은 좌표가 아니라 대부분 여기서). <span class="o">한 가구가 여러 조각</span>이면 마커가 겹쳐 → 가까운 건 합쳐요. 거리 기준이 셋이에요 — 라벨과 상관없이 <b>0.5m</b>는 사람이 '같은 자리'로 느끼는 최소 간격(의자끼리는 보존하면서 쪼개진 메쉬만 솎음), 같은 라벨이면 <b>1.0m</b>(수납장 패널 여럿을 하나로), 높이를 버리고 위에서 본 <b>0.42m</b>는 바닥 러그와 공중 벽그림이 위에서 겹쳐 보이던 걸 풀려고 의자 간격보다 일부러 좁게 잡은 값이에요. <span class="o">여러 가구가 한 덩어리</span>면 좌표가 뭉쳐 → 통짜 메쉬는 빼고 사진·손편집으로 받쳐요(점이 한 덩어리라 기하학만으론 못 쪼갬).</p>
     <div class="viz">
-      <svg viewBox="0 0 300 100" aria-label="바운딩 박스 중심과 겹침 정리">
-        <rect x="22" y="30" width="78" height="44" rx="6" fill="#fff" stroke="#DCD2C4"/>
-        <rect x="30" y="38" width="62" height="28" rx="3" fill="none" stroke="#E0730F" stroke-dasharray="4 3"/>
-        <circle cx="61" cy="52" r="4" fill="#E0730F"/>
-        <text x="61" y="92" class="lbl-s" text-anchor="middle">상자 중심 = 위치</text>
-        <circle cx="176" cy="46" r="13" fill="#241C12" opacity=".5"/>
-        <circle cx="188" cy="50" r="13" fill="#E0730F" opacity=".7"/>
-        <text x="225" y="46" class="lbl" text-anchor="middle">→</text>
-        <circle cx="262" cy="48" r="13" fill="#E0730F"/>
-        <text x="219" y="92" class="lbl-s" text-anchor="middle">겹친 둘 → 하나로</text>
+      <svg viewBox="0 0 300 122" aria-label="사진→3D 좌표: 한 점이면 뒤벽, 9점이면 앞면 무리 평균">
+        <line x1="12" y1="95" x2="288" y2="95" stroke="#DCD2C4" stroke-width="2"/>
+        <text x="150" y="108" text-anchor="middle" class="lbl-s">뒤 벽</text>
+        <text x="55" y="16" text-anchor="middle" font-size="14">📷</text>
+        <rect x="30" y="48" width="20" height="28" rx="3" fill="#EAE3D6" stroke="#D6CAB4"/>
+        <rect x="62" y="48" width="20" height="28" rx="3" fill="#EAE3D6" stroke="#D6CAB4"/>
+        <line x1="55" y1="22" x2="57" y2="93" stroke="#E0303A" stroke-width="1.8"/>
+        <circle cx="57" cy="93" r="3.2" fill="#E0303A"/>
+        <text x="56" y="120" text-anchor="middle" class="lbl-s" fill="#C0292F">한 점 → 틈으로 빠져 뒤벽 ✗</text>
+        <text x="228" y="16" text-anchor="middle" font-size="14">📷</text>
+        <rect x="198" y="52" width="60" height="24" rx="3" fill="#EAE3D6" stroke="#D6CAB4"/>
+        <g stroke="#E0730F" stroke-width="0.9" opacity=".5">
+          <line x1="228" y1="22" x2="212" y2="56"/><line x1="228" y1="22" x2="228" y2="56"/><line x1="228" y1="22" x2="244" y2="56"/>
+          <line x1="228" y1="22" x2="212" y2="63"/><line x1="228" y1="22" x2="228" y2="63"/><line x1="228" y1="22" x2="244" y2="63"/>
+          <line x1="228" y1="22" x2="212" y2="70"/><line x1="228" y1="22" x2="228" y2="70"/><line x1="228" y1="22" x2="244" y2="70"/>
+        </g>
+        <g fill="#15B86B"><circle cx="212" cy="56" r="2.2"/><circle cx="228" cy="56" r="2.2"/><circle cx="244" cy="56" r="2.2"/><circle cx="212" cy="63" r="2.2"/><circle cx="228" cy="63" r="2.2"/><circle cx="244" cy="63" r="2.2"/><circle cx="212" cy="70" r="2.2"/><circle cx="228" cy="70" r="2.2"/><circle cx="244" cy="70" r="2.2"/></g>
+        <text x="228" y="120" text-anchor="middle" class="lbl-s" fill="#0c7a47">9점 → 앞면 무리만 평균 ✓</text>
+      </svg>
+    </div>
+    <div class="viz">
+      <svg viewBox="0 0 300 124" aria-label="세그멘테이션 3거리 — 겹친 마커 합치기">
+        <text x="150" y="13" text-anchor="middle" class="lbl-s">겹친 마커를 ‘한 사물’로 합치는 거리 기준 셋</text>
+        <line x1="100" y1="22" x2="100" y2="116" stroke="#EFE6D8"/><line x1="200" y1="22" x2="200" y2="116" stroke="#EFE6D8"/>
+        <text x="50" y="40" text-anchor="middle" font="800 14px Pretendard" fill="#B25400">0.5m</text>
+        <g fill="#15B86B"><circle cx="32" cy="60" r="4.5"/><circle cx="68" cy="60" r="4.5"/></g>
+        <text x="50" y="82" text-anchor="middle" class="lbl-s">라벨 무관</text>
+        <text x="50" y="96" text-anchor="middle" class="lbl-s">떨어진 의자 보존,</text>
+        <text x="50" y="109" text-anchor="middle" class="lbl-s">쪼개진 메쉬만 솎음</text>
+        <text x="150" y="40" text-anchor="middle" font="800 14px Pretendard" fill="#B25400">1.0m</text>
+        <g fill="#E0730F"><rect x="137" y="53" width="11" height="16" rx="2"/><rect x="152" y="53" width="11" height="16" rx="2"/></g>
+        <text x="150" y="82" text-anchor="middle" class="lbl-s">같은 라벨끼리</text>
+        <text x="150" y="96" text-anchor="middle" class="lbl-s">수납장 패널 여럿</text>
+        <text x="150" y="109" text-anchor="middle" class="lbl-s">→ 하나로</text>
+        <text x="250" y="40" text-anchor="middle" font="800 14px Pretendard" fill="#B25400">0.42m</text>
+        <rect x="230" y="54" width="20" height="13" rx="2" fill="#DCD2C4"/>
+        <circle cx="256" cy="60" r="4" fill="#E0730F"/>
+        <text x="250" y="82" text-anchor="middle" class="lbl-s">위에서 본 평면(높이↓)</text>
+        <text x="250" y="96" text-anchor="middle" class="lbl-s">바닥 러그·공중 벽그림이</text>
+        <text x="250" y="109" text-anchor="middle" class="lbl-s">겹쳐 보이던 걸 분리</text>
       </svg>
     </div>
     <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 물건마다 '딱 맞는 상자'를 씌워 가운데를 찍고, <b>겹친 건 합치되 통짜로 붙은 건 못 쪼개</b> 사진·손편집으로 도와요.</span></div>
@@ -364,20 +422,27 @@
     <span class="num">기술 9</span>
     <div class="head"><div class="badge">📊</div>
       <div><h2>숫자로 보는 작업량</h2><div class="lead">방 하나에 몇 번·몇 장 일하나</div></div></div>
-    <p class="body"><b>📸 스크린샷</b> — 자동 이름 짓기는 방을 <span class="o">네 모서리 4장</span> 찍어 AI에 <b>딱 1번</b>. '정밀'은 <span class="o">마커 1개당 1장</span>(512×512)씩. 방 스캐너는 <b>고정 장수가 아니라</b>, 빠짐없이 덮이게 <span class="o">방 크기에 맞춰 자동으로 더</span> 찍어요(가장 먼 칸부터·약 60% 겹침, 사물마다 15° 벌려 한 번 더).</p>
+    <p class="body"><b>📸 스크린샷</b> — 자동 이름 짓기는 방을 <span class="o">네 모서리 4장</span> 찍어 AI에 <b>딱 1번</b>. '정밀'은 <span class="o">마커 1개당 1장</span>(512×512)씩. 방 스캐너는 <b>고정 장수가 아니라</b>, 빠짐없이 덮이게 <span class="o">방 크기에 맞춰 자동으로 더</span> 찍어요. <b>가장 먼 칸부터</b> 채우는 건 적은 장수로 방을 최대한 덮어 촬영 비용을 아끼려는 것이고, 이웃 칸끼리 약 <b>60% 겹치게</b> 해 사이가 비지 않게 해요(형상 복원이 아니라 '빠짐없이 보였나'만 보면 되니 60%로 충분). 사물마다 <b>15° 벌려 한 번 더</b> 찍는 건 두 시선이 만나 위치를 정확히 잡게 하는 여유분이에요.</p>
     <div class="viz">
-      <svg viewBox="0 0 300 116" aria-label="스캐너 시점계획 — 방 크기 비례 촬영">
-        <rect x="18" y="12" width="264" height="74" rx="8" fill="#fff" stroke="#DCD2C4"/>
-        <g stroke="#EFE6D8" stroke-width="1"><line x1="84" y1="12" x2="84" y2="86"/><line x1="150" y1="12" x2="150" y2="86"/><line x1="216" y1="12" x2="216" y2="86"/><line x1="18" y1="49" x2="282" y2="49"/></g>
-        <path d="M84 79 L54 22 L116 22 Z" fill="#E0730F" opacity=".13"/>
-        <path d="M150 79 L120 22 L182 22 Z" fill="#E0730F" opacity=".13"/>
-        <path d="M216 79 L186 22 L248 22 Z" fill="#E0730F" opacity=".13"/>
-        <g fill="#E0730F"><circle cx="84" cy="79" r="7"/><circle cx="150" cy="79" r="7"/><circle cx="216" cy="79" r="7"/></g>
-        <g fill="#fff" font="800 9px Pretendard" text-anchor="middle"><text x="84" y="82">2</text><text x="150" y="82">1</text><text x="216" y="82">3</text></g>
-        <text x="150" y="104" class="lbl-s" text-anchor="middle">가장 먼 칸부터 · 인접 ~60% 겹침 · 방 클수록 더 (사물마다 15° 더)</text>
+      <svg viewBox="0 0 300 122" aria-label="네 모서리 4컷 → AI 한 번 → 번호별 이름">
+        <rect x="14" y="22" width="118" height="78" rx="8" fill="#fff" stroke="#DCD2C4"/>
+        <circle cx="73" cy="61" r="3" fill="#C9B89E"/>
+        <g stroke="#E0730F" stroke-width="1" opacity=".45">
+          <line x1="30" y1="36" x2="73" y2="61"/><line x1="116" y1="36" x2="73" y2="61"/>
+          <line x1="30" y1="86" x2="73" y2="61"/><line x1="116" y1="86" x2="73" y2="61"/>
+        </g>
+        <g fill="#E0730F"><circle cx="30" cy="36" r="8"/><circle cx="116" cy="36" r="8"/><circle cx="30" cy="86" r="8"/><circle cx="116" cy="86" r="8"/></g>
+        <g fill="#fff" font="800 9px Pretendard" text-anchor="middle"><text x="30" y="39">1</text><text x="116" y="39">2</text><text x="30" y="89">3</text><text x="116" y="89">4</text></g>
+        <path d="M138 61 L160 61" stroke="#DCD2C4" stroke-width="2"/><polygon points="160,61 152,57 152,65" fill="#DCD2C4"/>
+        <rect x="164" y="44" width="60" height="34" rx="8" fill="#FBE7D1" stroke="#E0730F"/>
+        <text x="194" y="59" text-anchor="middle" font="800 10px Pretendard" fill="#B25400">GPT-4.1</text>
+        <text x="194" y="71" text-anchor="middle" class="lbl-s">비전 · 1콜</text>
+        <path d="M226 61 L246 61" stroke="#DCD2C4" stroke-width="2"/><polygon points="246,61 238,57 238,65" fill="#DCD2C4"/>
+        <g class="lbl-s"><text x="250" y="49">1 식탁</text><text x="250" y="63">2 소파</text><text x="250" y="77">3 의자…</text></g>
+        <text x="73" y="116" class="lbl-s" text-anchor="middle">네 모서리 4컷을 묶어 AI 1콜 → 번호별 이름</text>
       </svg>
     </div>
-    <p class="body" style="margin-top:14px;"><b>🔢 개수</b> — 가구 최대 <b>22개</b> 인식, 동선엔 <b>최대 16개</b>. 마커가 겹치면 <b>황금각 137.5°</b>로 흩뿌려요.</p>
+    <p class="body" style="margin-top:14px;"><b>🔢 개수</b> — 가구 최대 <b>22개</b> 인식, 동선엔 <b>최대 16개</b>. 22는 한 방을 한 바퀴 돌며 외울 '정거장'의 경험적 상한이에요(쪼개진 메쉬가 수백 개면 외울 게 폭발하니까) — 부피 큰 가구부터 채워 22에서 끊고, 모자라면 동선 합성으로 메워요. 동선 16은 사람이 한 번에 떠올릴 수 있는 한계(7±2 + 공간 단서)인데, 학습할 내용이 16개를 넘으면 사용자 데이터를 버릴 수 없어 그 수까지는 허용하고 그 위로는 신뢰도순으로 잘라요. 마커가 겹치면 <b>황금각 137.5°</b>로 흩뿌려요 — 가장 무리수에 가까운 각이라 점을 돌려 찍어도 겹치거나 일렬로 안 서고 매번 가장 넓은 빈틈으로 들어가거든요(해바라기 씨앗이 박히는 원리). 무작위가 아니라 늘 같은 결과로 고르게 퍼지죠.</p>
     <div class="viz">
       <svg viewBox="0 0 300 94" aria-label="검출 22 → 동선 16 · 황금각 분산">
         <circle cx="44" cy="46" r="25" fill="#fff" stroke="#DCD2C4"/>
@@ -393,7 +458,7 @@
         <text x="245" y="90" text-anchor="middle" class="lbl-s">고르게 흩뿌림</text>
       </svg>
     </div>
-    <p class="body" style="margin-top:14px;"><b>🎥 카메라</b> — 핫스팟 누를 때마다 <b>28방향</b>을 따져 가장 잘 보이는 자리를 골라 <b>0.9초</b> 활공해요.</p>
+    <p class="body" style="margin-top:14px;"><b>🎥 카메라</b> — 핫스팟 누를 때마다 <b>28방향</b>(약 12.86°마다)을 따져 가장 잘 보이는 자리를 골라 <b>0.9초</b> 활공해요. 너무 적으면 트인 틈을 놓치고 너무 많으면 계산이 비싸지는 균형점이죠.</p>
     <div class="viz">
       <svg viewBox="0 0 300 116" aria-label="카메라 28방향 평가 후 best 자리">
         <circle cx="70" cy="58" r="36" fill="none" stroke="#DCD2C4" stroke-width="2" stroke-dasharray="2 6"/>
@@ -426,18 +491,18 @@
   <!-- 실제 작동 예시 -->
   <div class="sechead"><div class="e">실제로 돌려봤어요</div><h2>경복궁 방 — 받자마자 자동 인식</h2></div>
   <div class="step">
-    <p class="body" style="margin-top:0;">한국사 프리셋 <b>경복궁 방</b>(GLB)을 처음 열었을 때예요. 업로드·세팅 없이 <span class="o">가구 12개에 번호 마커가 자동으로</span> 박히고 동선까지 짜였어요. (학습 개념은 PDF를 분석하면 이 마커 위에 얹혀요.)</p>
-    <img class="shot" src="shots/02_room-markers.png" alt="경복궁 방 — 가구 12개에 자동 마커" loading="lazy">
-    <div class="shotcap">GLB를 처음 받은 직후 — 소파·식탁·노란 의자·화분·창문에 번호 마커가 자동 배치</div>
+    <p class="body" style="margin-top:0;">방 파일(GLB) 하나만 열면, 업로드·세팅 없이 <span class="o">가구마다 번호 마커가 자동으로</span> 박히고 동선까지 짜여요. (학습 개념은 PDF를 분석하면 이 마커 위에 얹혀요.)</p>
+    <img class="shot" src="shots/naming-result.svg" alt="자동 명명 결과 — 가구마다 번호·한국어 이름·시점 라벨" loading="lazy">
+    <div class="shotcap">가구마다 번호·한국어 이름이 자동 — 번호=걷는 순서, '의자/의자2'=같은 종류 구분, '뒤 왼쪽/앞 오른쪽'=보는 방향</div>
     <div class="markers">
       <span class="mk">1 식탁</span><span class="mk">2 뒤 왼쪽 화분</span><span class="mk">3 소파</span>
-      <span class="mk">4 뒤 오른쪽 창문</span><span class="mk hl">5 우산 🔴</span><span class="mk">6 뒤 왼쪽 의자2</span>
+      <span class="mk">4 뒤 오른쪽 창문</span><span class="mk">5 화분</span><span class="mk">6 뒤 왼쪽 의자2</span>
       <span class="mk">7 뒤 왼쪽 의자</span><span class="mk">8 수납장</span><span class="mk">9 앞 왼쪽 창문</span>
       <span class="mk">10 앞 오른쪽 의자</span><span class="mk">11 앞 오른쪽 화분</span><span class="mk">12 앞 오른쪽 의자2</span>
     </div>
     <p class="body" style="margin-top:14px;"><b>이 실제 결과에서 바로 보이는 것:</b></p>
-    <p class="body" style="margin-top:6px;">• <span class="o">시점 라벨</span> — "뒤 왼쪽", "앞 오른쪽"이 이름에 그대로(들어선 시점 기준)<br>• <span class="o">같은 의자 여럿</span> → "의자 / 의자2"로 구분(4코너 선별)<br>• <span class="o">5번 "우산" 🔴</span> — AI(Azure)가 화분을 'umbrella'로 잘못 잡은 것. <b>비전이 다시 보고 교정할 대상</b>(하이브리드 명명의 실제 사례!)<br>• <span class="o">동선</span> — 1식탁→2화분→3소파…12, 되돌아가지 않는 한붓</p>
-    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 파일 하나 받았을 뿐인데 <b>가구를 알아보고 번호·동선까지 자동</b>. 'umbrella' 같은 오인식은 비전이 한 번 더 봐서 고쳐요.</span></div>
+    <p class="body" style="margin-top:6px;">• <span class="o">시점 라벨</span> — "뒤 왼쪽", "앞 오른쪽"이 이름에 그대로(들어선 시점 기준)<br>• <span class="o">같은 의자 여럿</span> → "의자 / 의자2"로 구분(4코너 선별)<br>• <span class="o">동선</span> — 1식탁→2화분→3소파…12, 되돌아가지 않는 한붓</p>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 방 파일 하나 받았을 뿐인데 <b>가구를 알아보고 번호·동선까지 자동</b>. 헷갈리는 이름은 비전이 한 번 더 봐서 고쳐요.</span></div>
   </div>
   <div class="step">
     <p class="body" style="margin-top:0;"><b>여기서 시작</b> — 도시·방을 고르는 화면. 한국사면 종로구(경복궁 등)를 고르면 그 명소 방에 학습을 배치해요.</p>
@@ -452,5 +517,43 @@
   </footer>
 
 </div>
+<style id="moredetail-style">
+  .moredetail{margin-top:10px;}
+  .moredetail>summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;
+    font-weight:800;font-size:13px;color:#B25400;background:#FBE7D1;border:1px solid #F0D9BE;
+    border-radius:999px;padding:8px 15px;user-select:none;-webkit-tap-highlight-color:transparent;transition:.15s;}
+  .moredetail>summary:hover{filter:brightness(.98);}
+  .moredetail>summary::-webkit-details-marker{display:none;}
+  .moredetail>summary::after{content:'▾';opacity:.65;margin-left:2px;font-size:11px;}
+  .moredetail[open]>summary{background:#F0E7D8;color:#6B5E4D;}
+  .moredetail[open]>summary::after{content:'▴';}
+  .moredetail>*{margin-top:13px !important;}
+  .modehint{margin:14px 0 2px;font-size:12.5px;color:#9A8C78;}
+</style>
+<script>
+(function(){
+  // 각 섹션의 '상세(기술·근거)'를 토글로 접어, 기본은 쉬운 설명만 보이게. 클릭 시 펼침.
+  function build(){
+    var steps=document.querySelectorAll('.step'); if(!steps.length) return;
+    steps.forEach(function(step){
+      if(step.querySelector(':scope > .moredetail')) return;
+      var head=step.querySelector(':scope > .head'), easy=step.querySelector(':scope > .easy');
+      var det=document.createElement('details'); det.className='moredetail';
+      var sum=document.createElement('summary'); sum.textContent='🔍 자세한 기술·근거 보기';
+      det.appendChild(sum);
+      [].slice.call(step.children).forEach(function(el){
+        if(el===head||el===easy||el===det) return;
+        if(el.classList&&el.classList.contains('num')) return;
+        det.appendChild(el);
+      });
+      if(det.children.length<=1) return;            // 옮길 상세가 없으면 토글 미생성
+      if(head&&easy){ head.parentNode.insertBefore(easy, head.nextSibling); } // 쉬운 설명을 위로
+      step.appendChild(det);
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', build); else build();
+})();
+</script>
+<script src="nav.js" defer></script>
 </body>
 </html>

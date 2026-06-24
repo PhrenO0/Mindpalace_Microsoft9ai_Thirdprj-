@@ -17,7 +17,9 @@
     // 상단 목차 = 3구획. 현재 페이지가 어느 구획인지(활성). home은 자체 네비가 있어 미주입.
     //   2.공간 둘러보기=region-select / 3.나만의 공간 만들기=구성·방디자인·3D지도·방안
     const CUR = { "region-select": "browse",
-                  "compose": "create", "glb-customizer": "create", "vworld_map": "create", "memory-walk": "create" }[file];
+                  "compose": "create", "glb-customizer": "create", "vworld_map": "create", "memory-walk": "create",
+                  "bounding-box-visual": "explain", "how-it-all-works": "explain", "how-markers-work": "explain",
+                  "how-route-works": "explain", "system-architecture": "explain", "pipeline-overview": "explain" }[file];
     if (CUR === undefined) return; // 등록 안 된 페이지(home 포함)엔 주입 안 함
 
     const withCity = (href, key) =>
@@ -25,7 +27,8 @@
 
     // home.html의 상단 네비와 동일한 번호 라벨로 통일(동일 서비스 느낌).
     const ITEMS = [
-      { key: "explain", label: "1 · 기술 설명",         href: "home.html" },
+      { key: "home",    label: "🏠 처음",                href: "home.html" },
+      { key: "explain", label: "1 · 전체 기술 설명",     href: "bounding-box-visual.html" },
       { key: "browse",  label: "2 · 공간 둘러보기",      href: "region-select.html" },
       { key: "create",  label: "3 · 나만의 공간 만들기", href: "compose.html" },
     ];
@@ -75,21 +78,18 @@
     nav.setAttribute("aria-label", "주요 메뉴");
     nav.innerHTML = `<a class="mpb" href="${withCity("home.html", "explain")}">기억의 궁전</a>`;
     // 우측 그룹: 번호 라벨 링크(home과 동일) + 계정. 몰입형 바엔 컴팩트.
-    // '기술 설명'은 단일 링크가 아니라 하위 기술 문서로 가는 드롭다운(클릭 시 작은 팝업).
-    const TECH_SUB = [
-      { label: "🏛 전체 소개",          href: "home.html" },
-      { label: "🧭 전체 기술 한눈에",    href: "how-it-all-works.html" },
-      { label: "🗺 3D 시스템 아키텍처",  href: "system-architecture.html" },
-      { label: "📍 3D 마커 만드는 법",   href: "how-markers-work.html" },
-      { label: "🚶 동선 설계",           href: "how-route-works.html" },
-      { label: "📦 바운딩 박스 시각화",  href: "bounding-box-visual.html" },
-    ];
+    // '전체 기술 설명'은 누르면 두 갈래(글 / 3D)를 고르는 드롭다운.
     const right = document.createElement("div");
     right.className = "mpright";
+    const TECH_SUB = [
+      { label: "📖 전체 기술 한눈에 (글)", href: "how-it-all-works.html" },
+      { label: "🧊 3D 워크스루 (체험)",    href: "bounding-box-visual.html" },
+    ];
     right.innerHTML = ITEMS.map((it) => {
       if (it.key === "explain") {
+        const on = (CUR === "explain") ? " on" : "";
         return `<div class="mpdd">`
-          + `<a class="mpsec mpdd-t" role="button" aria-haspopup="true" aria-expanded="false" tabindex="0">${it.label} <span class="mpcar">▾</span></a>`
+          + `<a class="mpsec mpdd-t${on}" role="button" aria-haspopup="true" aria-expanded="false" tabindex="0">${it.label} <span class="mpcar">▾</span></a>`
           + `<div class="mpdd-menu" role="menu">`
           + TECH_SUB.map((s) => `<a role="menuitem" href="${s.href}">${s.label}</a>`).join("")
           + `</div></div>`;
@@ -135,15 +135,19 @@
 
     // 문서형은 풀바+body 패딩. 지도(vworld_map)는 다른 페이지와 같은 솔리드 통일 바(브랜드+메뉴+계정)를
     //   오버레이로 두고, 위쪽 떠있는 카드(안내·대시도크)를 바 아래로 내려 겹침 방지. 그 외 몰입형(memory-walk)은 컴팩트 플로트.
-    const DOC = ["region-select", "compose", "glb-customizer"];
+    // region-select 기준으로 모든 페이지 솔리드 바 통일. 문서형은 풀바+body 패딩, 몰입형(지도·방·3D 워크스루)은 솔리드 오버레이+상단 UI 내림.
+    const DOC = ["region-select", "compose", "glb-customizer", "how-it-all-works",
+                 "how-markers-work", "how-route-works", "system-architecture", "pipeline-overview"];
     if (DOC.includes(file)) {
       document.body.classList.add("mpnav-pad");
-    } else if (file === "vworld_map") {
-      const ov = document.createElement("style");
-      ov.textContent = "#status{top:62px !important;} .dash-dock{top:62px !important;}";
-      document.head.appendChild(ov);
-    } else {
+    } else if (file === "vworld_map" || file === "memory-walk") {
+      // 랜드마크(vworld_map)·방안(memory-walk)은 다크 솔리드 바 대신 컴팩트 플로트 — 몰입 화면을 가리지 않게(사용자 요청).
       nav.classList.add("mpnav-float");
+    } else if (file === "bounding-box-visual") {
+      /* 전체 기술 설명(3D 워크스루): 다른 페이지와 동일한 솔리드 배너를 캔버스 위 오버레이로.
+         (pad 미적용 = 기본 솔리드 .mpnav. 헤더·근거패널이 top:60px라 겹치지 않음) */
+    } else {
+      document.body.classList.add("mpnav-pad");   // 기본도 솔리드+패딩으로 통일
     }
   } catch (e) { /* 내비 주입 실패는 페이지 동작에 영향 주지 않음 */ }
 })();

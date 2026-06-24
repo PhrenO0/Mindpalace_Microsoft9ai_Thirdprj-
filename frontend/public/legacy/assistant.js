@@ -45,7 +45,15 @@
     var css = ":root{"; for (var k in p){ if (!SKIP_VAR[k]) css += "--" + k + ":" + p[k] + ";"; } css += "}";
     s.textContent = css;
   }
-  function applyZoom(z){ document.documentElement.style.zoom = z || ""; }
+  // 글씨 크기(#3): 화면 전체에 zoom을 걸되(가로 오버플로 방지), 챗봇 위젯은 역배율로 원래 크기 유지
+  //   → 챗봇이 함께 커지지 않고 본문만 커지는 효과. (본문 래퍼에 직접 zoom 시 풀폭 레이아웃이 가로로 넘쳐 이 방식 채택)
+  //   ※ 컨테이너만 역배율(자식은 상속) — 중복 적용 시 이중 축소되므로 위젯 루트만 지정.
+  var ZOOM_FIXED_SEL = "#mp-asst, .phone-fab, .phone-chat";
+  function applyZoom(z){
+    document.documentElement.style.zoom = z || "";
+    var inv = z ? String(1 / parseFloat(z)) : "";
+    try { document.querySelectorAll(ZOOM_FIXED_SEL).forEach(function (el) { el.style.zoom = inv; }); } catch (e) {}
+  }
   function applyLite(on){
     var s = document.getElementById("mp-lite-style");
     if (on && !s){ s = document.createElement("style"); s.id = "mp-lite-style";
@@ -151,6 +159,7 @@
         '<div class="mp-foot"><input id="mpInput" placeholder="테마를 바꾸거나 질문하세요" /><button id="mpSend" aria-label="보내기">➤</button></div>' +
       '</section>';
     document.body.appendChild(wrap);
+    applyZoom(get(LS_ZOOM, ""));   // 방금 만든 챗봇 위젯에 글씨크기 역배율 반영(저장된 값으로 로드된 경우)
 
     var panel = document.getElementById("mpPanel"), body = document.getElementById("mpBody"), input = document.getElementById("mpInput");
     function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c]; }); }
@@ -226,9 +235,9 @@
         else addMsg("방 안(memory-walk)에서 이용할 수 있어요.", "bot");
         return;
       }
-      if (c.act === "quiz"){   // 📝 퀴즈 — 이 방 학습내용으로 퀴즈 생성·채점
-        if (typeof window.mpOpenQuiz === "function") { window.mpOpenQuiz(); addMsg("📝 이 방의 학습 내용으로 퀴즈를 내드릴게요. 풀고 '채점하기'를 누르면 오답은 마커로 복습할 수 있어요.", "bot"); }
-        else addMsg("방 안(memory-walk)에서 이용할 수 있어요.", "bot");
+      if (c.act === "quiz"){   // 📝 퀴즈 — 학습내용으로 퀴즈 생성·채점(주제·문제수·유형 선택)
+        if (typeof window.mpOpenQuiz === "function") { window.mpOpenQuiz(); addMsg("📝 학습 내용으로 퀴즈를 만들어 드릴게요. 주제·문제 수·유형을 고르고 '퀴즈 만들기'를 눌러 보세요.", "bot"); }
+        else addMsg("퀴즈를 준비 중이에요. 잠시 후 다시 시도해 주세요.", "bot");
         return;
       }
       if (c.act === "intent") return ruleReply(c.v);
@@ -288,7 +297,7 @@
       if (/지도|3d|map|둘러/.test(t)){ addMsg("3D 지도에서 도시의 랜드마크를 둘러볼 수 있어요.", "bot"); return addChips([{label:"3D 지도 열기",act:"go",v:"vworld_map.html",say:1}]); }
       if (/업로드|pdf|학습|자료/.test(t)){ addMsg("학습 PDF는 외부에서 palace.json으로 변환돼요. 올리면 '구성' 화면에서 장소·방을 추천해 드려요.", "bot"); return addChips([{label:"구성 화면으로",act:"go",v:"compose.html",say:1}]); }
       if (/구성|추천|장소|방 골/.test(t)){ addMsg("'구성' 화면에서 챕터마다 어울리는 장소와 방을 고를 수 있어요.", "bot"); return addChips([{label:"구성 화면으로",act:"go",v:"compose.html",say:1}]); }
-      if (/입장|시작|걷|walk|방으로/.test(t)){ addMsg("첫 챕터의 방으로 입장할게요.", "bot"); return act({act:"enterFirst"}); }
+      if (/입장|시작|걷|walk|방으로/.test(t)){ addMsg("방으로 입장할까요? 아래 버튼을 누르면 이동해요.", "bot"); return addChips([{label:"▶ 방으로 입장", act:"enterFirst", say:1}]); }
       addMsg("테마·글씨 크기 변경, 화면 이동을 도와드려요.", "bot");
       themeChips(); navChips();
     }
@@ -311,14 +320,18 @@
       region:"도시를 골라 시작하는 화면이에요." }[pg] || "안녕하세요, 기억의 궁전 도우미예요.";
     addMsg(hi + " 무엇을 도와드릴까요?", "bot");
     addMsg("아래 바에서 테마·글씨, 화면 이동, 음성 안내를 바로 쓸 수 있어요.", "bot");
-    if (pg === "walk") addChips([{ label: "✨ 의미 매치", act: "mnemonic", say: 0 }, { label: "📝 퀴즈", act: "quiz", say: 0 }]);   // 의미부여 + 인룸 퀴즈
+    if (pg === "walk") addChips([{ label: "✨ 의미 매치", act: "mnemonic", say: 0 }]);   // 의미부여(인룸 퀴즈는 지도 맵으로 이동)
+    if (pg === "map") addChips([{ label: "📝 퀴즈 만들기", act: "quiz", say: 0 }]);   // 지도: 이 도시 학습내용으로 퀴즈
 
     function toggle(open){ panel.classList.toggle("open", open); set(LS_OPEN, open ? "1" : "0"); if (open){ input.focus(); try { window.mpTTS && window.mpTTS.warmup && window.mpTTS.warmup(); } catch (e) {} } }
     document.getElementById("mpLaunch").onclick = function(){ toggle(!panel.classList.contains("open")); };
     document.getElementById("mpClose").onclick = function(){ toggle(false); };
     document.getElementById("mpSend").onclick = function(){ var v = input.value.trim(); if (!v) return; addMsg(v, "me"); input.value = ""; setTimeout(function(){ getReply(v); }, 120); };
+    // 챗봇 입력 중 키가 페이지로 새지 않게 차단 — 방 WASD 이동·지도 단축키가 같이 실행되거나(방) 입력이 막히던(지도) 문제 해결.
     // 한글 IME 조합 중 Enter는 '조합 확정'이므로 전송하지 않음(Mac에서 마지막 글자 중복 전송 방지)
-    input.addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) document.getElementById("mpSend").click(); });
+    input.addEventListener("keydown", function(e){ e.stopPropagation(); if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) document.getElementById("mpSend").click(); });
+    input.addEventListener("keyup", function(e){ e.stopPropagation(); });
+    input.addEventListener("keypress", function(e){ e.stopPropagation(); });
 
     // ── 푸터 도구 아코디언(테마·글씨 / 화면 이동 / 음성 안내) — 한 번에 하나만 펼쳐 공간 절약 ──
     var TOOLS = [
@@ -385,6 +398,8 @@
         vMaster.setAttribute("aria-pressed", window.__mpVoiceOn ? "true" : "false");
         vMaster.textContent = window.__mpVoiceOn ? "음성 안내 끄기" : "음성 안내 켜기";
         vMaster.setAttribute("aria-label", window.__mpVoiceOn ? "음성 안내 끄기" : "음성 안내 켜기");
+        // 페이지(예: memory-walk 엔티티 카드의 '설명 듣기' 버튼)가 ON/OFF에 반응하도록 알림
+        try { window.dispatchEvent(new CustomEvent("mp-voice-toggle", { detail: { on: window.__mpVoiceOn } })); } catch (e) {}
         if (window.__mpVoiceOn && window.mpTTS){ syncState(); if (window.mpTTS.warmup) window.mpTTS.warmup(); window.mpTTS.speak("음성 안내를 켰습니다. 도우미의 답변을 읽어 드릴게요."); }
         else if (window.mpTTS){ window.mpTTS.stop(); }
       });
@@ -407,6 +422,8 @@
         vSpatial.textContent = "공간음향: " + (on ? "켜기" : "끄기");
         vSpatial.setAttribute("aria-pressed", on ? "true" : "false");
         vSpatial.setAttribute("aria-label", on ? "공간음향 끄기" : "공간음향 켜기");
+        // 카드 '설명 듣기' 버튼의 공간음향 라벨을 즉시 갱신
+        try { window.dispatchEvent(new CustomEvent("mp-spatial-toggle", { detail: { on: on } })); } catch (e) {}
         if (window.__mpVoiceOn) window.mpTTS.speak(on ? "공간음향을 켰습니다." : "공간음향을 껐습니다.");
       });
     })();
