@@ -135,18 +135,25 @@
 
     // 문서형은 풀바+body 패딩. 지도(vworld_map)는 다른 페이지와 같은 솔리드 통일 바(브랜드+메뉴+계정)를
     //   오버레이로 두고, 위쪽 떠있는 카드(안내·대시도크)를 바 아래로 내려 겹침 방지. 그 외 몰입형(memory-walk)은 컴팩트 플로트.
-    const DOC = ["region-select", "compose", "glb-customizer", "how-it-all-works"];
+    // region-select 기준으로 모든 페이지 솔리드 바 통일. 문서형은 풀바+body 패딩, 몰입형(지도·방·3D 워크스루)은 솔리드 오버레이+상단 UI 내림.
+    const DOC = ["region-select", "compose", "glb-customizer", "how-it-all-works",
+                 "how-markers-work", "how-route-works", "system-architecture", "pipeline-overview"];
     if (DOC.includes(file)) {
       document.body.classList.add("mpnav-pad");
     } else if (file === "vworld_map") {
       const ov = document.createElement("style");
       ov.textContent = "#status{top:62px !important;} .dash-dock{top:62px !important;}";
       document.head.appendChild(ov);
+    } else if (file === "memory-walk") {
+      // 몰입형 방: region-select와 같은 솔리드 바를 캔버스 위 오버레이로 두고, 상단 카드(타이틀·엔티티·방목록)를 바 아래로 내려 겹침 방지.
+      const ov = document.createElement("style");
+      ov.textContent = ".top{top:60px !important;} .card{top:60px !important;} .roommenu{top:60px !important;}";
+      document.head.appendChild(ov);
     } else if (file === "bounding-box-visual") {
       /* 전체 기술 설명(3D 워크스루): 다른 페이지와 동일한 솔리드 배너를 캔버스 위 오버레이로.
-         (float/pad 미적용 = 기본 솔리드 .mpnav. 헤더·근거패널이 top:60px라 겹치지 않음) */
+         (pad 미적용 = 기본 솔리드 .mpnav. 헤더·근거패널이 top:60px라 겹치지 않음) */
     } else {
-      nav.classList.add("mpnav-float");
+      document.body.classList.add("mpnav-pad");   // 기본도 솔리드+패딩으로 통일(플로트 미사용)
     }
   } catch (e) { /* 내비 주입 실패는 페이지 동작에 영향 주지 않음 */ }
 })();
