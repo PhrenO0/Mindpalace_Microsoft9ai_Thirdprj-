@@ -472,6 +472,23 @@
     const CAPTURE = P.get("capture") === "1";           // ?capture=1: 방 내부 4컷 캡처 후 부모로 postMessage(②c 방 미리보기)
     if (DASH) document.body.classList.add("dash");
     const ROOM_GLB = P.get("glb") || "public/assets/rooms/3dfront-livingroom.glb";
+    const MW_CITY = (P.get("city") || "jongno").trim();
+    // 활성 학습자료를 '선택한 도시'에만 귀속(지역 누수 방지): 전역 staging(mp_palace)을 처음 들어온
+    //   도시가 mp_palace:<city>로 claim 하고 전역을 비운다 → 귀속 안 된 도시는 빈/잠금 상태로 로드된다.
+    function mpCityPalaceStr(city){
+      try{
+        var ck="mp_palace:"+city, own=sessionStorage.getItem(ck)||localStorage.getItem(ck);
+        if(own) return own;
+        var stg=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace");
+        if(stg){ var p=JSON.parse(stg); if(p&&p.rooms&&p.rooms.length){
+          try{ localStorage.setItem(ck,stg); sessionStorage.setItem(ck,stg);
+               var d=localStorage.getItem("mp_palace_demo"); if(d) localStorage.setItem("mp_palace_demo:"+city,d);
+               localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace_demo");
+          }catch(_){}
+          return stg; } }
+      }catch(_){}
+      return null;
+    }
     const ENV = P.get("env");
     const CEIL = parseFloat(P.get("ceil")) || 2.7;
     // 저사양(내장그래픽) 자동 감지 — URL ?lite=1/0 우선, 없으면 GPU/CPU/메모리 단서로 추정.
@@ -899,7 +916,7 @@
       let palace = SAMPLE_PALACE;
       // 우선순위: 업로드한 학습자료(sessionStorage) > ?palace= 명시 > 랜드마크 테마 콘텐츠 > 내장 샘플
       let fromUpload = false;
-      try { const sp = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); if (sp) { palace = JSON.parse(sp); fromUpload = true; } } catch(_) {}
+      try { const sp = mpCityPalaceStr(MW_CITY); if (sp) { palace = JSON.parse(sp); fromUpload = true; } } catch(_) {}
       const url = P.get("palace") || (THEME && THEME.palace) || null;
       if (!fromUpload && url) { try { palace = await (await fetch(url)).json(); } catch(e){ console.warn("palace 로드 실패, 샘플 사용", e); } }
       // PDF(업로드 학습자료)가 아직이면 = 데모(korean_history/내장 샘플) → 콘텐츠 잠금.
@@ -1846,7 +1863,7 @@
       let palace=null, designs=null;
       // 업로드한 현재 궁전 우선, 없으면 mp_palace localStorage 폴백.
       if (MW_LOADED_PALACE) palace = MW_LOADED_PALACE;
-      if (!palace) { try { const sp=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace"); if(sp) palace=JSON.parse(sp); } catch(_){} }
+      if (!palace) { try { const sp=mpCityPalaceStr(MW_CITY); if(sp) palace=JSON.parse(sp); } catch(_){} }
       if(!palace){ warn("저장할 궁전이 없어요. 궁전(방)에 입장한 뒤 다시 시도해 주세요."); return false; }
       try { const sd=localStorage.getItem("studio_designs"); if(sd) designs=JSON.parse(sd); } catch(_){}
       // 의미부여는 생성 즉시 /api/mnemonic 으로 저장되므로 이 번들엔 담지 않음.
@@ -2117,7 +2134,7 @@
       // 현재 도시의 랜드마크 + 활성 학습자료(업로드 PDF) 기반으로 구성 — 종로·korean_history 하드코딩 제거.
       (async function build(){
         try {
-          let pal = null; try { const sp = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); if (sp) pal = JSON.parse(sp); } catch(_){}
+          let pal = null; try { const sp = mpCityPalaceStr(CUR_CITY); if (sp) pal = JSON.parse(sp); } catch(_){}
           // PDF 미업로드 시 korean_history 데모를 끌어오지 않음 — 방 목록만 표시, 개념은 "(아직 내용 없음)".
           const isJongno = CUR_CITY === "jongno";
           const cityData = isJongno

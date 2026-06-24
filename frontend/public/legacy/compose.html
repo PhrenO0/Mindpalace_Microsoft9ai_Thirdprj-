@@ -175,6 +175,29 @@
     return DESIGNS.find(d=>String(d.glb).split("/").pop().replace("BLOB:","")===f) || null; };
   const resolveGlb = g => g && g.startsWith("BLOB:") ? (DESIGN_BLOB + g.slice(5)) : g;
 
+  // ── 활성 학습자료를 '선택한 도시'에만 귀속(지역 간 데이터 누수 방지) ──
+  //   업로드/데모/서재는 아직 도시 미선택이라 전역 staging(mp_palace)에 들어온다. 도시 페이지에
+  //   처음 들어오면 그 staging 을 mp_palace:<city> 로 가져오고(claim) 전역 staging 을 비운다
+  //   → 다른 도시는 빈 상태로 남는다. 새 자료를 올릴 땐 mpClearPlaced 로 기존 귀속을 모두 비운다.
+  function mpCityPalaceStr(city){
+    try{
+      var ck="mp_palace:"+city, own=sessionStorage.getItem(ck)||localStorage.getItem(ck);
+      if(own) return own;
+      var stg=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace");
+      if(stg){ var p=JSON.parse(stg); if(p&&p.rooms&&p.rooms.length){
+        try{ localStorage.setItem(ck,stg); sessionStorage.setItem(ck,stg);
+             var d=localStorage.getItem("mp_palace_demo"); if(d) localStorage.setItem("mp_palace_demo:"+city,d);
+             localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace_demo");
+        }catch(_){}
+        return stg; } }
+    }catch(_){}
+    return null;
+  }
+  function mpClearPlaced(){
+    try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&(k.indexOf("mp_palace:")===0||k.indexOf("mp_palace_demo:")===0)) localStorage.removeItem(k); } }catch(_){}
+    try{ for(var j=sessionStorage.length-1;j>=0;j--){ var k2=sessionStorage.key(j); if(k2&&(k2.indexOf("mp_palace:")===0||k2.indexOf("mp_palace_demo:")===0)) sessionStorage.removeItem(k2); } }catch(_){}
+  }
+
   function scoreFor(text, lm){
     const hay=text.toLowerCase(); let s=0; const hit=[];
     (lm.tags||[]).forEach(t=>{ if(hay.includes(String(t).toLowerCase())){ s+=2; hit.push(t);} });
@@ -304,7 +327,7 @@
     try { (chapState || []).forEach(st => st && saveStudioDesign(lmNameOf(st.lmId), st.designId)); } catch(_){}
   });
 
-  function persistPalace(){ try { const s=JSON.stringify(PAL); localStorage.setItem("mp_palace", s); sessionStorage.setItem("mp_palace", s); } catch(_){} }
+  function persistPalace(){ try { const s=JSON.stringify(PAL); const ck="mp_palace:"+CITY; localStorage.setItem(ck, s); sessionStorage.setItem(ck, s); } catch(_){} }
   function render(){
     // 제목이 플레이스홀더(hex / "기억의 궁전:")면 PDF 파일명으로 기본 세팅(✎로 수정 가능)
     try {
@@ -347,12 +370,13 @@
     // 활성 학습자료(업로드 PDF→palace)는 localStorage(탭 공유·지속)를 단일 출처로 — 지역 변경·스튜디오 진입에도 유지
     if (palaceFile) {
       PAL = JSON.parse(await palaceFile.text());
-      try { const s = JSON.stringify(PAL); localStorage.setItem("mp_palace", s); sessionStorage.setItem("mp_palace", s); } catch(_){}
+      try { const s = JSON.stringify(PAL); const ck="mp_palace:"+CITY; localStorage.setItem(ck, s); sessionStorage.setItem(ck, s); } catch(_){}
     } else {
-      let s = null; try { s = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); } catch(_) {}
+      // 이 도시에 귀속된 자료만 로드(없으면 전역 staging 을 이 도시로 claim) — 다른 도시 자료가 새지 않음.
+      const s = mpCityPalaceStr(CITY);
       // 빈 팰리스(rooms 0개)는 '구성됨'으로 처리하지 않음 — 분석이 끝나기 전 빈 값이 들어와도 "구성했습니다(0챕터)"라고 거짓 표시 안 하고, 분석 중 잠금이 뜨게 둔다.
-      if (s) { try { const cand = JSON.parse(s); if (cand && cand.rooms && cand.rooms.length) { PAL = cand; try { localStorage.setItem("mp_palace", s); } catch(_){}
-        let _demo=false; try { _demo = localStorage.getItem("mp_palace_demo")==="1"; } catch(_){}
+      if (s) { try { const cand = JSON.parse(s); if (cand && cand.rooms && cand.rooms.length) { PAL = cand;
+        let _demo=false; try { _demo = localStorage.getItem("mp_palace_demo:"+CITY)==="1"; } catch(_){}
         $("msg").textContent = _demo ? "🎬 데모(샘플) 데이터로 구성했어요 — 둘러본 뒤 PDF를 올리면 내 자료로 바뀝니다." : "업로드한 학습자료로 구성했습니다."; } } catch(_) { PAL = null; } }
       // PDF 미업로드 시 korean_history 데모를 끌어오지 않음 — 빈 팰리스(잠금 오버레이가 "아직 내용 없음" 안내).
       if (!PAL) PAL = PALACE_EXPLICIT ? await fetch(PALACE_URL).then(r=>r.json()) : { palace:{ title:"" }, rooms:[] };
@@ -383,7 +407,7 @@
   /* ④ 구성 잠금/해금: PDF 추출 중이면 챕터 매칭을 잠그고, 완료(mp-rag-ready) 시 해금·재로드. */
   (function () {
     var explicit = !!new URLSearchParams(location.search).get("palace");
-    function hasPalace(){ try { var s=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace"); if(!s) return false; var p=JSON.parse(s); return !!(p && p.rooms && p.rooms.length); } catch(_){ return false; } }   // 빈 팰리스(rooms 0)는 '미구성' 취급 → 분석 중 잠금이 정상 표시되게
+    function hasPalace(){ try { var s=mpCityPalaceStr(CITY); if(!s) return false; var p=JSON.parse(s); return !!(p && p.rooms && p.rooms.length); } catch(_){ return false; } }   // 빈 팰리스(rooms 0)는 '미구성' 취급 → 분석 중 잠금이 정상 표시되게 (이 도시 귀속분만)
     function getJob(){ try { return JSON.parse(localStorage.getItem("mp_rag_job") || "null"); } catch (_) { return null; } }
     function ragPending(){ var j = getJob(); return !!(j && j.jobId && !j.done && !hasPalace()); }
     var lock = document.getElementById("nodeLock"), grid = document.getElementById("grid"), msg = document.getElementById("msg");
@@ -407,8 +431,8 @@
             fetch(GBASE + "/palace/korean_history").then(function (r) { if (!r.ok) throw 0; return r.json(); })
               .catch(function () { return fetch("public/data/korean_history.palace.json").then(function (r) { return r.json(); }); })
               .then(function (pal) {
-              try { var s = JSON.stringify(pal); sessionStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace", s); } catch (_) {}
-              try { localStorage.setItem("mp_palace_demo", "1"); } catch (_) {}   // 데모 표식
+              try { mpClearPlaced(); var s = JSON.stringify(pal); sessionStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace", s); } catch (_) {}
+              try { localStorage.setItem("mp_palace_demo", "1"); } catch (_) {}   // 데모 표식(도시 진입 시 mp_palace_demo:<city>로 귀속)
               // 데모: 바로 방으로 가지 않고 '구성(종로구)' 페이지로 — 방을 커스텀하고 튜토리얼(둥실·반짝)로 다음 행동 안내.
               location.href = "compose.html?city=jongno&demo=1";
             }).catch(function () { db.disabled = false; db.textContent = "🎬 데모 데이터로 체험하기"; if (msg) msg.textContent = "샘플을 불러오지 못했어요. 잠시 후 다시 시도하세요."; });
