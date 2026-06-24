@@ -26,7 +26,7 @@
     function mount() {
       if (!isOn() || document.getElementById("mpDemoBadge")) return;
       var css =
-        "#mpDemoBadge{position:fixed;left:14px;bottom:14px;z-index:10002;display:flex;align-items:center;gap:9px;" +
+        "#mpDemoBadge{position:fixed;right:14px;bottom:14px;z-index:10002;display:flex;align-items:center;gap:9px;" +
         "padding:9px 12px 9px 13px;border-radius:13px;background:rgba(45,38,30,.93);color:#fff;" +
         "font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;font-weight:800;font-size:13px;" +
         "box-shadow:0 8px 24px rgba(40,34,26,.30);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);" +
@@ -45,22 +45,21 @@
       document.body.appendChild(b);
       reposition();
     }
-    // 좌하단을 쓰는 다른 고정 요소(예: memory-walk 의 .hint 조작법 안내) 위로 배지를 올려 겹침 방지.
-    //   요소 높이가 가변(텍스트 줄바꿈)이라 실측해서 배치하고, 리사이즈에도 다시 맞춘다.
+    // 배지는 우하단 기본. 우하단/전폭 하단을 점유하는 페이지별 위젯 위로 올려 겹침 방지:
+    //   compose .footbar(전폭 하단바), memory-walk .mini(미니맵)·.fab(가젯 버튼). 좌하단 전용 위젯
+    //   (vworld .left-panel/perf, memory-walk .hint)은 배지가 우측이라 무시한다. 높이 가변·비동기 표시라 실측.
     function reposition() {
       try {
         var b = document.getElementById("mpDemoBadge"); if (!b) return;
-        var base = 14, raised = base;
-        var nodes = document.querySelectorAll(".hint");
+        var vh = window.innerHeight, vw = window.innerWidth, raised = 14;
+        var nodes = document.querySelectorAll(".footbar, .mini, .fab");
         for (var i = 0; i < nodes.length; i++) {
           var el = nodes[i], cs = getComputedStyle(el);
-          if (cs.position !== "fixed" || cs.display === "none" || cs.visibility === "hidden") continue;
+          if (cs.display === "none" || cs.visibility === "hidden" || parseFloat(cs.opacity || "1") === 0) continue;
           var r = el.getBoundingClientRect();
-          if (!r.width || !r.height) continue;
-          // 좌측·하단 영역과 겹치는 요소만 대상(다른 위치의 .hint 는 무시).
-          if (r.left < 280 && r.bottom > window.innerHeight - 200) {
-            raised = Math.max(raised, (window.innerHeight - r.top) + 10);
-          }
+          if (!r.width || !r.height || r.height > vh * 0.7) continue;   // 풀스크린 오버레이 제외
+          // 화면 하단부 + 우측(또는 전폭) 영역과 겹치는 것만 — 좌측 전용 위젯은 무시.
+          if (r.bottom > vh - 260 && r.right > vw - 240) raised = Math.max(raised, (vh - r.top) + 10);
         }
         b.style.bottom = raised + "px";
       } catch (_) {}
@@ -69,6 +68,8 @@
     // 같은 페이지에서 데모를 켜면(region-select 등) 새로고침 없이도 배지가 바로 뜨게.
     window.addEventListener("mp-demo-changed", mount);
     window.addEventListener("resize", reposition);
-    window.addEventListener("load", reposition);   // 폰트·이미지 로드로 .hint 높이가 바뀐 뒤에도 한 번 더 맞춤
+    window.addEventListener("load", reposition);
+    // 비동기로 나타나는 위젯(미니맵·가젯 버튼)까지 잡도록 초기 ~6초간 재배치 후 정지.
+    var _rt = 0, _riv = setInterval(function () { reposition(); if (++_rt > 8) clearInterval(_riv); }, 700);
   } catch (e) { /* 배지 실패는 페이지 동작에 영향 주지 않음 */ }
 })();
