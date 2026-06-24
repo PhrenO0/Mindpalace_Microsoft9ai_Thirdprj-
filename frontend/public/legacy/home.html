@@ -7132,6 +7132,7 @@ end of keeper CSS */
         // 새 PDF는 새 활성 자료 → 이전에 도시에 귀속된 자료(mp_palace:<city>)도 모두 비워 단일 활성 자료 보장
         try { for (var _i=localStorage.length-1;_i>=0;_i--){ var _k=localStorage.key(_i); if(_k&&(_k.indexOf('mp_palace:')===0||_k.indexOf('mp_palace_demo:')===0)) localStorage.removeItem(_k); } } catch(_){}
         try { for (var _j=sessionStorage.length-1;_j>=0;_j--){ var _k2=sessionStorage.key(_j); if(_k2&&(_k2.indexOf('mp_palace:')===0||_k2.indexOf('mp_palace_demo:')===0)) sessionStorage.removeItem(_k2); } } catch(_){}
+        try { localStorage.removeItem('mp_demo'); sessionStorage.removeItem('mp_demo'); } catch(_){}   // 새 실제 자료 → 데모 스위치 OFF(내 자료가 우선)
       } catch (_) {}
       applyStage('QUEUED');
       return jobId;

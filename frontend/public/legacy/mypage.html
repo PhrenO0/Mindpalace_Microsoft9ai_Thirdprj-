@@ -245,6 +245,7 @@
           try { for (var _i=localStorage.length-1;_i>=0;_i--){ var _k=localStorage.key(_i); if(_k&&(_k.indexOf('mp_palace:')===0||_k.indexOf('mp_palace_demo:')===0)) localStorage.removeItem(_k); } } catch(_){}
           try { for (var _j=sessionStorage.length-1;_j>=0;_j--){ var _k2=sessionStorage.key(_j); if(_k2&&(_k2.indexOf('mp_palace:')===0||_k2.indexOf('mp_palace_demo:')===0)) sessionStorage.removeItem(_k2); } } catch(_){}
           localStorage.removeItem('mp_palace_demo'); sessionStorage.removeItem('mp_palace_demo');
+          try { localStorage.removeItem('mp_demo'); sessionStorage.removeItem('mp_demo'); } catch(_){}   // 서재 자료 불러옴 → 데모 스위치 OFF(불러온 자료가 우선)
           localStorage.setItem('mp_palace', JSON.stringify(item.palace));
           sessionStorage.setItem('mp_palace', JSON.stringify(item.palace));
           if (item.designs) localStorage.setItem('studio_designs', JSON.stringify(item.designs));

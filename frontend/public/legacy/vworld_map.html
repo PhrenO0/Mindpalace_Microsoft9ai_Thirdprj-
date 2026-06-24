@@ -1050,16 +1050,24 @@
           var stg=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace");
           if(stg){ var p=JSON.parse(stg); if(p&&p.rooms&&p.rooms.length){
             try{ localStorage.setItem(ck,stg); sessionStorage.setItem(ck,stg);
-                 var d=localStorage.getItem("mp_palace_demo"); if(d) localStorage.setItem("mp_palace_demo:"+city,d);
-                 localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace_demo");
+                 localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace");
             }catch(_){}
             return stg; } }
         }catch(_){}
         return null;
       }
+      // 데모 모드(스위치): ON 이면 도시 무관 한국사 오버레이, OFF 면 실제 자료(없으면 빈 상태).
+      function mpDemoOn(){ try{ return localStorage.getItem("mp_demo")==="1"; }catch(_){ return false; } }
+      function mpDemoStr(){ try{ return localStorage.getItem("mp_demo_palace")||sessionStorage.getItem("mp_demo_palace")||null; }catch(_){ return null; } }
       let PAL = null;
-      try { const s = mpCityPalaceStr(CITY_SLUG); if (s) PAL = JSON.parse(s); } catch(e){}
-      if (!PAL) PAL = loadJsonSync("data/korean_history.palace.json") || loadJsonSync("public/data/korean_history.palace.json");
+      if (mpDemoOn()) {
+        try { const ds = mpDemoStr(); if (ds) PAL = JSON.parse(ds); } catch(e){}
+        if (!PAL) PAL = loadJsonSync("data/korean_history.palace.json") || loadJsonSync("public/data/korean_history.palace.json");
+      } else {
+        try { const s = mpCityPalaceStr(CITY_SLUG); if (s) PAL = JSON.parse(s); } catch(e){}
+      }
+      // 데모 OFF + 자료 없음 → korean_history 자동 폴백 안 함, 빈 상태로 둔다(지역 간 데모 누수 방지).
+      if (!PAL) PAL = { palace:{ title:"" }, rooms:[] };
       const ROOMDES = loadJsonSync("data/room-designs.json") || loadJsonSync("public/data/room-designs.json") || { designs: [], blobBase: "" };
       const DESIGNS = ROOMDES.designs || [], DESIGN_BLOB = ROOMDES.blobBase || "";
       const resolveGlb = g => (g && g.indexOf("BLOB:") === 0) ? (DESIGN_BLOB + g.slice(5)) : g;
@@ -2233,6 +2241,7 @@
       boot();
     </script>
   <script src="nav.js" defer></script>
+  <script src="mp-demo.js" defer></script>
   <script src="assistant.js" defer></script>
 </body>
 </html>

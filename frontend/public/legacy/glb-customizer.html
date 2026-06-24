@@ -368,13 +368,15 @@
       var stg=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace");
       if(stg){ var p=JSON.parse(stg); if(p&&p.rooms&&p.rooms.length){
         try{ localStorage.setItem(ck,stg); sessionStorage.setItem(ck,stg);
-             var d=localStorage.getItem("mp_palace_demo"); if(d) localStorage.setItem("mp_palace_demo:"+city,d);
-             localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace_demo");
+             localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace");
         }catch(_){}
         return stg; } }
     }catch(_){}
     return null;
   }
+  // 데모 모드(스위치): ON 이면 도시 무관 한국사 오버레이, OFF 면 실제 자료.
+  function mpDemoOn(){ try{ return localStorage.getItem("mp_demo")==="1"; }catch(_){ return false; } }
+  function mpDemoStr(){ try{ return localStorage.getItem("mp_demo_palace")||sessionStorage.getItem("mp_demo_palace")||null; }catch(_){ return null; } }
   let CITYDATA = null, DESIGNS = [], DESIGN_BLOB = "", PAL = null, THEMES = null, LIB = null;
   let CONCEPT_PHOTOS = {};   // 개념 대표 사진(concept-photos.json) — title → {thumb,full,wiki}
   let regionLms = [], sel = null, previewGlb = null, pendingSrc = null, justImportedId = null;
@@ -841,7 +843,7 @@
     $("title").textContent = `${city.name} · 방 디자인`;
     $("regionName").textContent = `${city.name} · 랜드마크 ${regionLms.length}곳`;
     // 업로드한 학습자료(localStorage/세션)가 있으면 우선 사용 — 스튜디오(새 탭)에서도 같은 자료 유지
-    let uploaded = null; try { const s = mpCityPalaceStr(CITY); if (s) uploaded = JSON.parse(s); } catch(_){}
+    let uploaded = null; try { const s = mpDemoOn() ? mpDemoStr() : mpCityPalaceStr(CITY); if (s) uploaded = JSON.parse(s); } catch(_){}
     const themeUrl = (themes && (themes[CITY]||themes._default)) || "public/data/korean_history.palace.json";
     return (uploaded ? Promise.resolve(uploaded) : withTimeout(fetch(themeUrl).then(r=>r.ok?r.json():null), 12000).catch(()=>null)).then(pal => {
       PAL = pal; computeAssign();
@@ -866,11 +868,12 @@
 <script src="nav.js" defer></script>
 <script src="assistant.js" defer></script>
 <script src="rag-status.js" defer></script>
+<script src="mp-demo.js" defer></script>
 <script>
   /* ④ 노드 잠금/해금: PDF 추출 중이면 노드(학습 내용) 잠금, 완료(mp-rag-ready) 시 해금·재로드.
      방 둘러보기·선택은 그대로 가능, 노드만 분석 완료 후 표시. */
   (function () {
-    function hasPalace(){ try { var s=mpCityPalaceStr(CITY); if(!s) return false; var p=JSON.parse(s); return !!(p && p.rooms && p.rooms.length); } catch(_){ return false; } }   // 빈 팰리스(rooms 0)는 '미구성' 취급 (이 도시 귀속분만)
+    function hasPalace(){ try { var s=mpDemoOn() ? mpDemoStr() : mpCityPalaceStr(CITY); if(!s) return false; var p=JSON.parse(s); return !!(p && p.rooms && p.rooms.length); } catch(_){ return false; } }   // 데모 ON → 데모 오버레이, OFF → 이 도시 귀속분. 빈 팰리스(rooms 0)는 '미구성' 취급.
     function getJob(){ try { return JSON.parse(localStorage.getItem("mp_rag_job") || "null"); } catch (_) { return null; } }
     function ragPending(){ var j = getJob(); return !!(j && j.jobId && !j.done && !hasPalace()); }
     var lock = document.getElementById("nodeLock");

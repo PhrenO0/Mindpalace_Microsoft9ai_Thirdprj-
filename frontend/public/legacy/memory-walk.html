@@ -482,13 +482,15 @@
         var stg=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace");
         if(stg){ var p=JSON.parse(stg); if(p&&p.rooms&&p.rooms.length){
           try{ localStorage.setItem(ck,stg); sessionStorage.setItem(ck,stg);
-               var d=localStorage.getItem("mp_palace_demo"); if(d) localStorage.setItem("mp_palace_demo:"+city,d);
-               localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace_demo");
+               localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace");
           }catch(_){}
           return stg; } }
       }catch(_){}
       return null;
     }
+    // 데모 모드(스위치): ON 이면 도시 무관 한국사 오버레이(콘텐츠 공개), OFF 면 실제 자료(없으면 빈/잠금).
+    function mpDemoOn(){ try{ return localStorage.getItem("mp_demo")==="1"; }catch(_){ return false; } }
+    function mpDemoStr(){ try{ return localStorage.getItem("mp_demo_palace")||sessionStorage.getItem("mp_demo_palace")||null; }catch(_){ return null; } }
     const ENV = P.get("env");
     const CEIL = parseFloat(P.get("ceil")) || 2.7;
     // 저사양(내장그래픽) 자동 감지 — URL ?lite=1/0 우선, 없으면 GPU/CPU/메모리 단서로 추정.
@@ -914,15 +916,20 @@
 
     async function loadPalaceThenBuild() {
       let palace = SAMPLE_PALACE;
-      // 우선순위: 업로드한 학습자료(sessionStorage) > ?palace= 명시 > 랜드마크 테마 콘텐츠 > 내장 샘플
-      let fromUpload = false;
-      try { const sp = mpCityPalaceStr(MW_CITY); if (sp) { palace = JSON.parse(sp); fromUpload = true; } } catch(_) {}
+      // 우선순위: 데모 ON(한국사 오버레이) > 업로드한 학습자료 > ?palace= 명시 > 랜드마크 테마 콘텐츠 > 내장 샘플
+      let fromUpload = false, demoMode = false;
+      if (mpDemoOn()) {
+        try { const ds = mpDemoStr(); if (ds) { palace = JSON.parse(ds); demoMode = true; } } catch(_) {}
+        if (!demoMode) { try { palace = await (await fetch("public/data/korean_history.palace.json")).json(); demoMode = true; } catch(e){} }
+      } else {
+        try { const sp = mpCityPalaceStr(MW_CITY); if (sp) { palace = JSON.parse(sp); fromUpload = true; } } catch(_) {}
+      }
       const url = P.get("palace") || (THEME && THEME.palace) || null;
-      if (!fromUpload && url) { try { palace = await (await fetch(url)).json(); } catch(e){ console.warn("palace 로드 실패, 샘플 사용", e); } }
-      // PDF(업로드 학습자료)가 아직이면 = 데모(korean_history/내장 샘플) → 콘텐츠 잠금.
-      //   방·가구는 그대로 둘러보되(둘러보기), 내부 학습 마커·편집은 PDF 분석 후 해금. 데모 지식은 노출 안 함.
+      if (!fromUpload && !demoMode && url) { try { palace = await (await fetch(url)).json(); } catch(e){ console.warn("palace 로드 실패, 샘플 사용", e); } }
+      // 데모 ON 이면 한국사 지식을 공개(쇼케이스). 그 외 업로드 자료가 아니면(샘플/테마) 콘텐츠 잠금 —
+      //   방·가구는 둘러보되 내부 학습 마커·편집은 PDF 분석 후 해금. 데모 OFF + 미업로드면 지식 비노출.
       const _pid = (palace.palace && palace.palace.id) || "";
-      CONTENT_LOCKED = !fromUpload && (palace === SAMPLE_PALACE || /korean_history|sample|demo/i.test(_pid) || /korean_history|sample/i.test(url || ""));
+      CONTENT_LOCKED = !fromUpload && !demoMode && (palace === SAMPLE_PALACE || /korean_history|sample|demo/i.test(_pid) || /korean_history|sample/i.test(url || ""));
       $("palaceTitle").textContent = (CONTENT_LOCKED && !THEME) ? "기억 궁전" : (palace.palace?.title || "기억 궁전");
       MW_PALACE_ID = (palace.palace && palace.palace.id) || "";   // PDF figure URL 스코프(/images/{id}/...)
       MW_LOADED_PALACE = palace;   // '내 서재에 저장' 버튼이 쓸 현재 로드된 궁전
@@ -2134,8 +2141,8 @@
       // 현재 도시의 랜드마크 + 활성 학습자료(업로드 PDF) 기반으로 구성 — 종로·korean_history 하드코딩 제거.
       (async function build(){
         try {
-          let pal = null; try { const sp = mpCityPalaceStr(CUR_CITY); if (sp) pal = JSON.parse(sp); } catch(_){}
-          // PDF 미업로드 시 korean_history 데모를 끌어오지 않음 — 방 목록만 표시, 개념은 "(아직 내용 없음)".
+          let pal = null; try { const sp = mpDemoOn() ? mpDemoStr() : mpCityPalaceStr(CUR_CITY); if (sp) pal = JSON.parse(sp); } catch(_){}
+          // 데모 OFF + 미업로드 시 korean_history 데모를 끌어오지 않음 — 방 목록만 표시, 개념은 "(아직 내용 없음)".
           const isJongno = CUR_CITY === "jongno";
           const cityData = isJongno
             ? await fetch("public/data/landmarks.json").then(r=>r.ok?r.json():null).catch(()=>null)
@@ -3080,6 +3087,7 @@
     addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   </script>
 <script src="nav.js" defer></script>
+<script src="mp-demo.js" defer></script>
 <script src="assistant.js" defer></script>
 
 <script>
