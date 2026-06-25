@@ -448,7 +448,7 @@ Mindpalace_Microsoft9ai_Thirdprj/
 │  └─ public/legacy/  설명 페이지·3D 워크스루(bounding-box-visual)·방 스캐너·memory-walk
 ├─ tools/           fetch_city_photos.py (도시 사진 수집)
 ├─ ARCHITECTURE.md  3D 공간 마커 시스템 전체 아키텍처
-├─ 3D-PIPELINE-TECHNICAL-SHARE.md · 3D-RECOGNITION-DEEPDIVE.md · HOTSPOT-3D-PIPELINE.md · GLB-RECOGNITION-VERIFY.md
+├─ 3D-PIPELINE-TECHNICAL-SHARE.md · 3D-RECOGNITION-DEEPDIVE.md · HOTSPOT-3D-PIPELINE.md
 ├─ CONTRIBUTORS.md  팀 역할·사람별 히스토리
 └─ deploy-build.ps1 / startup.sh / requirements.txt
 ```
