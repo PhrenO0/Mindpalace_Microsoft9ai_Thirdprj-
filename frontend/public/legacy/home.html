@@ -7029,7 +7029,7 @@ end of keeper CSS */
     if (!usingStPageFlip) initMemoryBook();
   });
 
-  const PALACE_3D_URL = 'https://3d-mindpalace-ai-fxf8dyfqega3hvbp.canadacentral-01.azurewebsites.net';
+  const PALACE_3D_URL = 'region-select.html';  /* 데모(정적): Azure 종료 → 로컬 3D 둘러보기 페이지로 */
 
   /* ── 로딩 오버레이 요소 ── */
   const loadingOverlay = document.getElementById('uploadLoadingOverlay');
@@ -7103,6 +7103,10 @@ end of keeper CSS */
     // 업로드 직후 이동할 곳(도시 선택 허브). 같은 출처·같은 탭이라 mp_rag_job·mp_palace가 그대로 공유됨.
     const NEXT_URL = 'region-select.html';
 
+    // 포트폴리오 정적 데모: 백엔드(GraphRAG)가 없으므로 실제 업로드 대신 준비된 예시로 안내한다.
+    //   백엔드를 다시 연결하면 이 값만 false 로 바꾸면 실제 업로드 흐름이 그대로 살아난다.
+    const DEMO_MODE = true;
+
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     // graphrag state → 로딩 오버레이 4단계(파일전송0·서버수신1·분석처리2·기억페이지생성3) + 진행% + 문구.
@@ -7155,6 +7159,20 @@ end of keeper CSS */
     pdfForm.addEventListener('submit', (event) => {
       event.preventDefault();
       if (!selectedPdf) return;
+
+      if (DEMO_MODE) {
+        // 정적 데모: 실제 분석 대신 준비된 예시(한국사)로 3D 공간 둘러보기로 안내.
+        uploadPdfBtn.disabled = true;
+        if (removePdfBtn) removePdfBtn.disabled = true;
+        showLoadingOverlay();
+        if (loadingStage) loadingStage.textContent = '데모';
+        if (loadingTitle) loadingTitle.textContent = '포트폴리오 데모 안내';
+        if (loadingSub) loadingSub.textContent = '실제 PDF 분석은 백엔드가 필요해요. 준비된 예시(한국사)로 3D 공간을 둘러보도록 안내할게요.';
+        setLoadingStep(3); setLoadingProgress(100);
+        setUploadStatus('📌 포트폴리오 정적 데모 — 실시간 PDF 분석 대신 준비된 예시로 이동합니다.', '');
+        setTimeout(() => { location.href = NEXT_URL; }, 1900);
+        return;
+      }
 
       uploadPdfBtn.disabled = true;
       if (removePdfBtn) removePdfBtn.disabled = true;
@@ -7630,6 +7648,21 @@ end of keeper CSS */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
+</script>
+
+<!-- 포트폴리오 정적 데모 안내 배너 (백엔드 종료로 실시간 AI 기능 비활성) -->
+<div id="demoBanner" role="note" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:99990;max-width:calc(100vw - 24px);display:flex;align-items:center;gap:10px;padding:9px 12px 9px 14px;border-radius:999px;background:rgba(28,24,20,0.92);color:#f3ece1;font-size:12.5px;line-height:1.4;box-shadow:0 8px 26px rgba(20,16,12,0.32);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
+  <span aria-hidden="true">📌</span>
+  <span><strong style="color:#f6b45a;">포트폴리오 정적 데모</strong> · 챗봇·PDF 분석 등 실시간 AI 기능은 백엔드 종료로 비활성화돼 있어요. 화면·흐름 위주로 봐주세요.</span>
+  <button type="button" id="demoBannerClose" aria-label="안내 닫기" style="flex:0 0 auto;margin-left:2px;width:22px;height:22px;border:0;border-radius:50%;cursor:pointer;background:rgba(255,255,255,0.12);color:#f3ece1;font-size:14px;line-height:1;">×</button>
+</div>
+<script>
+  (function(){
+    var b=document.getElementById('demoBanner'); if(!b) return;
+    try { if(localStorage.getItem('mp_demo_banner_closed')==='1'){ b.style.display='none'; return; } } catch(_){}
+    var x=document.getElementById('demoBannerClose');
+    if(x) x.addEventListener('click',function(){ b.style.display='none'; try{ localStorage.setItem('mp_demo_banner_closed','1'); }catch(_){} });
+  })();
 </script>
 
 <script src="assistant.js" defer></script>
