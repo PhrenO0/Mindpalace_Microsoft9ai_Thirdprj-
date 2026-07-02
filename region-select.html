@@ -213,7 +213,9 @@
       <a class="dl" href="glb-customizer.html"><span class="di">🧩</span> 방 GLB 커스터마이즈</a>
     </div>
     <script>
-      /* 데모 프리셋: 한국사 + 종로구 + 예쁘고 사물 인식이 정확한 'living' 방으로 바로 입장(쇼케이스). */
+      /* 데모 프리셋(스위치 ON): 한국사 샘플을 'mp_demo_palace' 에 캐시하고 'mp_demo=1' 스위치만 켠다.
+         데모는 실제 자료(mp_palace:*)를 건드리지 않는 별도 오버레이 — 좌하단 배지로 언제든 끄면 원래
+         상태로 복귀. 특정 지역(종로) 강제 X: 사용자가 아래 도시 카드/지도/추천으로 직접 고른다. */
       (function () {
         var d = document.getElementById("demoPresetLink"); if (!d) return;
         d.addEventListener("click", function (e) {
@@ -224,9 +226,11 @@
           fetch(GBASE + "/palace/korean_history").then(function (r) { if (!r.ok) throw 0; return r.json(); })
             .catch(function () { return fetch("public/data/korean_history.palace.json").then(function (r) { return r.json(); }); })
             .then(function (pal) {
-            try { var s = JSON.stringify(pal); sessionStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace", s); localStorage.setItem("mp_palace_demo", "1"); } catch (_) {}
-            // 데모: 바로 방으로 가지 않고 '구성(종로구)' 페이지로 — 방을 커스텀하고 튜토리얼(둥실·반짝)로 다음 행동 안내.
-            location.href = "compose.html?city=jongno&demo=1";
+            try { var s = JSON.stringify(pal); localStorage.setItem("mp_demo_palace", s); sessionStorage.setItem("mp_demo_palace", s); localStorage.setItem("mp_demo", "1"); } catch (_) {}
+            d.style.pointerEvents = ""; d.classList.add("ready");
+            d.innerHTML = '<span class="di">✅</span> 데모 ON — 아래에서 <b>지역을 선택</b>하세요 (배지로 끄기)';
+            try { window.dispatchEvent(new CustomEvent("mp-demo-changed")); } catch (_) {}
+            try { var gv = document.getElementById("galleryview") || document.getElementById("mapview") || document.getElementById("map"); if (gv) gv.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) {}
           }).catch(function () { d.style.pointerEvents = ""; if (sp) sp.textContent = "🎬"; alert("데모를 불러오지 못했어요. 잠시 후 다시 시도하세요."); });
         });
       })();
@@ -494,7 +498,11 @@
   // ── AI 추천(업로드 내용 ↔ 도시 매칭, 규칙기반) ──
   function palaceCorpus(){
     try{
-      const sp = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace");
+      // 데모 ON 이면 데모(한국사) 오버레이를, 아니면 업로드 staging(mp_palace)을 코퍼스로.
+      const demoOn = (function(){ try{ return localStorage.getItem("mp_demo")==="1"; }catch(_){ return false; } })();
+      const sp = demoOn
+        ? (localStorage.getItem("mp_demo_palace") || sessionStorage.getItem("mp_demo_palace"))
+        : (sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"));
       if (!sp) return "";
       const p = JSON.parse(sp);
       const parts = [ (p.palace && p.palace.title) || "" ];
@@ -672,5 +680,6 @@
 <script src="nav.js" defer></script>
 <script src="assistant.js" defer></script>
 <script src="rag-status.js" defer></script>
+<script src="mp-demo.js" defer></script>
 </body>
 </html>

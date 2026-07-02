@@ -1048,9 +1048,40 @@
 
       // ── 활성 학습자료(업로드 PDF→palace) + 스튜디오 방 배정 로드 → 도시·자료 인지 + 구성한 방으로 입장 ──
       function loadJsonSync(url){ try { const r=new XMLHttpRequest(); r.open("GET",url,false); r.send(null); if(r.status>=200&&r.status<300) return JSON.parse(r.responseText); } catch(e){} return null; }
+      // 활성 학습자료를 '선택한 도시'에만 귀속(지역 누수 방지): 전역 staging(mp_palace)을 처음 들어온
+      //   도시가 mp_palace:<city>로 claim 하고 전역을 비운다 → 귀속 안 된 도시는 자료 없이(데모 폴백) 로드.
+      function mpCityPalaceStr(city){
+        try{
+          var ck="mp_palace:"+city;
+          // (마이그레이션) 구 모델서 데모가 실제 키에 claim 된 잔재 폐기 — 데모 표식이 붙은 건 실제 자료가 아님.
+          try{ if(localStorage.getItem("mp_palace_demo:"+city)==="1"){ localStorage.removeItem(ck); sessionStorage.removeItem(ck); localStorage.removeItem("mp_palace_demo:"+city); } }catch(_){}
+          try{ if(localStorage.getItem("mp_palace_demo")==="1"){ localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace_demo"); } }catch(_){}
+          var own=sessionStorage.getItem(ck)||localStorage.getItem(ck);
+          if(own) return own;
+          var stg=sessionStorage.getItem("mp_palace")||localStorage.getItem("mp_palace");
+          if(stg){ var p=JSON.parse(stg); if(p&&p.rooms&&p.rooms.length){
+            try{ localStorage.setItem(ck,stg); sessionStorage.setItem(ck,stg);
+                 localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace");
+            }catch(_){}
+            return stg; } }
+        }catch(_){}
+        return null;
+      }
+      // 데모 모드(스위치): ON 이면 도시 무관 한국사 오버레이, OFF 면 실제 자료(없으면 빈 상태).
+      function mpDemoOn(){ try{ return localStorage.getItem("mp_demo")==="1"; }catch(_){ return false; } }
+      function mpDemoStr(){ try{ return localStorage.getItem("mp_demo_palace")||sessionStorage.getItem("mp_demo_palace")||null; }catch(_){ return null; } }
+      // 데모는 '구성→입장' 경로로 활성화(mp_demo_entered)됐을 때만 3D 지도에 적용 — '전체 보기'(둘러보기) 진입엔 미적용.
+      function mpDemoEntered(){ try{ return localStorage.getItem("mp_demo_entered")==="1"; }catch(_){ return false; } }
+      function mpDemoShow(){ return mpDemoOn() && mpDemoEntered(); }
       let PAL = null;
-      try { const s = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); if (s) PAL = JSON.parse(s); } catch(e){}
-      if (!PAL) PAL = loadJsonSync("data/korean_history.palace.json") || loadJsonSync("public/data/korean_history.palace.json");
+      if (mpDemoShow()) {
+        try { const ds = mpDemoStr(); if (ds) PAL = JSON.parse(ds); } catch(e){}
+        if (!PAL) PAL = loadJsonSync("data/korean_history.palace.json") || loadJsonSync("public/data/korean_history.palace.json");
+      } else {
+        try { const s = mpCityPalaceStr(CITY_SLUG); if (s) PAL = JSON.parse(s); } catch(e){}
+      }
+      // 데모 OFF + 자료 없음 → korean_history 자동 폴백 안 함, 빈 상태로 둔다(지역 간 데모 누수 방지).
+      if (!PAL) PAL = { palace:{ title:"" }, rooms:[] };
       const ROOMDES = loadJsonSync("data/room-designs.json") || loadJsonSync("public/data/room-designs.json") || { designs: [], blobBase: "" };
       const DESIGNS = ROOMDES.designs || [], DESIGN_BLOB = ROOMDES.blobBase || "";
       const resolveGlb = g => (g && g.indexOf("BLOB:") === 0) ? (DESIGN_BLOB + g.slice(5)) : g;
@@ -2294,6 +2325,7 @@
     </script>
   <script src="quiz-widget.js" defer></script>
   <script src="nav.js" defer></script>
+  <script src="mp-demo.js" defer></script>
   <script src="assistant.js" defer></script>
 </body>
 </html>

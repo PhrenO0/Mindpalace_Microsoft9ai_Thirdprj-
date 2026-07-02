@@ -11,6 +11,9 @@
     var job = null;
     try { job = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); } catch (_) {}
     if (!job || !job.jobId || !job.base) return; // 진행 중인 분석 없음
+    // 취소 톰스톤: 이 잡이 '중단됨'으로 표시됐으면 절대 되살리지 않는다(다른 탭/재진입에서도). jobId 가 일치할 때만.
+    function isCanceled(){ try { return !!(job && job.jobId && localStorage.getItem("mp_rag_canceled") === job.jobId); } catch (_) { return false; } }
+    if (isCanceled()) { try { localStorage.removeItem("mp_rag_job"); } catch (_) {} return; }
     if (job.done) { try { window.dispatchEvent(new CustomEvent("mp-rag-ready")); } catch (_) {} return; } // 이미 완료
 
     var STAGE = {
@@ -55,7 +58,9 @@
       "#mpRagChip .rg-go{animation:mpRagCta 1.5s ease-in-out infinite;}" +
       "@keyframes mpRagCta{0%,100%{transform:translateY(0);box-shadow:0 0 0 0 rgba(196,98,58,0);}50%{transform:translateY(-3px);box-shadow:0 7px 16px rgba(196,98,58,.5),0 0 0 4px rgba(196,98,58,.20);}}" +
       "#mpRagChip.rg-done .rg-go{animation:none;}" +
-      "#mpRagDismiss{margin-left:auto;font-size:11.5px;color:rgba(42,36,29,.42);font-weight:600;cursor:pointer;background:none;border:0;text-decoration:underline;padding:0;}" +
+      "#mpRagCancel{margin-left:auto;font-size:11.5px;color:#c0463e;font-weight:700;cursor:pointer;background:none;border:0;text-decoration:underline;padding:0;}" +
+      "#mpRagCancel:hover{color:#9a2f28;}" +
+      "#mpRagDismiss{margin-left:10px;font-size:11.5px;color:rgba(42,36,29,.42);font-weight:600;cursor:pointer;background:none;border:0;text-decoration:underline;padding:0;}" +
       "#mpRagDismiss:hover{color:#7a5a3a;}" +
       "#mpRagTipTx{transition:opacity .4s ease;}";
     var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
@@ -78,6 +83,7 @@
         '<button class="rg-x" id="mpRagX" title="숨기기">✕</button>' +
       "</div>" +
       '<div id="mpRagTip"><span class="tw">✨</span><span id="mpRagTipTx">분석하는 동안 명소를 먼저 둘러보세요!</span>' +
+        '<button id="mpRagCancel" type="button" title="진행 중인 PDF 분석을 취소합니다">분석 중단</button>' +
         '<button id="mpRagDismiss" type="button">다시 보지 않기</button></div>';
 
     // 다음 행동 추천 멘트 — 처리 중 지루하지 않게 회전(반짝임과 함께).
@@ -102,6 +108,8 @@
       document.getElementById("mpRagX").onclick = function () { chip.style.display = "none"; if (tipTimer) clearInterval(tipTimer); };
       var dz = document.getElementById("mpRagDismiss");
       if (dz) dz.onclick = function () { try { localStorage.setItem("mp_onboard_off", "1"); } catch (_) {} chip.style.display = "none"; if (tipTimer) clearInterval(tipTimer); };
+      var cz = document.getElementById("mpRagCancel");
+      if (cz) cz.onclick = cancel;
       if (nextStep.explore) {   // region-select: '둘러보기' = 페이지 이동 대신, 도시 카드를 반짝·들썩으로 가리켜 클릭 유도
         var goEl = document.getElementById("mpRagGo");
         if (goEl) goEl.onclick = function (e) { e.preventDefault();
@@ -115,7 +123,23 @@
     function setLabel(t) { var el = document.getElementById("mpRagLabel"); if (el) el.textContent = t; }
 
     var stopped = false;
+    // 분석 중단: 잡을 '확실히' 버린다 — 폴링 정지 + 톰스톤 기록(다른 탭의 finish/poll 가 되살리지 못하게) +
+    //   도시 귀속 전 전역 staging 정리(palace_ready 직후 취소 대비) + 백엔드 best-effort 취소 + 새로고침으로 잠금 해제.
+    function cancel() {
+      try { if (!confirm("PDF 분석을 중단할까요?\n진행 중인 분석이 취소되고 지금까지 결과가 사라집니다.")) return; } catch (_) {}
+      stopped = true;
+      if (tipTimer) clearInterval(tipTimer);
+      try { if (job && job.jobId) localStorage.setItem("mp_rag_canceled", job.jobId); } catch (_) {}   // 톰스톤
+      try { localStorage.removeItem("mp_rag_job"); } catch (_) {}
+      // 전역 staging(아직 도시 미귀속분)만 정리 — 기존 도시 자료(mp_palace:<city>)는 보존.
+      try { localStorage.removeItem("mp_palace"); sessionStorage.removeItem("mp_palace"); localStorage.removeItem("mp_palace_demo"); } catch (_) {}
+      // 백엔드 잡도 best-effort 취소(엔드포인트 미지원이면 무시).
+      try { if (job && job.base && job.jobId) fetch(job.base + "/orchestrator/jobs/" + encodeURIComponent(job.jobId), { method: "DELETE" }).catch(function () {}); } catch (_) {}
+      try { window.dispatchEvent(new CustomEvent("mp-rag-canceled")); } catch (_) {}
+      location.reload();   // 칩 제거 + 분석 잠금 페이지(compose 등)를 빈 상태로 리셋
+    }
     function finish() {
+      if (isCanceled()) { stopped = true; if (tipTimer) clearInterval(tipTimer); try { localStorage.removeItem("mp_rag_job"); } catch (_) {} if (chip && chip.parentNode) chip.parentNode.removeChild(chip); return; }   // 취소된 잡은 완료 처리/되살림 금지
       stopped = true;
       if (tipTimer) clearInterval(tipTimer);
       setBar(100); setLabel("분석 완료 · 방 미리보기로");
@@ -140,6 +164,7 @@
     function fail(msg) {
       stopped = true;
       if (tipTimer) clearInterval(tipTimer);
+      var _c = document.getElementById("mpRagCancel"); if (_c) _c.style.display = "none";   // 실패 상태에선 중단 버튼 숨김
       setLabel("분석 실패: " + (msg || "오류"));
       var b = document.getElementById("mpRagBar"); if (b) b.style.background = "#c0463e";
       var ic = document.getElementById("mpRagIc"); if (ic) { ic.textContent = "⚠️"; ic.classList.remove("spin"); }
@@ -160,6 +185,8 @@
     var gone = 0;
     async function poll() {
       if (stopped) return;
+      // 다른 탭에서 중단됐으면(톰스톤) 이 탭도 즉시 멈추고 칩 제거 — 완료로 되살아나지 않게.
+      if (isCanceled()) { stopped = true; if (tipTimer) clearInterval(tipTimer); try { localStorage.removeItem("mp_rag_job"); } catch (_) {} if (chip && chip.parentNode) chip.parentNode.removeChild(chip); return; }
       try {
         var r = await fetch(job.base + "/orchestrator/jobs/" + job.jobId + "/status");
         if (r.ok) {
