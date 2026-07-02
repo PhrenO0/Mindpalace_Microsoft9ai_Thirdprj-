@@ -1,0 +1,95 @@
+{
+  "roomId": "front_room_first_pass",
+  "generatedBy": "personal-room-scanner-3d (Azure AI Vision, headless)",
+  "ordered": true,
+  "hotspots": [
+    {
+      "slot": 1,
+      "object": "chair",
+      "detectedClass": "chair",
+      "confidence": 0.8,
+      "markerPosition": [
+        -1.694,
+        0.401,
+        -1.169
+      ]
+    },
+    {
+      "slot": 2,
+      "object": "sofa",
+      "detectedClass": "sofa",
+      "confidence": 0.79,
+      "markerPosition": [
+        0.302,
+        0.51,
+        0.663
+      ]
+    },
+    {
+      "slot": 3,
+      "object": "sofa",
+      "detectedClass": "sofa",
+      "confidence": 0.75,
+      "markerPosition": [
+        -0.384,
+        0.091,
+        1.272
+      ]
+    },
+    {
+      "slot": 4,
+      "object": "window",
+      "detectedClass": "window",
+      "confidence": 0.75,
+      "markerPosition": [
+        -2.301,
+        1.076,
+        -0.514
+      ]
+    },
+    {
+      "slot": 5,
+      "object": "window",
+      "detectedClass": "window",
+      "confidence": 0.75,
+      "markerPosition": [
+        1.274,
+        1.046,
+        -2.758
+      ]
+    },
+    {
+      "slot": 6,
+      "object": "dining table",
+      "detectedClass": "dining table",
+      "confidence": 0.74,
+      "markerPosition": [
+        -0.851,
+        0.788,
+        -0.392
+      ]
+    },
+    {
+      "slot": 7,
+      "object": "chair",
+      "detectedClass": "chair",
+      "confidence": 0.72,
+      "markerPosition": [
+        -1.006,
+        0.36,
+        -0.14
+      ]
+    },
+    {
+      "slot": 8,
+      "object": "bookshelf",
+      "detectedClass": "bookshelf",
+      "confidence": 0.72,
+      "markerPosition": [
+        -2.297,
+        1.125,
+        -0.59
+      ]
+    }
+  ]
+}

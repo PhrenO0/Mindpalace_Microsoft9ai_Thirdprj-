@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>이동 중… — 경주 기억궁전</title>
+<script>
+  // 정본 통합: 단일 엔진(vworld_map.html)으로 일원화됨. 경주 데이터로 리다이렉트.
+  // ?key= 등 쿼리스트링과 #해시는 그대로 넘긴다.
+  (function () {
+    var q = location.search ? location.search + "&city=gyeongju" : "?city=gyeongju";
+    location.replace("vworld_map.html" + q + location.hash);
+  })();
+</script>
+</head>
+<body style="margin:0;background:#080a09;color:#cfe;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif">
+  <p>경주 기억궁전으로 이동 중… 자동으로 넘어가지 않으면 <a style="color:#9fd" href="vworld_map.html?city=gyeongju">여기</a>를 누르세요.</p>
+</body>
+</html>

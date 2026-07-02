@@ -191,8 +191,16 @@
 
     const HTTP_GLB = "public/assets/rooms/bilocale_viale_lucania_milano.glb";
     // ?glb=경로 로 임의의 GLB를 테스트할 수 있다. 없으면 기본 방.
-    const urlGlb = new URLSearchParams(location.search).get("glb");
+    const _params = new URLSearchParams(location.search);
+    const urlGlb = _params.get("glb");
     const ROOM_GLB = urlGlb || window.__ROOM03_GLB_DATAURI__ || HTTP_GLB;
+    // glb-customizer가 iframe으로 띄울 때 auto=1 → 로드 후 자동 스캔하고, 진행/완료/오류를
+    // postMessage로 부모(가져오기 로딩 박스)에 알린다. 이게 없으면 부모의 "2/2" 단계가 멈춘다.
+    const AUTO_SCAN = _params.get("auto") === "1";
+    function postParent(msg) {
+      try { if (window.parent && window.parent !== window) window.parent.postMessage(msg, "*"); }
+      catch (e) { /* cross-origin 등 무시 */ }
+    }
 
     // ---- Three.js 기본 세팅 ----
     const sceneEl = document.getElementById("scene");
@@ -247,7 +255,9 @@
     let scanning = false;           // 스캔 중엔 렌더루프가 카메라를 못 건드리게(광선 정확도)
 
     const $ = (id)=>document.getElementById(id);
-    const setStatus = (h)=>{ $("status").innerHTML = h; };
+    // XSS 방어: innerHTML에 들어가는 외부 데이터(AI 인식 라벨·저장된 핫스팟 제목/사물 등)를 이스케이프.
+    const esc = s => String(s ?? "").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+    const setStatus = (h)=>{ $("status").innerHTML = h; if (AUTO_SCAN) postParent({ type:"scan-progress", html:h }); };
 
     // 서버에 Azure 비전이 설정돼 있는지 물어본다(없거나 file://면 폴백).
     fetch("/api/vision-config").then(r=>r.json()).then(c=>{ USE_AZURE = !!c.azure; }).catch(()=>{});
@@ -314,9 +324,12 @@
         controls.update();
         $("scanBtn").disabled = false;
         setStatus("방 로드 완료 · <b>AI로 방 스캔</b>을 누르면 여러 각도에서 가구를 인식합니다.\n(모델 첫 로드 시 수십 MB 다운로드)");
+        // 자동 모드(가져오기 흐름): 로드되자마자 스캔 시작.
+        if (AUTO_SCAN) scanRoom();
       }, undefined, (err) => {
         console.error(err);
         setStatus("GLB 로드 실패: " + (err?.message||err));
+        if (AUTO_SCAN) postParent({ type:"scan-error", msg:"GLB 로드 실패: " + (err?.message||err) });
       });
     }
 
@@ -611,8 +624,8 @@
         // 커버리지 전용: Azure 콜은 비용이므로, 방을 빠짐없이 보는 데 필요한 만큼만 촬영하고
         // 같은 사물을 반복 촬영하지 않는다. 위치는 각 사물의 "베스트샷"에서 GLB 레이캐스트로
         // 1샷에 구한다(우리는 3D 형상을 이미 가졌으므로 사진 재구성용 다중촬영이 불필요).
-        const MAX_SHOTS = USE_AZURE ? 16 : 30;
-        const PASS1_MAX = Math.max(4, Math.ceil(MAX_SHOTS * 0.6));   // 1차(커버리지)에 예산 60%, 나머지는 2차(조준)
+        let MAX_SHOTS = USE_AZURE ? 16 : 30;                        // 셀 수에 따라 아래에서 방 크기 비례로 재설정
+        let PASS1_MAX = Math.max(4, Math.ceil(MAX_SHOTS * 0.6));    // 1차(커버리지)에 예산 60%, 나머지는 2차(조준)
         let used = 0;
         const candidates = [];
 
@@ -640,21 +653,33 @@
         //   (상세: docs/SCAN_GEOMETRY_BASIS.md)
         const aimFloor = (px, pz, a, R) => new THREE.Vector3(px + Math.sin(a)*R, floorY + 0.25, pz - Math.cos(a)*R);
         const DIRS = [0, Math.PI/2, Math.PI, -Math.PI/2];
-        const shots = [];
-        for (let x = min.x + 0.9; x <= max.x - 0.9 + 1e-6; x += 1.8)   // 1.8m 격자(위 근거)
+        // 1) 유효 시점(열린 공간) 셀 수집 — 1.8m 눈높이 격자(위 근거)
+        const cells = [];
+        for (let x = min.x + 0.9; x <= max.x - 0.9 + 1e-6; x += 1.8)
           for (let z = min.z + 0.9; z <= max.z - 0.9 + 1e-6; z += 1.8) {
             const v = new THREE.Vector3(x, eyeY, z);
-            if (!isVantageValid(v)) continue;
-            for (const a of DIRS) shots.push({ pos: v, target: aimFloor(x, z, a, 2.5) });
+            if (isVantageValid(v)) cells.push(v);
           }
-        // 단일 방(격자가 거의 안 잡힘)이면 중앙 오비트 링 8방향으로 보강.
-        if (shots.length < 4) {
-          for (let i = 0; i < 8; i++) {
-            const a = i/8 * Math.PI * 2;
-            shots.push({ pos: new THREE.Vector3(center.x + Math.cos(a)*ringR, eyeY, center.z + Math.sin(a)*ringR),
-                         target: new THREE.Vector3(center.x, floorY + 0.5, center.z) });
-          }
+        // 단일 방(격자가 거의 안 잡힘)이면 중앙 오비트 링으로 셀 보강.
+        if (cells.length < 2)
+          for (let i = 0; i < 6; i++) { const a = i/6 * Math.PI * 2;
+            cells.push(new THREE.Vector3(center.x + Math.cos(a)*ringR, eyeY, center.z + Math.sin(a)*ringR)); }
+        // 2) ★ 최원점 샘플링(farthest-point): 중앙에서 시작해 "가장 먼 셀"을 차례로 → 예산이 적어도
+        //    한쪽(왼쪽)에 쏠리지 않고 방 전체를 고루 커버. (기존 x순차 → 왼쪽 열만 찍히던 버그 수정)
+        const ordered = [], rem = cells.slice();
+        if (rem.length) {
+          let cur = rem.reduce((b, p) => p.distanceTo(center) < b.distanceTo(center) ? p : b, rem[0]);
+          ordered.push(cur); rem.splice(rem.indexOf(cur), 1);
+          while (rem.length) { let bi = 0, bd = -1;
+            rem.forEach((p, i) => { let m = Infinity; ordered.forEach(o => { const d = o.distanceTo(p); if (d < m) m = d; }); if (m > bd) { bd = m; bi = i; } });
+            ordered.push(rem.splice(bi, 1)[0]); }
         }
+        // 3) ★ 예산을 방 크기(유효 셀 수)에 비례해 확장 → 큰 방(교실)도 오른쪽 끝까지 촬영.
+        MAX_SHOTS = USE_AZURE ? Math.min(40, Math.max(16, cells.length * 3)) : Math.min(64, Math.max(30, cells.length * 4));
+        PASS1_MAX = Math.max(4, Math.ceil(MAX_SHOTS * 0.6));
+        // 4) 촬영 목록: 퍼진 셀 순서대로, 각 셀 4방향.
+        const shots = [];
+        ordered.forEach(v => DIRS.forEach(a => shots.push({ pos: v, target: aimFloor(v.x, v.z, a, 2.5) })));
         // ===== 1차: 커버리지 촬영 (대략 위치 파악) — 예산 60%(PASS1_MAX)까지만 =====
         for (const sh of shots) {
           if (used >= PASS1_MAX) break;
@@ -750,9 +775,20 @@
         const real = hotspots.filter(h=>h.detectedClass).length;
         const srcLabel = lastSource === "azure" ? "Azure AI Vision" : "브라우저 OWL-ViT";
         setStatus(`완료 · 검출기 <b>${srcLabel}</b> · ${total}개 샷 스캔 → 사물 <b>${merged.length}</b>개 인식, 기억 지점 <b>${hotspots.length}</b>개 생성(실제 사물 ${real}개).`);
+        // 자동 모드: 결과 핫스팟을 부모(가져오기 흐름)에 넘긴다. exportBtn과 동일한 포맷.
+        if (AUTO_SCAN) postParent({
+          type: "scan-done",
+          hotspots: hotspots.map(h => ({
+            slot:h.number, conceptId:h.conceptId, title:h.title, object:h.object,
+            detectedClass:h.detectedClass, confidence:h.score,
+            markerPosition: [ +h.pos.x.toFixed(3), +h.pos.y.toFixed(3), +h.pos.z.toFixed(3) ],
+            summary:h.summary, memoryCue:h.cue
+          }))
+        });
       } catch (err) {
         console.error(err);
         setStatus("오류: " + (err?.message||err));
+        if (AUTO_SCAN) postParent({ type:"scan-error", msg: (err?.message||String(err)) });
       } finally {
         scanning = false;           // 렌더루프 재개
         controls.enabled = true;
@@ -929,7 +965,7 @@
         const row = document.createElement("div");
         row.className = "drow";
         row.innerHTML = `<span class="swatch" style="background:#${hex}"></span>` +
-          `<span class="name">${ko}</span>` +
+          `<span class="name">${esc(ko)}</span>` +
           `<span class="pct">${Math.round(cl.score*100)}%</span>` +
           `<span class="tri ${b.ok?'ok':'weak'}">${b.t}</span>`;
         row.addEventListener("click", () => selectDetect(cl));   // 라벨 고정 + 카메라 이동
@@ -976,7 +1012,7 @@
       hotspots.forEach((h,i) => {
         const row = document.createElement("div");
         row.className = "row" + (i===activeIndex?" active":"");
-        row.innerHTML = `<span class="n">${h.number}</span><span>${h.title} · <b>${h.object}</b></span>
+        row.innerHTML = `<span class="n">${esc(h.number)}</span><span>${esc(h.title)} · <b>${esc(h.object)}</b></span>
           <span class="conf">${h.score!=null?Math.round(h.score*100)+"%":"조망"}</span>`;
         row.addEventListener("click", ()=>selectHotspot(i));
         list.appendChild(row);
@@ -1007,6 +1043,7 @@
           summary:h.summary, memoryCue:h.cue
         }))
       };
+      window.__exportPayload = payload;   // 자동화/디버그: 다운로드 없이도 결과를 읽을 수 있게 노출
       const a = document.createElement("a");
       a.href = URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)], {type:"application/json"}));
       a.download = "my-room-3d-hotspots.json"; a.click();

@@ -1,0 +1,2299 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <!-- 크롬/엣지 등 브라우저 텍스트 자동확대 방지 — 글자 크기 통일 -->
+    <style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>
+    <title>VWorld 3D 광화문 기억궁전</title>
+    <style>
+      :root {
+        --ink: #2a241d;
+        --muted: #51635c;
+        --dim: #7f908d;
+        --teal: var(--accent);
+        --mint: var(--accent2);
+        --panel: rgba(255, 255, 255, 0.92);
+        --panel-strong: #ffffff;
+        --line: rgba(51, 46, 40, 0.12);
+        --shadow: 0 18px 50px rgba(40, 34, 26, 0.14);
+        --accent: #b5552f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif;
+        letter-spacing: 0;
+        word-break: keep-all;       /* 한국어: 단어 단위로 깔끔히 줄바꿈(어절 중간 끊김 방지) */
+        overflow-wrap: anywhere;
+      }
+      /* 모든 오버레이 UI가 같은 글꼴을 쓰도록 명시(우측 패널·중앙 하단 도크·좌하단) */
+      .study-panel, .study-panel *, .entry-dock, .entry-dock *,
+      .left-panel, .left-panel *, .concept-card, .anchor-tabs button {
+        font-family: "Pretendard", "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif;
+      }
+
+      #vmap {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(
+          #7fb0c6 0 36%,
+          #5d8978 36% 62%,
+          #202725 62% 100%
+        );
+      }
+
+      .scene-sky,
+      .scene-vignette,
+      .focus-mask {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .scene-sky {
+        z-index: 1;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(115, 165, 190, 0.48) 0%,
+            rgba(115, 165, 190, 0.2) 23%,
+            rgba(8, 14, 15, 0) 48%
+          ),
+          radial-gradient(
+            ellipse at 50% 10%,
+            rgba(227, 242, 242, 0.2),
+            transparent 44%
+          );
+        mix-blend-mode: screen;
+        opacity: 0.54;
+      }
+
+      .scene-vignette {
+        z-index: 2;
+        /* 서울 중심만 또렷하게, 주변부는 밝은 페이드(화이트 톤) → 중심 집중 + 밝은 배경 유지 */
+        background: radial-gradient(
+          90% 90% at 50% 47%,
+          transparent 50%,
+          rgba(245, 241, 234, 0.06) 76%,
+          rgba(245, 241, 234, 0.14) 92%,
+          rgba(245, 241, 234, 0.22) 100%
+        );
+      }
+
+      .focus-mask {
+        z-index: 3;
+        opacity: 0;
+        transition: opacity 0.18s ease;
+        background: radial-gradient(
+          ellipse at 50% 54%,
+          transparent 0%,
+          transparent 60%,
+          rgba(245, 241, 234, 0.14) 86%,
+          rgba(245, 241, 234, 0.32) 100%
+        );
+      }
+
+      body.focus-mode .focus-mask {
+        opacity: 1;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        height: 34px;
+        border: 1px solid rgba(51, 46, 40, 0.12);
+        border-radius: 8px;
+        background: rgba(51, 46, 40, 0.05);
+        color: var(--ink);
+        padding: 0 12px;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        transition:
+          background 0.16s ease,
+          border-color 0.16s ease,
+          transform 0.16s ease;
+      }
+
+      button:hover {
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        border-color: rgba(181, 85, 47, 0.4);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+      button.active {
+        background: rgba(181, 85, 47, 0.18);
+        border-color: rgba(181, 85, 47, 0.5);
+        box-shadow: inset 0 0 0 1px rgba(181, 85, 47, 0.18);
+      }
+
+      .kicker {
+        font-size: 10px;
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--muted);
+        font-weight: 900;
+      }
+
+      .palace-shell {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      .palace-shell > * {
+        pointer-events: auto;
+      }
+
+      .route-rail,
+      .left-panel,
+      .study-panel,
+      .entry-dock,
+      .status {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+
+      /* 루트 도트 = 색깔 동그라미 가로 연결. 하단 네비 바 안 우측 상단에 작게. */
+      .route-rail {
+        display: none; /* 상단 레일은 숨김(routeCount/Summary만 JS용으로 유지) */
+      }
+      /* 도트 줄(1~10)을 absolute 대신 정상 흐름에 두고 버튼과 같은 줄(.dock-right)에 묶음 */
+      .entry-dock .anchor-tabs {
+        position: static;
+        margin: 0;
+      }
+
+      .route-title {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .route-title strong {
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .route-title span {
+        color: var(--muted);
+        font-size: 11px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .route-count {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .anchor-tabs {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        position: relative;
+      }
+      .anchor-tabs::before {
+        display: none; /* 도트 연결 가로줄 제거 */
+      }
+
+      .anchor-tab {
+        position: relative;
+        z-index: 1;
+        width: 19px;
+        height: 19px;
+        min-height: 0;
+        padding: 0;
+        margin: 0 6px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.96);
+        border: 2px solid color-mix(in srgb, var(--accent) 55%, #cdd8d2);
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 900;
+      }
+      .anchor-num {
+        line-height: 1;
+      }
+
+      .anchor-dot,
+      .anchor-copy {
+        display: none;
+      }
+
+      .anchor-copy {
+        min-width: 0;
+      }
+
+      .anchor-copy strong {
+        display: block;
+        font-size: 12px;
+        line-height: 1.25;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .anchor-copy span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .anchor-tab.active {
+        width: 23px;
+        height: 23px;
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #ffffff;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+      }
+      .anchor-tab.visited {
+        border-color: color-mix(in srgb, var(--accent) 80%, transparent);
+        color: var(--accent);
+      }
+
+      /* 좌상단 미니맵 — Leaflet 2D 지도(실시간 길거리·현위치) */
+      .minimap {
+        position: absolute;
+        left: 14px;
+        top: 115px;
+        width: 150px;
+        height: 150px;
+        z-index: 4;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        background: #eee9df;
+      }
+      /* 도우미 위젯(assistant.js 전역 좌하단 배치)을 이 페이지에서만 하단 정보바 높이에 맞춰 내림.
+         id + !important 로 assistant.js 의 인라인 bottom 값을 덮어씀(다른 페이지는 영향 없음). */
+      #mpLaunch { bottom: 100px !important; }
+      #mpPanel  { bottom: 156px !important; }
+      .minimap .leaflet-container {
+        width: 100%;
+        height: 100%;
+        background: #eee9df;
+        font: inherit;
+      }
+      /* 미니맵은 북=위(고정). 4방위 표시 */
+      .mini-compass {
+        position: absolute;
+        inset: 0;
+        z-index: 500;
+        pointer-events: none;
+      }
+      .mini-compass b {
+        position: absolute;
+        color: rgba(27, 38, 34, 0.9);
+        font-size: 10px;
+        font-weight: 900;
+        text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
+      }
+      .mini-compass .n { top: 3px; left: 50%; transform: translateX(-50%); color: #c5282a; }
+      .mini-compass .s { bottom: 3px; left: 50%; transform: translateX(-50%); }
+      .mini-compass .e { right: 5px; top: 50%; transform: translateY(-50%); }
+      .mini-compass .w { left: 5px; top: 50%; transform: translateY(-50%); }
+      /* 화면 밖 마커 가장자리 인디케이터 — 안 보이는 명소의 방향·번호를 가장자리 화살표로 */
+      .mini-edges { position: absolute; inset: 0; z-index: 540; pointer-events: none; }
+      .mini-edge { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; }
+      .mini-edge .me-arrow { font-size: 12px; line-height: 1; color: #c5282a; text-shadow: 0 1px 2px rgba(255,255,255,.95); }
+      .mini-edge .me-num { font-size: 8.5px; font-weight: 900; color: #fff; background: #c5282a; border-radius: 6px;
+        min-width: 11px; text-align: center; padding: 0 3px; box-shadow: 0 1px 3px rgba(40,34,26,.35); margin-top: -1px; }
+      .mini-edge.on .me-arrow { color: var(--accent); }
+      .mini-edge.on .me-num { background: var(--accent); }
+      /* 5개 루트 포인트 — 반짝(펄스) */
+      .mini-pin-dot {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--c);
+        border: 1.5px solid #ffffff;
+        box-shadow: 0 0 5px var(--c);
+        z-index: 2;
+      }
+      .mini-pin-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--c);
+        animation: miniPulse 1.7s ease-out infinite;
+      }
+      @keyframes miniPulse {
+        0% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
+        100% { transform: translate(-50%, -50%) scale(3.4); opacity: 0; }
+      }
+      /* 현위치 화살표 — 미니맵 정중앙 고정, 빨간 삼각형만 */
+      .mini-arrow-fixed {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 600;
+        pointer-events: none;
+        width: 0;
+        height: 0;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
+        border-bottom: 20px solid #ff3b30;
+        transform: translate(-50%, -50%);
+        transform-origin: 50% 62%;
+        filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.85));
+      }
+
+      /* 우측 패널: 도시+과목 목차 — 선명하게 */
+      .study-panel {
+        opacity: 0.97;
+        transition: opacity 0.2s ease;
+      }
+      .study-panel:hover {
+        opacity: 1;
+      }
+      .status {
+        opacity: 0.82;
+      }
+      /* 마커/이름표 DOM 레이어: WebGL 밖에서 렌더해 항상 선명하게 유지 */
+      .mk-layer { position:absolute; inset:0; pointer-events:none; z-index:3; overflow:hidden; }
+      .mk { position:absolute; transform:translate(-50%,-100%); pointer-events:auto; cursor:pointer; transition:opacity .15s ease; }
+      .mk-label { font:700 13px 'Pretendard','Malgun Gothic',sans-serif; color:#fff; background:rgba(26,24,20,.92);
+        border:1px solid rgba(255,255,255,.22); border-radius:9px; padding:4px 10px; white-space:nowrap;
+        box-shadow:0 4px 13px rgba(0,0,0,.34); margin-bottom:3px; text-align:center; letter-spacing:-.01em; }
+      .mk-pin { width:26px; height:26px; margin:0 auto; border-radius:50% 50% 50% 0; transform:rotate(-45deg);
+        background:radial-gradient(circle at 35% 30%, #ff8076, #ec4a41 55%, #c5282a); border:2.5px solid #fff;
+        box-shadow:0 3px 9px rgba(0,0,0,.38); display:flex; align-items:center; justify-content:center; }
+      .mk-pin span { transform:rotate(45deg); color:#fff; font:800 13px 'Pretendard',Arial; }
+      .mk.on .mk-pin { background:radial-gradient(circle at 35% 30%, #5fd6b6, #b5552f 55%, #1f5a48); transform:rotate(-45deg) scale(1.14); }
+      .mk.on .mk-label { background:#b5552f; border-color:rgba(255,255,255,.42); }
+      .mk:hover { z-index:11 !important; }
+      .mk:hover .mk-pin { transform:rotate(-45deg) scale(1.12); }
+      .entry-dock #spatialCue {
+        opacity: 0.55;
+      }
+      /* 미니맵 핀 좀 더 또렷하게 */
+      .mini-pin-dot {
+        width: 10px;
+        height: 10px;
+      }
+
+      body.labels-hidden .concept-card span {
+        display: none;
+      }
+
+      body.labels-hidden .anchor-copy strong {
+        color: transparent;
+        text-shadow: 0 0 8px rgba(27, 38, 34, 0.7);
+      }
+
+      /* 좌측 큰 패널 → 좌하단 작은 VWorld 제어 오버레이(토글만) */
+      .left-panel {
+        position: absolute;
+        left: 14px;
+        bottom: 14px;
+        top: auto;
+        width: auto;
+        min-width: 170px;
+        padding: 10px 12px;
+        z-index: 4;
+      }
+      .left-panel > .kicker,
+      .left-panel h1,
+      .left-panel #leftPanelCopy,
+      .left-panel .control-grid {
+        display: none;
+      }
+      .left-panel .perf-panel {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+      }
+      .left-panel .perf-row {
+        margin-top: 7px;
+        font-size: 11px;
+      }
+      .left-panel .perf-panel > .kicker {
+        font-size: 9.5px;
+        opacity: 0.7;
+      }
+
+      .left-panel h1,
+      .study-panel h2 {
+        margin: 9px 0 11px;
+        font-size: 22px;
+        line-height: 1.22;
+        letter-spacing: 0;
+      }
+
+      .left-panel p,
+      .study-panel p,
+      .entry-dock p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.58;
+        white-space: pre-line;   /* 문장 단위 줄바꿈(가독성) */
+      }
+
+      .control-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .control-grid button {
+        width: 100%;
+      }
+
+      .perf-panel {
+        margin-top: 14px;
+        padding-top: 13px;
+        border-top: 1px solid rgba(51, 46, 40, 0.12);
+      }
+
+      .perf-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 9px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .switch {
+        position: relative;
+        width: 46px;
+        height: 25px;
+        flex: 0 0 auto;
+        border: 1px solid rgba(51, 46, 40, 0.12);
+        border-radius: 999px;
+        background: rgba(51, 46, 40, 0.05);
+        padding: 0;
+        cursor: pointer;
+      }
+
+      .switch::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: rgba(27, 38, 34, 0.55);
+        transition:
+          transform 0.18s ease,
+          background 0.18s ease;
+      }
+
+      .switch.active {
+        background: rgba(181, 85, 47, 0.3);
+        border-color: rgba(181, 85, 47, 0.5);
+      }
+
+      .switch.active::after {
+        transform: translateX(21px);
+        background: var(--accent);
+      }
+
+      /* PERFORMANCE 패널: 기본 접힘(키커만 노출) → 마우스 호버/포커스 시 펼침 */
+      .perf-panel > .kicker {
+        cursor: pointer;
+        transition: opacity 0.18s ease;
+      }
+      .perf-panel > .kicker::after {
+        content: " ⚙ ▾";
+        opacity: 0.55;
+        font-size: 0.92em;
+      }
+      .perf-panel:hover > .kicker,
+      .perf-panel:focus-within > .kicker {
+        opacity: 1;
+      }
+      .perf-panel:hover > .kicker::after,
+      .perf-panel:focus-within > .kicker::after {
+        content: " ⚙ ▴";
+      }
+      .perf-panel .perf-row {
+        max-height: 0;
+        margin-top: 0;
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
+        transition:
+          max-height 0.2s ease,
+          opacity 0.2s ease,
+          margin-top 0.2s ease;
+      }
+      .perf-panel:hover .perf-row,
+      .perf-panel:focus-within .perf-row {
+        max-height: 44px;
+        opacity: 1;
+        margin-top: 9px;
+        pointer-events: auto;
+      }
+      .left-panel .perf-panel:hover .perf-row,
+      .left-panel .perf-panel:focus-within .perf-row {
+        margin-top: 7px;
+      }
+
+      .study-panel {
+        position: absolute;
+        right: 20px;
+        top: 120px;
+        width: min(300px, calc(100vw - 40px));
+        padding: 16px;
+        z-index: 4;
+        transform: scale(0.92);
+        transform-origin: top right;
+      }
+
+      .era-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 25px;
+        border-radius: 999px;
+        border: 1px solid rgba(51, 46, 40, 0.12);
+        background: rgba(51, 46, 40, 0.05);
+        padding: 0 10px;
+        color: var(--mint);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .concept-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .concept-card {
+        border: 1px solid rgba(51, 46, 40, 0.12);
+        border-radius: 7px;
+        background: rgba(51, 46, 40, 0.05);
+        padding: 13px 14px;
+      }
+
+      .concept-card strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 13px;
+      }
+
+      .concept-card span {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .entry-dock {
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        width: min(760px, calc(100vw - 40px));
+        transform: translateX(-50%);
+        padding: 8px 14px;
+        display: flex;
+        align-items: flex-end;
+        gap: 18px;
+        z-index: 4;
+      }
+      .dock-text {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      /* 도트(1~10)를 버튼 바로 위에 얹음(오른쪽 그룹: 위=도트, 아래=버튼) */
+      .dock-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 5px;
+        flex: 0 0 auto;
+      }
+
+      .question {
+        margin-bottom: 7px;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .dock-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .primary-button {
+        background: rgba(181, 85, 47, 0.18);
+        border-color: rgba(181, 85, 47, 0.5);
+      }
+
+      .status {
+        position: absolute;
+        left: 14px;
+        top: 14px;
+        bottom: auto;
+        max-width: 320px;
+        padding: 8px 12px;
+        color: var(--muted);
+        font-size: 11.5px;
+        line-height: 1.45;
+        pointer-events: none;
+        z-index: 4;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        backdrop-filter: blur(8px);
+      }
+
+      #mapLoader {
+        position: fixed;
+        inset: 0;
+        z-index: 4;
+        background: #f5f1ea;
+        pointer-events: none;
+        transition: opacity 0.7s ease;
+      }
+
+      #mapLoader.ready {
+        opacity: 0;
+      }
+
+      .keyPanel {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        place-items: center;
+        background: radial-gradient(
+          circle at 50% 38%,
+          color-mix(in srgb, var(--accent) 12%, transparent),
+          rgba(245, 241, 234, 0.94) 52%,
+          #f5f1ea
+        );
+      }
+
+      .keyCard {
+        width: min(460px, calc(100vw - 34px));
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+        padding: 24px;
+      }
+
+      .keyCard h1 {
+        margin: 7px 0 8px;
+        font-size: 24px;
+      }
+
+      .keyCard label {
+        display: block;
+        margin: 16px 0 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .keyCard input {
+        width: 100%;
+        height: 42px;
+        border: 1px solid rgba(51, 46, 40, 0.12);
+        border-radius: 8px;
+        background: rgba(51, 46, 40, 0.05);
+        color: var(--ink);
+        padding: 0 12px;
+        outline: none;
+        font-family: ui-monospace, Consolas, monospace;
+      }
+
+      .keyCard .controls {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+      }
+
+      html.embedded-mode .left-panel,
+      html.embedded-mode .status {
+        display: none;
+      }
+
+      html.embedded-mode .route-rail {
+        top: 10px;
+      }
+
+      @media (max-width: 980px) {
+        .route-rail {
+          top: 10px;
+          width: calc(100vw - 20px);
+        }
+
+        .anchor-tabs {
+          grid-template-columns: repeat(5, minmax(104px, 1fr));
+          overflow-x: auto;
+          padding-bottom: 2px;
+        }
+
+        .left-panel {
+          display: none;
+        }
+
+        .study-panel {
+          top: 154px;
+          right: 10px;
+          width: min(330px, calc(100vw - 20px));
+        }
+
+        .entry-dock {
+          left: 10px;
+          right: 10px;
+          bottom: 10px;
+          width: auto;
+          transform: none;
+          grid-template-columns: 1fr;
+        }
+
+        .status {
+          display: none;
+        }
+      }
+
+      @media (max-width: 660px) {
+        .route-head {
+          align-items: flex-start;
+        }
+
+        .route-title {
+          display: block;
+        }
+
+        .route-title span {
+          display: block;
+          margin-top: 5px;
+          white-space: normal;
+        }
+
+        .study-panel {
+          top: 170px;
+          left: 10px;
+          right: 10px;
+          width: auto;
+          max-height: 35vh;
+          overflow: auto;
+        }
+
+        .study-panel h2 {
+          font-size: 19px;
+        }
+
+        .dock-actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .dock-actions button {
+          width: 100%;
+        }
+      }
+    </style>
+    <script>
+      (function () {
+        const storageKey = "VWORLD_API_KEY";
+        const params = new URLSearchParams(location.search);
+        if (
+          params.get("mode") === "background" ||
+          params.get("mode") === "palace"
+        ) {
+          document.documentElement.classList.add("embedded-mode");
+        }
+
+        function readUrlKey() {
+          const url = new URL(location.href);
+          const hashParams = new URLSearchParams(
+            location.hash.replace(/^#/, ""),
+          );
+          const key = url.searchParams.get("key") || hashParams.get("key");
+          if (key) {
+            localStorage.setItem(storageKey, key.trim());
+            url.searchParams.delete("key");
+            history.replaceState(
+              null,
+              "",
+              url.pathname +
+                (url.search || "") +
+                (url.hash && !location.hash.includes("key=") ? url.hash : ""),
+            );
+          }
+          return key;
+        }
+
+        function readServerKeySync() {
+          try {
+            const request = new XMLHttpRequest();
+            request.open("GET", "/api/client-config", false);
+            request.send(null);
+            if (request.status < 200 || request.status >= 300) return "";
+            const config = JSON.parse(request.responseText || "{}");
+            return String(config.vworldApiKey || "").trim();
+          } catch {
+            return "";
+          }
+        }
+
+        const apiKey = (
+          readUrlKey() ||
+          localStorage.getItem(storageKey) ||
+          readServerKeySync() ||
+          ""
+        ).trim();
+        window.__VWORLD_BOOT_KEY__ = apiKey;
+        if (apiKey) {
+          const src =
+            "https://map.vworld.kr/js/webglMapInit.js.do?version=3.0&apiKey=" +
+            encodeURIComponent(apiKey) +
+            "&domain=" +
+            encodeURIComponent(location.origin);
+          document.write(
+            '<script type="text/javascript" src="' + src + '"><\/script>',
+          );
+        }
+      })();
+    </script>
+    <!-- 미니맵용 Leaflet(오픈소스 2D 지도) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+  </head>
+  <body class="focus-mode">
+    <div id="vmap"></div>
+    <div class="scene-sky"></div>
+    <div class="scene-vignette"></div>
+    <div class="focus-mask"></div>
+    <div id="mapLoader" aria-hidden="true"></div>
+
+    <!-- 대시보드 바로가기(3D 지도에서 언제든 이동) — 작은 아이콘 도크 -->
+    <style>
+      .dash-dock{position:absolute; top:14px; right:14px; z-index:6; display:flex; gap:8px;}
+      .dash-dock a{display:inline-flex; align-items:center; gap:6px; padding:8px 11px;
+        border:1px solid var(--line, rgba(51,46,40,.12)); border-radius:10px; text-decoration:none;
+        color:var(--ink,#2a241d); font-size:12.5px; font-weight:700;
+        background:var(--panel, rgba(255,255,255,.86)); backdrop-filter:blur(10px);
+        box-shadow:0 8px 22px rgba(40,34,26,.14); transition:transform .14s, border-color .14s, background .14s;}
+      .dash-dock a:hover{transform:translateY(-2px); border-color:rgba(181, 85, 47,.4); background:color-mix(in srgb, var(--accent) 12%, transparent);}
+      .dash-dock a .di{font-size:14px;}
+      @media(max-width:980px){ .dash-dock a{padding:7px 9px;} .dash-dock a .tx{font-size:11px;} }
+    </style>
+    <nav class="dash-dock" aria-label="대시보드 바로가기">
+      <a id="dashQuiz" href="#" title="이 도시 학습 내용으로 퀴즈 풀기" onclick="if(window.mpOpenQuiz)window.mpOpenQuiz();return false;"><span class="di">📝</span><span class="tx">퀴즈</span></a>
+      <a id="dashCompose" href="compose.html" title="학습 내용에 어울리는 방 고르기"><span class="di">🛍</span><span class="tx">방 디자인</span></a>
+      <a id="dashStudio" href="glb-customizer.html" title="방 GLB 모델 커스터마이즈"><span class="di">🧩</span><span class="tx">GLB 커스텀</span></a>
+    </nav>
+
+    <main class="palace-shell" aria-label="광화문 VWorld 기억궁전">
+      <section class="route-rail" aria-label="기억궁전 외관 루트">
+        <div class="route-head">
+          <div class="route-title">
+            <strong>광화문 기억궁전 외관 루트</strong>
+            <span id="routeSummary"
+              >VWorld 3D 광화문 위에 5개의 입장 건물을 배치합니다.</span
+            >
+          </div>
+          <div class="route-count" id="routeCount">1 / 5</div>
+        </div>
+      </section>
+
+      <aside class="left-panel" aria-label="투어 제어">
+        <div class="kicker">VWorld Exterior Mode</div>
+        <h1>광화문 위 기억궁전</h1>
+        <p id="leftPanelCopy">
+          내부 방은 렌더링하지 않고, 실제 3D 광화문 배경 위에 외관 건물만 가볍게
+          얹습니다.
+        </p>
+        <div class="control-grid">
+          <button id="tourBtn" type="button">자동 투어</button>
+          <button id="stopTourBtn" type="button">정지</button>
+          <button id="prevBtn" type="button">이전</button>
+          <button id="nextBtn" type="button">다음</button>
+          <button id="labelBtn" type="button">라벨 전환</button>
+          <button id="enterBtn" type="button">현재 입장</button>
+        </div>
+        <div class="perf-panel" aria-label="성능 설정">
+          <div class="kicker">Performance</div>
+          <div class="perf-row">
+            <span>경량 overlay</span>
+            <button
+              class="switch active"
+              id="performanceToggle"
+              type="button"
+              aria-label="경량 overlay"
+            ></button>
+          </div>
+          <div class="perf-row">
+            <span>VWorld 건물 레이어</span>
+            <button
+              class="switch"
+              id="landmarkOnlyToggle"
+              type="button"
+              aria-label="VWorld 건물 레이어"
+            ></button>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="study-panel" aria-label="현재 입장 건물">
+        <div class="kicker">Current Pavilion</div>
+        <span class="era-pill" id="eraPill">1단계</span>
+        <h2 id="anchorTitle">세종대로 진입부</h2>
+        <p id="anchorQuestion">
+          광화문 축의 첫 지점에 한국사 흐름의 출발점을 배치합니다.
+        </p>
+        <div class="concept-list" id="conceptList"></div>
+      </aside>
+
+      <section class="entry-dock" aria-label="건물 입장">
+        <div class="dock-text">
+          <div class="question" id="entryQuestion">현재 건물로 들어갈 준비</div>
+          <p id="spatialCue">
+            건물을 클릭하거나 입장 버튼을 누르면 개별 HTML 페이지로 이동합니다.
+            지금 단계에서는 외관까지만 렌더링합니다.
+          </p>
+        </div>
+        <div class="dock-right">
+          <div class="anchor-tabs" id="anchorTabs"></div>
+          <div class="dock-actions">
+            <button id="dockOverviewBtn" type="button" title="모든 명소가 한눈에 보이는 상공 조망으로">🔭 전체 보기</button>
+            <button id="dockPrevBtn" type="button">이전</button>
+            <button id="dockNextBtn" type="button">다음</button>
+            <button id="dockFocusBtn" type="button">중심 이동</button>
+            <button id="dockEnterBtn" class="primary-button" type="button">
+              건물 입장
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="minimap" id="minimap" aria-label="미니맵(상공 2D 지도·실시간 현위치)"></div>
+
+      <div class="status" id="status">VWorld 3D API 준비 중...</div>
+    </main>
+
+
+    <script>
+      const STORAGE_KEY = "VWORLD_API_KEY";
+
+      // ── 도시 데이터 로드: ?city=<slug> → data/cities/<slug>.json (정적 데이터, 동기 로드) ──
+      const CITY_SLUG = (new URLSearchParams(location.search).get("city") || "jongno").trim();
+      function loadCitySync(slug) {
+        try {
+          const r = new XMLHttpRequest();
+          r.open("GET", "data/cities/" + encodeURIComponent(slug) + ".json", false);
+          r.send(null);
+          if (r.status >= 200 && r.status < 300) return JSON.parse(r.responseText);
+        } catch (e) {}
+        return null;
+      }
+      const CITY =
+        loadCitySync(CITY_SLUG) || loadCitySync("jongno") || { name: "기억궁전", landmarks: [] };
+
+      // ── 활성 학습자료(업로드 PDF→palace) + 스튜디오 방 배정 로드 → 도시·자료 인지 + 구성한 방으로 입장 ──
+      function loadJsonSync(url){ try { const r=new XMLHttpRequest(); r.open("GET",url,false); r.send(null); if(r.status>=200&&r.status<300) return JSON.parse(r.responseText); } catch(e){} return null; }
+      let PAL = null;
+      try { const s = sessionStorage.getItem("mp_palace") || localStorage.getItem("mp_palace"); if (s) PAL = JSON.parse(s); } catch(e){}
+      if (!PAL) PAL = loadJsonSync("data/korean_history.palace.json") || loadJsonSync("public/data/korean_history.palace.json");
+      const ROOMDES = loadJsonSync("data/room-designs.json") || loadJsonSync("public/data/room-designs.json") || { designs: [], blobBase: "" };
+      const DESIGNS = ROOMDES.designs || [], DESIGN_BLOB = ROOMDES.blobBase || "";
+      const resolveGlb = g => (g && g.indexOf("BLOB:") === 0) ? (DESIGN_BLOB + g.slice(5)) : g;
+      const designById = id => DESIGNS.find(d => d.id === id) || null;
+      let STUDIO = {}; try { STUDIO = JSON.parse(localStorage.getItem("studio_designs") || "{}"); } catch(e){}
+      const PAL_ROOMS = (PAL && PAL.rooms) || [];
+      // 업로드 자료 제목의 슬러그/ID(KOREAN_HISTORY 등)를 보기 좋게 — 밑줄→공백, 단어 첫 글자만 대문자(약어 유지)
+      const humanTitle = (t) => String(t || "").replace(/[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+/g, m =>
+        m.split("_").map(w => /^[A-Z0-9]{1,3}$/.test(w) ? w : (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w)).join(" "));
+      const paraBreak = (t) => String(t || "").replace(/\s+/g, " ").trim().replace(/([.!?…。])\s+/g, "$1\n");
+      const PAL_TITLE = humanTitle((PAL && PAL.palace && PAL.palace.title) || "");
+      const chapterFor = (i) => PAL_ROOMS[i] || null;   // 랜드마크 i → 챕터(인덱스 매핑)
+      function designForLm(i, name){                     // 배정 디자인: 스튜디오 설정 > 랜드마크 room의 glb 추론 > 기본
+        const a = STUDIO[CITY_SLUG] || {};
+        if (a[name] && designById(a[name])) return designById(a[name]);
+        const m = (CITY.landmarks||[])[i];
+        if (m && m.room){ try { const u = new URLSearchParams(m.room.split("?")[1]||""); const file=(u.get("glb")||"").split("/").pop();
+          const d = DESIGNS.find(d => resolveGlb(d.glb).split("/").pop()===file || (d.glb||"").split("/").pop()===file); if (d) return d; } catch(e){} }
+        return DESIGNS[0] || null;
+      }
+
+      // 마커 데이터(엔진이 쓰는 형태로 정규화). 좌표 없는 항목은 마커에서 제외.
+      const LANDMARKS = (CITY.landmarks || [])
+        .filter((m) => isFinite(m.lon) && isFinite(m.lat))
+        .map((m) => ({
+          name: m.name, lon: m.lon, lat: m.lat, h: m.h, desc: m.desc, cam: m.cam,
+        }));
+
+      // 하단 번호 도트 색(원래 디자인 — 다양한 톤)
+      const TAB_COLORS = ["#95c8bd","#9db8d2","#a8d8c9","#cf9286","#9ac78f","#86bcb4","#7fb0c6","#b6c98f","#caa18f","#9fc7b0"];
+
+      // 마커(0-based) → 연결된 방(memory-walk). 데이터에 room 이 있는 마커만 입장 가능(없으면 null).
+      const roomFor = (i, name) => {
+        const m = (CITY.landmarks || [])[i]; if (!m) return null;
+        // 구성한 방(디자인) + 활성 자료 챕터로 입장 URL 생성. memory-walk은 자료를 localStorage에서 우선 로드.
+        const d = designForLm(i, name), ch = chapterFor(i);
+        if (d && d.glb){
+          const p = new URLSearchParams();
+          p.set("glb", resolveGlb(d.glb)); if (d.hotspots) p.set("hotspots", d.hotspots);
+          if (ch && ch.id) p.set("room", ch.id);
+          p.set("city", CITY_SLUG);
+          if (m.lmId) p.set("lm", m.lmId); else { p.set("lmName", m.name); if (m.desc) p.set("lmDesc", m.desc); }
+          return "memory-walk.html?" + p.toString();
+        }
+        // 폴백: 데이터의 정적 room
+        if (!m.room) return null;
+        const u = m.room, lm = m.lmId || "";
+        return (!lm || u.includes("lm=")) ? u : u + (u.includes("?") ? "&" : "?") + "lm=" + lm;
+      };
+
+      // ── 지도 화면 RAG 챗봇: assistant.js 의 자유 질문을 graphrag /query 로 라우팅 ──
+      //   memory-walk 의 window.mpAssistantAsk 와 동일 구조. 방(route) 컨텍스트가 없으므로
+      //   관련 개념 칩은 그 개념이 속한 챕터의 랜드마크 '입장' 칩으로 만든다(매칭 실패 시 칩 없음).
+      const MAP_PALACE_ID = (PAL && PAL.palace && PAL.palace.id) || "korean_history";
+      // 쇼케이스(데모 스냅샷) 질의는 항상 고정 백엔드로 보낸다.
+      //   (잡 서버 base 로 보내면 /query+snapshot 이 없어 404 가 났음 — 퀴즈 위젯과 동일한 이슈.)
+      const MNEMO_BASE = "https://3d-mindpalace-ai-backend-h3gze8h7hfhqg3h8.canadacentral-01.azurewebsites.net";
+      window.mpAssistantAsk = async (text, ctx) => {
+        const q = (text || "").trim();
+        if (!q) return null;
+        let job = null;
+        try { job = JSON.parse(localStorage.getItem("mp_rag_job") || "null"); } catch (_) {}
+        // 데모(한국사 등 쇼케이스 콘텐츠)면 진행 중 업로드 잡을 무시하고 항상 쇼케이스로 — PDF 처리 중 데모로 둘러볼 때 잡 query 가 404나던 문제(방안 memory-walk 와 동일).
+        const _demo = /korean_history|sample|demo/i.test(MAP_PALACE_ID || "");
+        // 쇼케이스(데모 스냅샷) 질의 — 잡이 없거나, 잡 질의가 실패하면 이걸로 폴백.
+        const showcase = { url: MNEMO_BASE + "/query", body: { question: q, snapshot: MAP_PALACE_ID, method: "local" } };
+        // 업로드 PDF(라이브 잡)가 유효하면 그 잡으로 먼저 질의(local 이라야 sources.entities 동반→개념 칩). 데모면 건너뜀.
+        const primary = (!_demo && job && job.base && job.jobId && job.done !== false)
+          ? { url: job.base + "/jobs/" + encodeURIComponent(job.jobId) + "/query", body: { question: q, method: "local" } }
+          : showcase;
+        async function askOnce(spec) {
+          const ctrl = new AbortController();
+          const to = setTimeout(() => ctrl.abort(), 25000);
+          try {
+            return await fetch(spec.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(spec.body), signal: ctrl.signal });
+          } catch (_) { return null; } finally { clearTimeout(to); }
+        }
+        // 이미 분석이 끝났던 잡(done===true)이 만료·삭제(404 등)된 경우에만 데모 스냅샷으로 폴백.
+        //   (아직 분석 중인 잡은 폴백하지 않고 "분석 끝났는지 확인" 안내를 유지 → 엉뚱한 데모 답변 방지.)
+        const jobWasDone = !!(job && job.done === true);
+        let r = await askOnce(primary);
+        if ((!r || !r.ok) && primary !== showcase && jobWasDone) r = await askOnce(showcase);
+        if (!r) return { text: "요청이 지연됐어요. 잠시 후 다시 물어봐 주세요." };
+        if (!r.ok)
+          return { text: "학습 답변을 가져오지 못했어요 (" + r.status + "). 분석이 끝났는지 확인해 주세요." };
+        try {
+          const j = await r.json();
+          const ans = (j.answer || "").replace(/\s*\[Data:[^\]]*\]/g, "").trim(); // GraphRAG 인용 토큰 정리
+          // 관련 개념 → 그 개념이 배정된 챕터의 랜드마크 '입장' 칩(act:"go" = 그 방으로 이동)
+          const chips = [], seen = new Set();
+          for (const e of (j.sources && j.sources.entities) || []) {
+            const t = e && e.title;
+            if (!t || seen.has(t)) continue;
+            seen.add(t);
+            const idx = PAL_ROOMS.findIndex((rm) =>
+              rm && (rm.title === t || (rm.entities || []).some((x) => (x && (x.title || x)) === t)));
+            if (idx >= 0) {
+              const nm = ((CITY.landmarks || [])[idx] || {}).name || t;
+              const u = roomFor(idx, nm);
+              if (u) { chips.push({ label: "📍 " + nm + " 입장", act: "go", v: u }); if (chips.length >= 4) break; }
+            }
+          }
+          return { text: ans || "관련 내용을 찾지 못했어요.", chips };
+        } catch (_) {
+          return { text: "요청이 지연됐어요. 잠시 후 다시 물어봐 주세요." };
+        }
+      };
+
+      // 시작/중심 좌표가 데이터에 없으면 랜드마크 평균 위치로 자동 계산.
+      const CITY_CENTROID = (() => {
+        const ls = LANDMARKS.filter((m) => isFinite(m.lon) && isFinite(m.lat));
+        if (!ls.length) return { lon: 127.0, lat: 36.5 };
+        return {
+          lon: ls.reduce((a, m) => a + m.lon, 0) / ls.length,
+          lat: ls.reduce((a, m) => a + m.lat, 0) / ls.length,
+        };
+      })();
+
+      // 명소 분포 경계(바운딩 박스): 중심 + 가장 먼 명소까지 거리(m).
+      // 클리핑 반경과 초기 카메라 프레이밍에 함께 사용 → "10개가 다 보이는" 시작 뷰.
+      const CITY_BOUNDS = (() => {
+        const ls = LANDMARKS.filter((m) => isFinite(m.lon) && isFinite(m.lat));
+        if (!ls.length) return { lon: CITY_CENTROID.lon, lat: CITY_CENTROID.lat, radiusM: 4000 };
+        const lons = ls.map((m) => m.lon), lats = ls.map((m) => m.lat);
+        const lon = (Math.min(...lons) + Math.max(...lons)) / 2;
+        const lat = (Math.min(...lats) + Math.max(...lats)) / 2;
+        const cos = Math.cos((lat * Math.PI) / 180);
+        let r = 0;
+        for (const m of ls) {
+          const dy = (m.lat - lat) * 111320;
+          const dx = (m.lon - lon) * 111320 * cos;
+          r = Math.max(r, Math.hypot(dx, dy));
+        }
+        return { lon, lat, radiusM: Math.max(r, 600) }; // 최소 600m(너무 좁아지지 않게)
+      })();
+
+      // 초기 카메라 프레이밍 파라미터(필요시 도시 데이터에서 각도만 조정).
+      const START_HEADING = (CITY.start && isFinite(CITY.start.heading)) ? CITY.start.heading : 0;   // 도
+      const START_PITCH = (CITY.start && isFinite(CITY.start.pitch)) ? CITY.start.pitch : -43;        // 도(아래로) — 오블리크 조망(3D 건물+분포 한눈에)
+      const START_RANGE_FACTOR = 3.6; // 바운딩 반경 대비 카메라 거리 배수(명소 10개가 여유 있게 다 들어오는 값)
+      // 초기 카메라-중심 거리 추정값(휠 줌아웃 한계도 이 값에 맞춰 → 초기 고도에서 휠 만져도 안 튐).
+      const INITIAL_RANGE_EST = Math.max(CITY_BOUNDS.radiusM * START_RANGE_FACTOR, 1800);
+
+      // 마커 높이 = 해당 건물 높이(m.h) + 띄움. 핀이 건물 위에 확실히 뜨도록.
+      const MARKER_LIFT_M = (CITY.markerLiftM && CITY.markerLiftM > 0) ? CITY.markerLiftM : 35;
+      const markerHeight = (m) => (m.h || 0) + (isFinite(m.lift) ? m.lift : MARKER_LIFT_M);
+
+      // 도시별 화면 문구(타이틀·헤더)를 데이터에서 주입.
+      function applyCityChrome() {
+        const name = CITY.name || "기억궁전";
+        const headline = CITY.headline || name + " 기억궁전";
+        document.title = "VWorld 3D " + name + " 기억궁전";
+        const setText = (sel, txt) => { const el = document.querySelector(sel); if (el) el.textContent = txt; };
+        setText(".route-title strong", name + " 기억궁전 명소 루트");
+        setText(".left-panel h1", headline);
+        if (CITY.intro) setText("#leftPanelCopy", CITY.intro);
+        const rs = document.getElementById("routeSummary");
+        if (rs) rs.textContent = "VWorld 3D " + name + " 위에 " + LANDMARKS.length + "개의 명소를 배치합니다.";
+        const shell = document.querySelector(".palace-shell");
+        if (shell) shell.setAttribute("aria-label", name + " VWorld 기억궁전");
+      }
+      // 첫 화면 — 교보빌딩 앞(북쪽)에서 세종대로 따라 북향, 광화문/경복궁 몰입.
+      // (카메라 지상 위치 그대로. flyTo는 목표점 해석이 달라 시작은 직접 setView 사용)
+      // 시작 카메라 = 종로구 일대 상공 조망(경복궁·광화문·창덕궁·종묘·보신각·청계광장 등 한눈에).
+      //  (위치/각도/높이만 바꾸면 시작 뷰 조절 가능. height는 maximumZoomDistance 이내)
+      // 시작: 7번 남산타워(lat 37.5512)보다 남쪽에서 북향 → 10개 마커가 모두 북쪽 시야에 들어옴.
+      // 사전 배치(VWorld 초기 위치). 정밀 프레이밍은 setInitialView가 viewBoundingSphere로 처리.
+      const GWANGHWAMUN = {
+        lon: CITY_BOUNDS.lon,
+        lat: CITY_BOUNDS.lat,
+        height: Math.max(CITY_BOUNDS.radiusM * 2.2, 2500),
+        heading: START_HEADING,
+        pitch: START_PITCH,
+      };
+      // 시작 카메라 = 명소 10개가 모두 화면에 들어오도록 자동 프레이밍.
+      //   바운딩 스피어를 만들고 viewBoundingSphere로 거리/각도를 맞춘 뒤,
+      //   참조 프레임 락을 풀어(lookAtTransform IDENTITY) 이후 WASD·드래그 조작이 정상 동작하게 한다.
+      function setInitialView() {
+        try {
+          const v = getVWorldViewer();
+          const C = window.Cesium;
+          if (!v || !C) return;
+          const positions = LANDMARKS
+            .filter((m) => isFinite(m.lon) && isFinite(m.lat))
+            .map((m) => C.Cartesian3.fromDegrees(m.lon, m.lat, m.h || 0));
+          if (positions.length >= 1 && C.BoundingSphere) {
+            const sphere = C.BoundingSphere.fromPoints(positions);
+            const range = Math.max(sphere.radius * START_RANGE_FACTOR, 1800); // 너무 가깝지 않게 하한
+            v.camera.viewBoundingSphere(
+              sphere,
+              new C.HeadingPitchRange(
+                C.Math.toRadians(START_HEADING),
+                C.Math.toRadians(START_PITCH),
+                range,
+              ),
+            );
+            // viewBoundingSphere가 건 카메라 참조 프레임 해제(위치/방향은 유지) → 자유 조작 복구
+            v.camera.lookAtTransform(C.Matrix4.IDENTITY);
+          } else {
+            v.camera.setView({
+              destination: C.Cartesian3.fromDegrees(GWANGHWAMUN.lon, GWANGHWAMUN.lat, GWANGHWAMUN.height),
+              orientation: { heading: C.Math.toRadians(START_HEADING), pitch: C.Math.toRadians(START_PITCH), roll: 0 },
+            });
+          }
+          if (typeof requestRender === "function") requestRender();
+          if (typeof syncBuildingPositions === "function") syncBuildingPositions();
+        } catch (e) {}
+      }
+
+      // (지도 전체 확장: 카메라 위치 경계 제한 clampCameraToBounds 제거됨)
+
+      let map = null;
+      let activeIndex = 0;
+      let focusMode = true;
+      let performanceMode = true;
+      let labelsHidden = false;
+      let tourTimer = null;
+      let geoSyncRunning = false;
+      let postRenderHooked = false;
+      let syncRafId = null;
+      let syncLastActivity = 0;
+      let navLocked = false;
+      const SYNC_IDLE_MS = 400;
+
+      const qs = (id) => document.getElementById(id);
+
+      function setStatus(text) {
+        qs("status").textContent = text;
+      }
+
+      function hideMapLoader() {
+        const el = qs("mapLoader");
+        if (!el) return;
+        el.classList.add("ready");
+        window.setTimeout(() => {
+          el.style.display = "none";
+        }, 750);
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "").replace(
+          /[&<>"']/g,
+          (char) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#039;",
+            })[char],
+        );
+      }
+
+      function readUrlKey() {
+        const url = new URL(location.href);
+        const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+        const key = url.searchParams.get("key") || hashParams.get("key");
+        if (key) {
+          localStorage.setItem(STORAGE_KEY, key.trim());
+          url.searchParams.delete("key");
+          history.replaceState(
+            null,
+            "",
+            url.pathname +
+              (url.search || "") +
+              (url.hash && !location.hash.includes("key=") ? url.hash : ""),
+          );
+        }
+        return key;
+      }
+
+      async function getConfiguredKey() {
+        const saved = (
+          window.__VWORLD_BOOT_KEY__ ||
+          readUrlKey() ||
+          localStorage.getItem(STORAGE_KEY) ||
+          ""
+        ).trim();
+        if (saved) return saved;
+        try {
+          const response = await fetch("/api/client-config", {
+            cache: "no-store",
+          });
+          if (!response.ok) return "";
+          const config = await response.json();
+          return String(config.vworldApiKey || "").trim();
+        } catch {
+          return "";
+        }
+      }
+
+      // 키 입력 모달은 제거됨 — 키는 Azure 환경변수(/api/client-config)에서 주입.
+      // 키/로드 실패 시에는 입력창 대신 상태 메시지만 남긴다.
+      function reportKeyError(message) {
+        const msg = message || "VWorld 인증키를 불러오지 못했습니다. 서버 환경변수(VWORLD_API_KEY)를 확인하세요.";
+        console.error(msg);
+        setStatus(msg);
+        hideMapLoader();
+      }
+
+      async function boot() {
+        renderUi();
+        const apiKey = await getConfiguredKey();
+        if (!apiKey) {
+          reportKeyError();
+          return;
+        }
+
+        setStatus("VWorld 3D API 확인 중...");
+        try {
+          if (!window.vw) {
+            throw new Error(
+              "VWorld API 객체를 찾지 못했습니다. 키 권한이나 등록 도메인을 확인하세요.",
+            );
+          }
+          startMap();
+        } catch (err) {
+          reportKeyError(err.message || "VWorld 3D API 로드에 실패했습니다.");
+        }
+      }
+
+      function startMap() {
+        setStatus((CITY.name || "") + " 3D 지도를 생성하는 중...");
+        let initCam = GWANGHWAMUN;   // 기본 = 전체 오버뷰
+        // ?focus=<랜드마크> 입장이면 VWorld '초기 위치'를 그 랜드마크로 잡는다. 안 그러면 VWorld 엔진이
+        //   로드 후 자기 초기 위치(GWANGHWAMUN=전체조망)로 늦게 애니메이션하며 우리 flyToAnchor(랜드마크)를
+        //   덮어써 '경복궁 줌인 → 전체조망 줌아웃'처럼 튕긴다. 초기 위치 자체를 랜드마크로 두면 둘이 일치.
+        try {
+          const _fx = (new URLSearchParams(location.search).get("focus") || "").trim();
+          if (_fx && Array.isArray(LANDMARKS) && LANDMARKS.length) {
+            let _i = LANDMARKS.findIndex((m) => m.name === _fx);
+            if (_i < 0) _i = LANDMARKS.findIndex((m) => m.name && (m.name.includes(_fx) || _fx.includes(m.name)));
+            if (_i >= 0) {
+              const _m = LANDMARKS[_i], _o = _m.cam || {};
+              const _num = (v, d) => (Number.isFinite(Number(v)) ? Number(v) : d);
+              initCam = {
+                lon: _m.lon + _num(_o.lonOff, 0),
+                lat: _m.lat + _num(_o.latOff, -0.0045),
+                height: _num(_o.height, 500),
+                heading: _num(_o.heading, 0),
+                pitch: _num(_o.pitch, -35),
+              };
+            }
+          }
+        } catch (_) {}
+        const initPosition = new vw.CameraPosition(
+          new vw.CoordZ(initCam.lon, initCam.lat, initCam.height),
+          new vw.Direction(initCam.heading, initCam.pitch, 0),
+        );
+        const options = {
+          mapId: "vmap",
+          initPosition,
+          logo: false,
+          navigation: false,
+        };
+        map = new vw.Map();
+        map.setOption(options);
+        map.setMapId("vmap");
+        map.setInitPosition(initPosition);
+        map.setLogoVisible(false);
+        map.setNavigationZoomVisible(false);
+        map.start();
+        window.vworldMap = map;
+        startGeoSyncLoop();
+        setStatus(
+          "VWorld 3D 지도 로드 완료. 실제 위경도 기반 외관 건물 overlay를 준비합니다.",
+        );
+        window.setTimeout(() => {
+          applyPerformanceMode(true, false);
+          applyVWorldRenderSettings();
+          activeIndex = 0; renderUi(); setInitialView();   // 교보 앞에서 세종대로 북향 몰입(직접 setView)
+          // 포커스 입장(?focus=)이면 초기 전체조망 '강제유지'(initLock)를 끄고 잠금을 해제한다.
+          //   안 그러면 VWorld 로드 타이밍에 따라 랜드마크로 날아간 직후 initLock 루프가 setInitialView(전체조망)로
+          //   되돌려 '경복궁 줌인 → 전체조망 줌아웃'처럼 튕긴다. 일반 진입은 기존대로 초기 조망 유지.
+          { const _fx = (new URLSearchParams(location.search).get("focus") || "").trim();
+            initLock = _fx ? 0 : 200; if (_fx) userMoved = true; }
+          const viewer = getVWorldViewer();
+          if (viewer && viewer.scene && viewer.scene.postRender) {
+            viewer.scene.postRender.addEventListener(syncBuildingPositions);
+            postRenderHooked = true;
+          }
+          addLandmarkMarkers(); // 종로구 일대 명소 10곳 마커 표시
+          // 구성(compose) '입장'으로 넘어오면 ?focus=<랜드마크>로 그 명소에 날아가 선택.
+          //   ?enter=1 이면(=구성 '바로 입장') 전체 조망 → 그 명소 → 다이브 → 방까지 자동 시네마틱으로 이어간다.
+          (function(){ const Q = new URLSearchParams(location.search);
+            const f = (Q.get("focus") || "").trim(); if (!f) return;
+            // 명시적 '3D로 보기' 링크(?focus=)만 그 명소로 비행. 방으로의 자동 다이브(?enter=1)는 폐지 —
+            //   3D 지도 진입은 항상 전체 조망/특정 명소까지만, 방 입장은 사용자가 건물을 직접 클릭해야 함.
+            let idx = LANDMARKS.findIndex(m => m.name === f);
+            if (idx < 0) idx = LANDMARKS.findIndex(m => m.name && (m.name.includes(f) || f.includes(m.name)));
+            if (idx < 0) return;
+            window.setTimeout(() => { initLock = 0; stopTour(false); flyToAnchor(idx); }, 900);
+          })();
+          window.setTimeout(hideMapLoader, 500);
+        }, 1800);
+      }
+
+      function applyVWorldRenderSettings() {
+        const viewer = window.ws3d && window.ws3d.viewer;
+        const engine = window.Cesium;
+        if (!viewer || !engine) {
+          setStatus("VWorld 렌더 설정: Cesium viewer를 찾지 못했습니다.");
+          return;
+        }
+
+        // 빌딩 3D 타일셋: 클리핑 없이 LOD/캐시만 조정.
+        //  maximumScreenSpaceError 가 작을수록 더 높은 고도/먼 거리에서도 건물이 렌더됨(대신 부하↑).
+        //  (건물을 더 높은 곳에서도 보이게 64→24로 낮춤. 더 멀리서 보려면 더 낮추고, 더 빠르게는 키움)
+        const LOW_QUALITY_SSE = 16;
+        const tuneTileset = (p) => {
+          try {
+            p.show = true;
+            p.maximumScreenSpaceError = LOW_QUALITY_SSE;
+            p.dynamicScreenSpaceError = false; // 거리별 화질 완화 끔 → 먼/높은 곳 건물도 렌더
+            p.clippingPlanes = undefined; // [클리핑 제거] 도시 밖 건물 컷 비활성화 — 전 영역 건물 렌더
+            // VWorld 도시 타일은 지역별 bounding volume/LOD 구성이 균일하지 않다.
+            // 공격적인 LOD 스킵·자식 bounds culling은 일부 도시에서 건물이 통째로 비는 원인이 된다.
+            p.cullRequestsWhileMoving = false;
+            p.preferLeaves = false;
+            p.skipLevelOfDetail = false;
+            p.loadSiblings = true;
+            p.cullWithChildrenBounds = false;
+            // 캐시 크게 → 한번 본 건물은 재접근 시 즉시 표시(버전별 속성 대응)
+            if ("cacheBytes" in p) p.cacheBytes = 768 * 1024 * 1024;
+            else p.maximumMemoryUsage = 768; // 구버전 Cesium(MB 단위)
+          } catch {}
+        };
+
+        // 타일셋(빌딩 등) 화질 낮춤 + 서울 클리핑 적용
+        let tilesetCount = 0;
+        for (let i = 0; i < viewer.scene.primitives.length; i++) {
+          const p = viewer.scene.primitives.get(i);
+          if (p instanceof engine.Cesium3DTileset) {
+            tuneTileset(p);
+            tilesetCount++;
+          }
+        }
+
+        // 타일셋(빌딩)은 이후 비동기로 추가될 수 있으므로, 추가분도 저화질 적용
+        try {
+          viewer.scene.primitives.primitiveAdded.addEventListener((p) => {
+            if (p instanceof engine.Cesium3DTileset) tuneTileset(p);
+            // 건물 끄기 모드면 새로 추가되는 건물 Primitive도 숨김
+            if (landmarkOnly && isBuildingPrimitive(p)) { try { p.show = false; } catch {} }
+          });
+        } catch {}
+
+        // 글로브(지형·위성): 클리핑 없이 화질만 낮춰 가속
+        viewer.scene.globe.backFaceCulling = true;
+        viewer.scene.globe.showSkirts = false;
+        viewer.scene.globe.maximumScreenSpaceError = 6; // 지형 화질(낮을수록 선명, 기본 2)
+        try { viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 1.5); } catch {} // 렌더 해상도 상향(상한 1.5x) — 선명하되 약한 GPU의 부담·WebGL 컨텍스트 손실 방지
+        try { viewer.scene.fog.enabled = true; viewer.scene.fog.density = 0.00012; } catch {} // 원경 안개 약하게(과한 흐릿함 제거)
+        try { viewer.scene.postProcessStages.fxaa.enabled = true; } catch {} // FXAA 켜서 에지 매끈하게
+
+        hideVWorldPoiLabels(viewer);   // 잡다한 상호·POI 라벨(하이브리드 레이어) 숨김 — 위성+우리 마커만 깔끔하게
+        applyCameraConstraints();
+      }
+
+      // VWorld POI 텍스트 제거 — ① 하이브리드(Layer=hyb) 이미지 레이어(은행·약국·상호) ② POI 라벨 3D타일셋
+      //   (POI_BASE/POI_BOUND = 경복궁흥례문·국립고궁박물관 등 건물·장소명). 둘 다 비동기 로드 → 훅+재시도로 확실히 끈다.
+      function hideVWorldPoiLabels(viewer) {
+        const engine = window.Cesium;
+        const hideHyb = (L) => { try { const p = L.imageryProvider || {}; const u = (p.url || p._url || "").toString();
+          if (/Layer=hyb|hybrid/i.test(u)) L.show = false; } catch {} };
+        const hidePoi = (pr) => { try { if (engine && pr instanceof engine.Cesium3DTileset) {
+          const u = (pr._url || (pr.resource && pr.resource.url) || "").toString();
+          if (/\/poi\/POI_/i.test(u) && pr.show) pr.show = false; } } catch {} };
+        try {
+          const il = viewer.imageryLayers, P = viewer.scene.primitives;
+          const sweep = () => { for (let i = 0; i < il.length; i++) hideHyb(il.get(i));
+            for (let i = 0; i < (P.length || 0); i++) { let pr; try { pr = P.get(i); } catch (e) { continue; } hidePoi(pr); } };
+          sweep();
+          if (il.layerAdded && !il.__poiHook) { il.__poiHook = 1; il.layerAdded.addEventListener(hideHyb); }
+          // POI 라벨 타일셋(POI_BASE/BOUND)은 줌인할 때 늦게 로드됨 → postRender에서 ~1초마다 sweep(켜져 있으면 끈다).
+          //   한 번 끄면 유지되므로 대부분 no-op(비용 미미). 어느 줌·도시에서나 라벨이 다시 안 뜨게 보장.
+          if (viewer.scene.postRender && !viewer.scene.__poiSweepHook) {
+            viewer.scene.__poiSweepHook = 1; let last = 0;
+            viewer.scene.postRender.addEventListener(() => { const now = performance.now(); if (now - last < 1000) return; last = now;
+              const PP = viewer.scene.primitives; for (let i = 0; i < (PP.length || 0); i++) { let pr; try { pr = PP.get(i); } catch (e) { continue; } hidePoi(pr); } });
+          }
+        } catch {}
+      }
+
+      function applyCameraConstraints() {
+        const viewer = window.ws3d && window.ws3d.viewer;
+        const engine = window.Cesium;
+        if (!viewer || !engine) return;
+
+        // void 공간을 UI 배경색(#f5f1ea)과 맞춰 경계를 자연스럽게 처리
+        viewer.scene.backgroundColor = new engine.Color(
+          245 / 255,
+          241 / 255,
+          234 / 255,
+          1.0,
+        );
+
+        // ── 카메라 이동·줌 제한 ────────────────────────────────────────────────
+        const ctrl = viewer.scene.screenSpaceCameraController;
+        // 휠 줌아웃 한계 = 초기 프레이밍 거리보다 넉넉히 → 초기 고도에서 휠을 만져도 확 내려가지 않음.
+        ctrl.maximumZoomDistance = Math.max(INITIAL_RANGE_EST * 1.3, 4100);
+        ctrl.minimumZoomDistance = 60;
+
+        const EV = engine.CameraEventType;
+        ctrl.lookEventTypes = [];               // 기본 free-look 끔(직접 구현으로 대체)
+        ctrl.rotateEventTypes = [];             // 왼쪽 드래그 orbit 제거
+        ctrl.translateEventTypes = [];          // 이동(상하좌우)은 WASD가 담당
+        ctrl.tiltEventTypes = [];               // 중클릭/틸트 제거
+        ctrl.zoomEventTypes = [EV.WHEEL, EV.PINCH]; // 오른쪽 드래그 줌 제거(휠/핀치만)
+
+        // 시야각(pitch) 한계: 위로는 수평 위 +30°까지(올려보기 가능), 아래로는 거의 수직(-88°)까지.
+        //  (위로 더 보고 싶으면 30을 키우면 됨. 단 너무 키우면 클리핑 너머 검은 공허가 보일 수 있음)
+        const MAX_PITCH = (30 * Math.PI) / 180;
+        const MIN_PITCH = -((88 * Math.PI) / 180);
+
+        // 왼쪽 드래그 = 시야 회전. 좌우=heading, 상하=pitch(위 한계까지). 카메라 위치는 안 바뀜.
+        //  (좌우가 반대로 느껴지면 dx 부호, 상하가 반대면 dy 부호를 뒤집으면 됨)
+        const SSE = engine.ScreenSpaceEventType;
+        const lookHandler = new engine.ScreenSpaceEventHandler(viewer.scene.canvas);
+        let lookDragging = false, lookLastX = 0, lookLastY = 0;
+        lookHandler.setInputAction((e) => {
+          lookDragging = true;
+          lookLastX = e.position.x;
+          lookLastY = e.position.y;
+        }, SSE.RIGHT_DOWN);   // 시점 회전 = 우클릭 드래그(좌클릭은 마커 선택)
+        lookHandler.setInputAction((e) => {
+          if (!lookDragging) return;
+          const dx = e.endPosition.x - lookLastX;
+          const dy = e.endPosition.y - lookLastY;
+          lookLastX = e.endPosition.x;
+          lookLastY = e.endPosition.y;
+          if (!dx && !dy) return;
+          const cam = viewer.camera;
+          const heading = cam.heading + dx * 0.0035;           // 좌우 회전
+          let pitch = cam.pitch - dy * 0.0035;                 // 상하 회전(드래그 위=올려봄)
+          pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, pitch));
+          cam.setView({ orientation: { heading, pitch, roll: 0 } });
+          requestRender();
+        }, SSE.MOUSE_MOVE);
+        lookHandler.setInputAction(() => { lookDragging = false; }, SSE.RIGHT_UP);
+        viewer.scene.canvas.addEventListener("contextmenu", (e) => e.preventDefault()); // 우드래그 회전 시 컨텍스트 메뉴 차단
+
+        // 위쪽 시야각 한계만 유지(조작 종료 시 안전망) — 위치 경계 제한은 제거(지도 전체 탐색)
+        viewer.camera.moveEnd.addEventListener(() => {
+          if (viewer.camera.pitch > MAX_PITCH) {
+            viewer.scene.camera.setView({
+              orientation: {
+                heading: viewer.camera.heading,
+                pitch: MAX_PITCH,
+                roll: viewer.camera.roll,
+              },
+            });
+          }
+        });
+
+        viewer.camera.moveStart.addEventListener(requestRender);
+        viewer.camera.changed.addEventListener(requestRender);
+      }
+
+      function flyTo(pos, onDone, durationMs) {
+        const viewer = (window.ws3d && window.ws3d.viewer) || getVWorldViewer();
+        const engine = window.Cesium;
+        if (viewer && engine && viewer.scene && viewer.scene.camera) {
+          const cam = viewer.scene.camera;
+          const startPos = cam.position.clone();
+          const startHeading = cam.heading;
+          const startPitch = cam.pitch;
+          const endPos = engine.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.height);
+          const endHeading = engine.Math.toRadians(pos.heading || 0);
+          const endPitch = engine.Math.toRadians(pos.pitch || -40);
+          let hdelta = endHeading - startHeading;
+          while (hdelta > Math.PI) hdelta -= 2 * Math.PI;
+          while (hdelta < -Math.PI) hdelta += 2 * Math.PI;
+          const DURATION = durationMs || 1200;
+          const t0 = performance.now();
+          const scratch = new engine.Cartesian3();
+          const ease = (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+          const step = () => {
+            const t = Math.min((performance.now() - t0) / DURATION, 1);
+            const e = ease(t);
+            cam.setView({
+              destination: engine.Cartesian3.lerp(startPos, endPos, e, scratch),
+              orientation: {
+                heading: startHeading + hdelta * e,
+                pitch: startPitch + (endPitch - startPitch) * e,
+                roll: 0,
+              },
+            });
+            syncBuildingPositions();
+            if (t < 1) requestAnimationFrame(step);
+            else if (typeof onDone === "function") onDone();
+          };
+          requestAnimationFrame(step);
+          return;
+        }
+        if (map && window.vw) {
+          const cam = new vw.CameraPosition(
+            new vw.CoordZ(pos.lon, pos.lat, pos.height),
+            new vw.Direction(pos.heading, pos.pitch, 0),
+          );
+          map.setInitPosition(cam);
+        }
+        if (typeof onDone === "function") setTimeout(onDone, 300);
+      }
+
+      function flyToAnchor(index) {
+        releaseLock();   // 사용자 의도 이동 → 초기 조망 강제(initLock) 해제(줌이 조망으로 튕기는 것 방지)
+        activeIndex = Math.max(0, Math.min(STOPS.length - 1, index));
+        navLocked = true;
+        clearTimeout(navLocked._t);
+        navLocked._t = setTimeout(() => { navLocked = false; }, 1500);
+        const stop = STOPS[activeIndex];
+        renderUi();
+        flyTo(stop.camera);
+        syncBuildingPositions();
+        requestRender();
+        setStatus(
+          stop.page
+            ? `${stop.num}. ${stop.title}(으)로 이동. 건물을 클릭하면 방으로 입장합니다.`
+            : `${stop.num}. ${stop.title}(으)로 이동했습니다.`,
+        );
+      }
+
+      // 시네마틱 입장: 현재 시점에서 건물 가까이 낮게 내려꽂은 뒤(다이브) 방으로 이동.
+      //   → "랜드마크를 내려다보다가 쭉 그 방으로 들어가는" 카메라 무브. 방에선 entryFrame이 정면을 잘 잡아줌.
+      function diveAndEnter(stop) {
+        if (!stop || !stop.page) { setStatus(`${stop ? stop.title : "이 명소"}: 입장 가능한 방이 없습니다.`); return; }
+        releaseLock();   // 다이브가 초기 조망 강제(initLock)에 튕기지 않게
+        const c = stop.camera || {}; let gone = false;
+        const go = () => { if (gone) return; gone = true; location.href = stop.page; };
+        const dive = { lon: c.lon, lat: c.lat,
+          height: Math.max((c.height || 600) * 0.42, 180),   // 건물 근처까지 낮게
+          heading: c.heading || 0, pitch: -42 };             // 가파른 내려보기(다이브)
+        setStatus(`${stop.title}(으)로 진입합니다…`);
+        flyTo(dive, go, 1300);
+        setTimeout(go, 1700);   // 안전망(콜백 누락 대비)
+      }
+      // 현재 정거장 입장(방이 있는 정거장만)
+      function enterCurrentStop() {
+        const stop = STOPS[activeIndex];
+        if (stop && stop.page) diveAndEnter(stop);
+        else setStatus(`${stop ? stop.title : "이 명소"}: 입장 가능한 방이 없습니다.`);
+      }
+
+      // ── "랜드마크만" 토글: 무거운 3D 건물(VWorld batch Primitive)을 통째로 끔 ──
+      // VWorld 건물은 타일셋이 아니라 geometryInstances를 가진 Primitive(난독화 클래스 Ja류)라
+      // 개별 건물 필터링은 불가능. 대신 건물 Primitive를 통째로 show=false 하여 랙을 크게 줄인다.
+      // (10개 랜드마크 빨간 핀/라벨은 entities/billboard라 그대로 남는다)
+      let landmarkOnly = false;
+      let _buildingHideHookInstalled = false;
+
+      // 건물 Primitive 판별: geometryInstances + appearance + 인스턴스 배열을 가진 배치 Primitive
+      function isBuildingPrimitive(p) {
+        return (
+          !!p &&
+          typeof p === "object" &&
+          "geometryInstances" in p &&
+          "appearance" in p &&
+          ("_numberOfInstances" in p || "_instanceIds" in p)
+        );
+      }
+
+      // 씬의 모든 건물 Primitive를 보이기/숨기기 + VWorld 공식 레이어 토글(이중 안전)
+      function setVWorldBuildingsVisible(visible) {
+        // 1) VWorld 공식 건물 레이어 on/off (지원되면 가장 깔끔)
+        try {
+          const m = window.vworldMap;
+          if (m && m.getLayerElement) {
+            ["facility_build", "facility_build_world"].forEach((n) => {
+              try {
+                const l = m.getLayerElement(n);
+                if (l) visible ? l.show && l.show() : l.hide && l.hide();
+              } catch {}
+            });
+          }
+        } catch {}
+        // 2) 씬의 건물 Primitive show 직접 토글(레이어 토글이 안 먹는 경우 대비)
+        let count = 0;
+        try {
+          const viewer = getVWorldViewer();
+          if (viewer && viewer.scene) {
+            const P = viewer.scene.primitives;
+            for (let i = 0; i < (P.length || 0); i++) {
+              let p; try { p = P.get(i); } catch { continue; }
+              if (isBuildingPrimitive(p)) { p.show = visible; count++; }
+            }
+            if (viewer.scene.requestRender) viewer.scene.requestRender();
+          }
+        } catch {}
+        return count;
+      }
+
+      // 카메라 이동 시 VWorld가 건물 Primitive를 새로 추가해도 계속 숨김 유지
+      function installBuildingHideHook() {
+        if (_buildingHideHookInstalled) return;
+        const viewer = getVWorldViewer();
+        if (!viewer || !viewer.scene) return;
+        try {
+          viewer.scene.primitives.primitiveAdded.addEventListener((p) => {
+            if (landmarkOnly && isBuildingPrimitive(p)) { try { p.show = false; } catch {} }
+          });
+          // 백업: postRender마다 새 건물 Primitive가 보이면 숨김(landmarkOnly일 때만)
+          viewer.scene.postRender.addEventListener(() => {
+            if (!landmarkOnly) return;
+            const P = viewer.scene.primitives;
+            for (let i = 0; i < (P.length || 0); i++) {
+              let p; try { p = P.get(i); } catch { continue; }
+              if (isBuildingPrimitive(p) && p.show) p.show = false;
+            }
+          });
+          _buildingHideHookInstalled = true;
+        } catch {}
+      }
+
+      function applyLandmarkOnly(enabled, announce = true) {
+        landmarkOnly = enabled;
+        const btn = qs("landmarkOnlyToggle");
+        if (btn) btn.classList.toggle("active", enabled);
+        installBuildingHideHook();
+        const count = setVWorldBuildingsVisible(!enabled);
+        if (announce) {
+          setStatus(
+            enabled
+              ? `다른 3D 건물을 끄고 10개 랜드마크만 남깁니다. (건물 Primitive ${count}개 숨김)`
+              : "전체 3D 건물을 다시 표시합니다.",
+          );
+        }
+      }
+
+      function applyPerformanceMode(enabled, announce = true) {
+        performanceMode = enabled;
+        document.body.classList.toggle("performance-mode", performanceMode);
+        qs("performanceToggle").classList.toggle("active", performanceMode);
+        if (announce) {
+          setStatus(
+            performanceMode
+              ? "경량 overlay: 현재/인접 건물만 상세 표시하고 먼 건물은 silhouette로 줄입니다."
+              : "고품질 overlay: 5개 외관 건물을 모두 자세히 표시합니다.",
+          );
+        }
+      }
+
+      function requestRender() {
+        if (postRenderHooked) return;
+        syncLastActivity = performance.now();
+        if (syncRafId !== null) return;
+        syncRafId = window.requestAnimationFrame(syncTick);
+      }
+
+      function syncTick() {
+        syncBuildingPositions();
+        if (performance.now() - syncLastActivity < SYNC_IDLE_MS) {
+          syncRafId = window.requestAnimationFrame(syncTick);
+        } else {
+          syncRafId = null;
+        }
+      }
+
+      function startGeoSyncLoop() {
+        if (geoSyncRunning) return;
+        geoSyncRunning = true;
+        syncBuildingPositions();
+        const vmap = qs("vmap");
+        ["mousedown", "mousemove", "wheel", "touchstart", "touchmove"].forEach((type) => {
+          vmap.addEventListener(type, requestRender, { passive: true });
+        });
+      }
+
+      function getVWorldViewer() {
+        if (window.ws3d && window.ws3d.viewer) return window.ws3d.viewer;
+        try { if (window.vw && window.vw.ol && window.vw.ol.viewer) return window.vw.ol.viewer; } catch {}
+        try { const m = window.vworldMap; if (m && m._viewer) return m._viewer; } catch {}
+        return null;
+      }
+
+      // (외관 건물 오버레이 제거됨) 카메라 이동/비행 시 미니맵만 갱신하는 경량 동기 함수.
+      function syncBuildingPositions() {
+        updateMinimap();
+      }
+
+      function renderUi() {
+        const stop = STOPS[activeIndex] || STOPS[0];
+        qs("routeCount").textContent = `${stop.num} / ${STOPS.length}`;
+        const ch = chapterFor(activeIndex);
+        qs("routeSummary").textContent = `${CITY.name || ""}${PAL_TITLE ? " · " + PAL_TITLE : ""}`;
+        const kick = document.querySelector(".study-panel .kicker");
+        if (kick) kick.textContent = `${CITY.name || "기억궁전"}${PAL_TITLE ? " · " + PAL_TITLE : ""}`;
+        qs("eraPill").textContent = ch ? `${stop.num}번 · ${ch.name}` : `${stop.num}번 명소`;
+        qs("anchorTitle").textContent = stop.title;
+        qs("anchorQuestion").textContent = ch ? `${ch.name}\n아래 목차의 ${activeIndex + 1}번 챕터입니다.` : paraBreak(stop.desc || "");
+        qs("entryQuestion").textContent = `${stop.num}. ${stop.title}`;
+        qs("spatialCue").textContent = stop.page
+          ? paraBreak(`${stop.desc} 건물을 클릭하면 방으로 입장합니다.`)
+          : paraBreak(stop.desc);
+
+        const tabs = qs("anchorTabs");
+        tabs.innerHTML = "";
+        STOPS.forEach((item, index) => {
+          const tab = document.createElement("button");
+          tab.type = "button";
+          const visited = index < activeIndex;
+          tab.className = `anchor-tab${index === activeIndex ? " active" : visited ? " visited" : ""}`;
+          tab.style.setProperty("--accent", item.color);
+          tab.title = `${item.num}. ${item.title}`;
+          tab.innerHTML = `<span class="anchor-num">${item.num}</span>`;
+          tab.addEventListener("click", () => {
+            stopTour(false);
+            flyToAnchor(index);
+          });
+          tabs.appendChild(tab);
+        });
+
+        const list = qs("conceptList");
+        list.innerHTML = "";
+        // 우측 패널은 '도시 + 과목 목차' 수준으로 간결하게 — 챕터 목차만(현재 명소 강조)
+        const cards = PAL_ROOMS.length
+          ? PAL_ROOMS.map((r, idx) => [`${idx + 1}. ${r.name}`, idx === activeIndex ? "● 지금 이 명소" : ""])
+          : (stop.page ? [["방 입장", "건물을 클릭하면 해당 방(memory-walk)으로 들어갑니다."]] : [["명소 안내", stop.desc || ""]]);
+        cards.forEach(([term, description]) => {
+          const card = document.createElement("article");
+          card.className = "concept-card";
+          card.innerHTML = `<strong>${escapeHtml(term)}</strong><span>${escapeHtml(description)}</span>`;
+          list.appendChild(card);
+        });
+
+        // 대시보드 링크(방 디자인/GLB 커스텀)가 현재 도시·선택 명소를 달고 가게 — 종로 강제 링크 제거
+        const _dc = qs("dashCompose"), _ds = qs("dashStudio");
+        if (_dc) _dc.href = "compose.html?city=" + encodeURIComponent(CITY_SLUG);
+        if (_ds) _ds.href = "glb-customizer.html?city=" + encodeURIComponent(CITY_SLUG) + (stop && stop.title ? "&lmName=" + encodeURIComponent(stop.title) : "");
+
+        document.body.classList.toggle("labels-hidden", labelsHidden);
+        qs("labelBtn").classList.toggle("active", labelsHidden);
+        qs("labelBtn").textContent = labelsHidden ? "라벨 보기" : "라벨 숨김";
+        updateMinimap();
+      }
+
+      // 우하단 미니맵 — 상공뷰. 한옥 위치/경로 + "내 카메라 현위치·바라보는 방향"(실시간, 북=위).
+      // ── 미니맵: Leaflet 2D 지도(VWorld Base 타일) — 카메라 현위치/방향 실시간 동기 ──
+      let miniMap = null, miniMarker = null, miniEdges = [];
+      function getMiniKey() {
+        return (
+          window.__VWORLD_BOOT_KEY__ ||
+          new URLSearchParams(location.search).get("key") ||
+          localStorage.getItem(STORAGE_KEY) ||
+          ""
+        ).trim();
+      }
+      function initMinimap() {
+        if (miniMap || !window.L || !qs("minimap")) return;
+        const key = getMiniKey();
+        miniMap = L.map("minimap", {
+          zoomControl: false, attributionControl: false, dragging: false,
+          scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false,
+          keyboard: false, touchZoom: false, zoomSnap: 0,
+        }).setView([(CITY.center && CITY.center.lat) || CITY_CENTROID.lat, (CITY.center && CITY.center.lon) || CITY_CENTROID.lon], (CITY.center && CITY.center.zoom) || 13);
+        // 무라벨 지도(CARTO light_nolabels) — POI 텍스트('경원재…' 등) 제거, 지리만. 키 불필요.
+        L.tileLayer(
+          "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+          { subdomains: "abcd", minZoom: 11, maxZoom: 19, opacity: 0.82, attribution: "" },
+        ).addTo(miniMap);
+        LANDMARKS.forEach((b, i) => {
+          const color = "#e23b3b"; // 마커와 동일 빨강
+          L.marker([b.lat, b.lon], {
+            icon: L.divIcon({
+              className: "mini-pin",
+              html:
+                `<span class="mini-pin-ring" style="--c:${color};animation-delay:${(i * 0.18).toFixed(2)}s"></span>` +
+                `<span class="mini-pin-dot" style="--c:${color}"></span>`,
+              iconSize: [12, 12], iconAnchor: [6, 6],
+            }),
+            interactive: false, keyboard: false,
+          }).addTo(miniMap);
+        });
+        // 화살표는 Leaflet 마커가 아니라 컨테이너 중앙에 고정한 오버레이(항상 가운데).
+        const arrow = document.createElement("div");
+        arrow.className = "mini-arrow-fixed";
+        arrow.id = "miniArrow";
+        qs("minimap").appendChild(arrow);
+        // 4방위 나침반(북=위 고정)
+        const compass = document.createElement("div");
+        compass.className = "mini-compass";
+        compass.innerHTML = '<b class="n">N</b><b class="s">S</b><b class="e">E</b><b class="w">W</b>';
+        qs("minimap").appendChild(compass);
+        // 화면 밖 마커 가장자리 인디케이터(번호 화살표) — 각 명소마다 하나
+        const edgeLayer = document.createElement("div"); edgeLayer.className = "mini-edges";
+        qs("minimap").appendChild(edgeLayer);
+        miniEdges = LANDMARKS.map((b, i) => { const el = document.createElement("div"); el.className = "mini-edge";
+          el.innerHTML = `<span class="me-arrow">▲</span><span class="me-num">${i + 1}</span>`;
+          el.style.display = "none"; edgeLayer.appendChild(el); return el; });
+        setTimeout(() => miniMap && miniMap.invalidateSize(), 100);
+      }
+      // 화면 밖 마커 → 미니맵 가장자리에 방향 화살표 + 번호로 표시(안에 있으면 Leaflet 핀이 보여줌)
+      function updateMiniEdges() {
+        if (!miniMap || !miniEdges.length) return;
+        const cont = qs("minimap"); if (!cont) return;
+        const W = cont.clientWidth, H = cont.clientHeight, cx = W / 2, cy = H / 2, margin = 13;
+        LANDMARKS.forEach((b, i) => {
+          const ed = miniEdges[i]; if (!ed) return;
+          const p = miniMap.latLngToContainerPoint([b.lat, b.lon]);
+          if (p.x >= margin && p.x <= W - margin && p.y >= margin && p.y <= H - margin) { ed.style.display = "none"; return; }
+          const dx = p.x - cx, dy = p.y - cy, ang = Math.atan2(dy, dx), hw = W / 2 - margin, hh = H / 2 - margin;
+          const t = Math.min(Math.abs(dx) > 1e-3 ? hw / Math.abs(dx) : Infinity, Math.abs(dy) > 1e-3 ? hh / Math.abs(dy) : Infinity);
+          ed.style.left = (cx + dx * t) + "px"; ed.style.top = (cy + dy * t) + "px";
+          const arr = ed.querySelector(".me-arrow"); if (arr) arr.style.transform = `rotate(${ang * 180 / Math.PI + 90}deg)`;
+          ed.classList.toggle("on", i === activeIndex);
+          ed.style.display = "flex";
+        });
+      }
+      // GPS형: 화살표는 항상 중앙 고정, 지도가 내 위치를 따라 움직인다(setView).
+      // ── 성능: Leaflet setView는 무거우므로 매 프레임이 아니라 ~15fps로 제한 ──
+      let _miniLastUpdate = 0;
+      function updateMinimap() {
+        if (!miniMap) initMinimap();
+        if (!miniMap) return;
+        const _now = performance.now();
+        if (_now - _miniLastUpdate < 66) return; // 초당 약 15회로 throttle
+        _miniLastUpdate = _now;
+        try {
+          const viewer = getVWorldViewer();
+          if (viewer && viewer.camera && viewer.camera.positionCartographic) {
+            const c = viewer.camera.positionCartographic;
+            const lat = (c.latitude * 180) / Math.PI;   // 라디안→도
+            const lon = (c.longitude * 180) / Math.PI;
+            miniMap.setView([lat, lon], miniMap.getZoom(), { animate: false });
+            const arrow = qs("miniArrow");
+            if (arrow)
+              arrow.style.transform = `translate(-50%, -50%) rotate(${((viewer.camera.heading || 0) * 180) / Math.PI}deg)`;
+            updateMiniEdges();   // 화면 밖 마커 가장자리 인디케이터 갱신
+          }
+        } catch (e) {}
+      }
+
+      // ── WASD 이동(지도 카메라) — 드래그=시점/회전(VWorld 기본)과 함께 ──
+      const keyMove = {};
+      let initLock = 0;        // >0이면 초기 카메라 매 프레임 강제 적용
+      let userMoved = false;   // 사용자가 입력하면 초기 락 해제
+      const releaseLock = () => { userMoved = true; initLock = 0; };
+      // 입력란/퀴즈 모달에 포커스가 있으면 지도 키 조작 차단 — 입력 띄어쓰기·타이핑이 막히고 라벨이 토글되던 문제(특히 Windows) 해결.
+      const mapKeyBlocked = (ev) => {
+        var t = ev.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return true;
+        var qm = document.getElementById("quizModal");
+        return !!(qm && qm.style.display === "block");
+      };
+      window.addEventListener("keydown", (e) => {
+        if (mapKeyBlocked(e)) return;
+        const k = e.key.toLowerCase();
+        if (["w", "a", "s", "d"].includes(k)) { keyMove[k] = true; releaseLock(); e.preventDefault(); }
+      });
+      window.addEventListener("keyup", (e) => { keyMove[e.key.toLowerCase()] = false; });
+      window.addEventListener("blur", () => { for (const k in keyMove) keyMove[k] = false; });
+      window.addEventListener("mousedown", releaseLock);
+      window.addEventListener("wheel", releaseLock, { passive: true });
+      // WASD 첫 입력부터 동작하도록 로드 직후/포인터 진입 시 창에 포커스를 잡는다
+      // (iframe 안에서 실행될 때 키보드 포커스가 없으면 keydown이 전달되지 않는 문제 방지)
+      const grabFocus = () => { try { window.focus(); } catch {} };
+      window.addEventListener("load", grabFocus);
+      window.addEventListener("pointerdown", grabFocus);
+      window.addEventListener("pointerenter", grabFocus);
+      grabFocus();
+      function wasdTick() {
+        try {
+          // 초기 락: VWorld 정착에 안 밀리게 시작 카메라를 잠깐 강제 유지
+          if (initLock > 0 && !userMoved) { setInitialView(); initLock--; }
+          // 성능: WASD 키가 눌렸을 때만 무거운 행렬 연산/객체 할당 수행(idle 시 GC·CPU 절약)
+          const anyMoveKey = keyMove.w || keyMove.a || keyMove.s || keyMove.d;
+          const viewer = anyMoveKey ? getVWorldViewer() : null;
+          const engine = window.Cesium;
+          if (anyMoveKey && viewer && viewer.camera && engine) {
+            const cam = viewer.camera;
+            const h = cam.positionCartographic ? cam.positionCartographic.height : 500;
+            const step = Math.max(2.5, h * 0.014); // 고도 비례 속도
+            let moved = false;
+            // 지면 평면 기준 수평 전/후·좌/우 벡터(나침반 heading 기준).
+            //  카메라가 아래로 기울어 있어도 고도는 그대로 유지 → "줌"이 아니라 순수 평면 이동.
+            const C3 = engine.Cartesian3;
+            const enu = engine.Transforms.eastNorthUpToFixedFrame(cam.positionWC);
+            const east = C3.fromCartesian4(engine.Matrix4.getColumn(enu, 0, new engine.Cartesian4()), new C3());
+            const north = C3.fromCartesian4(engine.Matrix4.getColumn(enu, 1, new engine.Cartesian4()), new C3());
+            const hd = cam.heading, sinH = Math.sin(hd), cosH = Math.cos(hd);
+            const fwd = C3.normalize(
+              C3.add(C3.multiplyByScalar(east, sinH, new C3()),
+                     C3.multiplyByScalar(north, cosH, new C3()), new C3()), new C3());
+            const right = C3.normalize(
+              C3.add(C3.multiplyByScalar(east, cosH, new C3()),
+                     C3.multiplyByScalar(north, -sinH, new C3()), new C3()), new C3());
+            if (keyMove.w) { cam.move(fwd, step); moved = true; }    // 앞으로(상)
+            if (keyMove.s) { cam.move(fwd, -step); moved = true; }   // 뒤로(하)
+            if (keyMove.a) { cam.move(right, -step); moved = true; } // 왼쪽(좌)
+            if (keyMove.d) { cam.move(right, step); moved = true; }  // 오른쪽(우)
+            if (moved) {
+              // 이동 중에도 씬을 강제로 다시 그려 타일/건물이 실시간 로드되게
+              if (viewer.scene && viewer.scene.requestRender) viewer.scene.requestRender();
+              if (typeof syncBuildingPositions === "function") syncBuildingPositions();
+              if (typeof requestRender === "function") requestRender();
+            }
+          }
+        } catch (e) {}
+        updateMinimap(); // 매 프레임 미니맵을 카메라 현위치에 동기(드래그·WASD·비행 모두)
+        requestAnimationFrame(wasdTick);
+      }
+      requestAnimationFrame(wasdTick);
+
+      function playTour() {
+        stopTour(false);
+        setStatus(
+          `자동 투어를 시작합니다. ${CITY.name || "이 지역"} 명소 ${LANDMARKS.length}곳을 순서대로 보여줍니다.`,
+        );
+        qs("tourBtn").classList.add("active");
+        tourTimer = window.setInterval(() => {
+          if (activeIndex >= STOPS.length - 1) {
+            stopTour(true);
+            return;
+          }
+          flyToAnchor(activeIndex + 1);
+        }, 4800);
+      }
+
+      function stopTour(showMessage = true) {
+        if (tourTimer) window.clearInterval(tourTimer);
+        tourTimer = null;
+        qs("tourBtn").classList.remove("active");
+        if (showMessage) setStatus("자동 투어를 정지했습니다.");
+      }
+
+      function attachEvents() {
+        qs("tourBtn").addEventListener("click", playTour);
+        qs("stopTourBtn").addEventListener("click", () => stopTour(true));
+        qs("prevBtn").addEventListener("click", () => {
+          stopTour(false);
+          flyToAnchor(activeIndex - 1);
+        });
+        qs("nextBtn").addEventListener("click", () => {
+          stopTour(false);
+          flyToAnchor(activeIndex + 1);
+        });
+        qs("labelBtn").addEventListener("click", () => {
+          labelsHidden = !labelsHidden;
+          renderUi();
+        });
+        qs("enterBtn").addEventListener("click", () => enterCurrentStop());
+        qs("dockPrevBtn").addEventListener("click", () => {
+          stopTour(false);
+          flyToAnchor(activeIndex - 1);
+        });
+        qs("dockNextBtn").addEventListener("click", () => {
+          stopTour(false);
+          flyToAnchor(activeIndex + 1);
+        });
+        qs("dockFocusBtn").addEventListener("click", () =>
+          flyToAnchor(activeIndex),
+        );
+        // 🔭 전체 보기 — 모든 명소가 한눈에 들어오도록 정확히 프레이밍(바운딩 스피어 기반)된 상공 조망으로(언제 어디서든)
+        qs("dockOverviewBtn").addEventListener("click", () => { stopTour(false); activeIndex = 0; renderUi(); setInitialView(); setStatus("전체 조망 — 모든 명소를 한눈에 봅니다."); });
+        qs("dockEnterBtn").addEventListener("click", () => enterCurrentStop());
+        qs("performanceToggle").addEventListener("click", () =>
+          applyPerformanceMode(!performanceMode),
+        );
+        qs("landmarkOnlyToggle").addEventListener("click", () =>
+          applyLandmarkOnly(!landmarkOnly),
+        );
+        window.addEventListener("wheel", (event) => {
+          if (!event.ctrlKey) return;
+          const canvas = document.querySelector("#vmap canvas");
+          if (canvas && (event.target === canvas || canvas.contains(event.target))) return;
+          event.preventDefault();
+          const viewer = getVWorldViewer();
+          if (viewer && viewer.camera) {
+            const height = viewer.camera.positionCartographic.height;
+            const delta = height * (event.deltaY > 0 ? 0.15 : -0.15);
+            if (delta > 0) viewer.camera.zoomOut(delta);
+            else viewer.camera.zoomIn(-delta);
+            requestRender();
+          } else if (canvas) {
+            canvas.dispatchEvent(new WheelEvent("wheel", {
+              bubbles: true, cancelable: true, ctrlKey: true,
+              deltaX: event.deltaX, deltaY: event.deltaY, deltaZ: event.deltaZ,
+              deltaMode: event.deltaMode,
+              clientX: window.innerWidth / 2, clientY: window.innerHeight / 2,
+            }));
+          }
+        }, { passive: false });
+
+        window.addEventListener("keydown", (event) => {
+          // 입력란/퀴즈 모달 포커스 시 지도 단축키(화살표·Enter·Space) 차단
+          var _t = event.target, _qm = document.getElementById("quizModal");
+          if ((_t && (_t.tagName === "INPUT" || _t.tagName === "TEXTAREA" || _t.tagName === "SELECT" || _t.isContentEditable)) || (_qm && _qm.style.display === "block")) return;
+          if (event.key === "ArrowRight") {
+            stopTour(false);
+            flyToAnchor(activeIndex + 1);
+          }
+          if (event.key === "ArrowLeft") {
+            stopTour(false);
+            flyToAnchor(activeIndex - 1);
+          }
+          if (event.key === "Enter") {
+            enterCurrentStop();
+          }
+          if (event.code === "Space") {
+            event.preventDefault();
+            labelsHidden = !labelsHidden;
+            renderUi();
+          }
+        });
+      }
+
+      // ── 종로구 일대 주요 명소 10곳 마커 ──
+
+      // ── 대시보드/네비게이션용 10개 정거장(마커와 동일) ──
+      const clampNumber = (value, min, max) => Math.max(min, Math.min(max, value));
+      const finiteNumber = (value, fallback = 0) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : fallback;
+      };
+      const landmarkBaseHeight = (m) => Math.max(0, finiteNumber(m && m.h, 0));
+      function autoCameraHeight(m, o) {
+        const h = landmarkBaseHeight(m);
+        if (Number.isFinite(Number(o.height))) return Number(o.height);
+        const offset = Number.isFinite(Number(o.heightOffset))
+          ? Number(o.heightOffset)
+          : clampNumber(170 + h * 1.35, 180, 700);
+        return Math.round(h + offset);
+      }
+      function autoCameraDistanceM(m, o) {
+        if (Number.isFinite(Number(o.distanceM))) return Number(o.distanceM);
+        const h = landmarkBaseHeight(m);
+        return clampNumber(230 + h * 1.2, 220, 720);
+      }
+      function autoCameraPitch(m, o) {
+        if (Number.isFinite(Number(o.pitch))) return Number(o.pitch);
+        const h = landmarkBaseHeight(m);
+        const t = clampNumber((h - 15) / 220, 0, 1);
+        return Math.round(-35 + t * 19);
+      }
+      function autoCameraOffset(m, heading, distanceM) {
+        const lat = finiteNumber(m && m.lat, 0);
+        const rad = (heading * Math.PI) / 180;
+        const metersPerLat = 111320;
+        const metersPerLon = Math.max(1, 111320 * Math.cos((lat * Math.PI) / 180));
+        return {
+          lonOff: -(Math.sin(rad) * distanceM) / metersPerLon,
+          latOff: -(Math.cos(rad) * distanceM) / metersPerLat,
+        };
+      }
+      const STOPS = LANDMARKS.map((m, i) => {
+        const o = m.cam || {};
+        const heading = Number.isFinite(Number(o.heading)) ? Number(o.heading) : 0;
+        const distanceM = autoCameraDistanceM(m, o);
+        const autoOffset = autoCameraOffset(m, heading, distanceM);
+        return {
+          num: i + 1,
+          title: m.name,
+          desc: m.desc || "",
+          color: "#86bcb4", // 도트 색상 통일
+          camera: {
+            lon: m.lon + (Number.isFinite(Number(o.lonOff)) ? Number(o.lonOff) : autoOffset.lonOff),
+            lat: m.lat + (Number.isFinite(Number(o.latOff)) ? Number(o.latOff) : autoOffset.latOff),
+            height: autoCameraHeight(m, o),
+            heading,
+            pitch: autoCameraPitch(m, o),
+          },
+          page: roomFor(i, m.name), // 방 있는 곳만 입장(나머지는 null) + &lm 테마 부착
+        };
+      });
+
+      function addLandmarkMarkers() {
+        const viewer = (window.ws3d && window.ws3d.viewer) || getVWorldViewer();
+        const engine = window.Cesium;
+        if (!viewer || !engine) return;
+        const scene = viewer.scene;
+        const host = scene.canvas.parentNode;
+        if (host && getComputedStyle(host).position === "static") host.style.position = "relative";
+        let layer = document.getElementById("mkLayer");
+        if (layer) layer.remove();
+        layer = document.createElement("div");
+        layer.id = "mkLayer";
+        layer.className = "mk-layer";
+        (host || document.body).appendChild(layer);
+
+        const markers = [];
+        LANDMARKS.forEach((m, i) => {
+          const cart = engine.Cartesian3.fromDegrees(m.lon, m.lat, markerHeight(m));
+          const el = document.createElement("div");
+          el.className = "mk";
+          el.dataset.idx = i;
+          el.innerHTML = `<div class="mk-label">${escapeHtml(m.name || "")}</div>` +
+            `<div class="mk-pin"><span>${i + 1}</span></div>`;
+          el.addEventListener("click", (event) => {
+            event.stopPropagation();
+            stopTour(false);
+            flyToAnchor(i);
+          });
+          layer.appendChild(el);
+          markers.push({ cart, el });
+        });
+
+        const transforms = engine.SceneTransforms;
+        function syncMarkers() {
+          let occluder = null;
+          try {
+            occluder = new engine.EllipsoidalOccluder(scene.globe.ellipsoid, scene.camera.positionWC);
+          } catch (e) {}
+          for (const marker of markers) {
+            let win = null;
+            try {
+              win = transforms && transforms.wgs84ToWindowCoordinates
+                ? transforms.wgs84ToWindowCoordinates(scene, marker.cart)
+                : scene.cartesianToCanvasCoordinates(marker.cart);
+            } catch (e) {}
+            const visible = win && (!occluder || occluder.isPointVisible(marker.cart));
+            if (!visible) {
+              marker.el.style.opacity = "0";
+              marker.el.style.pointerEvents = "none";
+              continue;
+            }
+            marker.el.style.opacity = "1";
+            marker.el.style.pointerEvents = "auto";
+            marker.el.style.left = win.x + "px";
+            marker.el.style.top = win.y + "px";
+            const isActive = Number(marker.el.dataset.idx) === activeIndex;
+            marker.el.classList.toggle("on", isActive);
+            marker.el.style.zIndex = isActive ? 12 : 6;
+          }
+        }
+        scene.postRender.addEventListener(syncMarkers);
+        syncMarkers();
+
+        setStatus((CITY.name || "이 지역") + " 명소 " + LANDMARKS.length + "곳 — 핀을 누르면 그 명소가 선택돼요. 우측 정보를 보고 '건물 입장'으로 들어갑니다.");
+      }
+
+      // 건물에서 history.back()으로 돌아오면 bfcache(뒤로가기 캐시)로 복원되며
+      // 지도/입력 상태가 멈춰 WASD·시야 조작이 안 먹는다 → 복원 시 새로고침해 완전 재초기화.
+      // (키는 localStorage에 있어 즉시 다시 로드됨. 일반 첫 로드는 persisted=false라 영향 없음)
+      window.addEventListener("pageshow", (e) => {
+        if (e.persisted) location.reload();
+      });
+
+      applyCityChrome();
+      attachEvents();
+      boot();
+    </script>
+  <script src="quiz-widget.js" defer></script>
+  <script src="nav.js" defer></script>
+  <script src="assistant.js" defer></script>
+</body>
+</html>

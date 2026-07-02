@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>걷는 순서는 어떻게 설계될까 · 기억의 궁전</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+  :root{
+    --orange:#E0730F; --orange-d:#B25400; --orange-soft:#FBE7D1;
+    --ink:#241C12; --gray7:#5E5346; --gray5:#9A8E7F; --gray3:#DCD2C4;
+    --bg:#FFFFFF; --bg2:#FAF5EE; --bg3:#F2EADF;
+    --teal:#0E9E8E; --amber:#E89008;
+    --r:22px; --shadow:0 2px 8px rgba(70,45,15,.07), 0 1px 2px rgba(70,45,15,.05);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;word-break:keep-all;overflow-wrap:break-word;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    background:var(--bg2);color:var(--ink);line-height:1.6;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:560px;margin:0 auto;padding:0 20px 80px;}
+  h1,h2,h3{letter-spacing:-.03em;text-wrap:balance;}
+  p{text-wrap:pretty;}
+
+  /* 히어로 */
+  .hero{padding:64px 0 40px;text-align:center;}
+  .hero .eyebrow{display:inline-block;font-size:13px;font-weight:700;color:var(--orange);
+    background:var(--orange-soft);padding:7px 14px;border-radius:999px;margin-bottom:20px;}
+  .hero h1{font-size:34px;font-weight:800;line-height:1.32;margin-bottom:16px;}
+  .hero h1 b{color:var(--orange);}
+  .hero .sub{font-size:16px;color:var(--gray7);font-weight:500;line-height:1.6;}
+  .hero .scene{margin:34px auto 0;max-width:360px;}
+
+  /* 한눈에 */
+  .flow{background:var(--bg);border-radius:var(--r);box-shadow:var(--shadow);padding:22px 20px;margin:8px 0 40px;}
+  .flow .ttl{font-size:13px;font-weight:700;color:var(--gray5);margin-bottom:14px;}
+  .flow .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .flow .chip{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--gray7);
+    background:var(--bg3);border-radius:12px;padding:8px 11px;}
+  .flow .chip .n{width:18px;height:18px;border-radius:50%;background:var(--orange);color:#fff;font-size:11px;font-weight:800;
+    display:grid;place-items:center;flex:none;}
+
+  /* 단계 카드 */
+  .step{background:var(--bg);border-radius:var(--r);box-shadow:var(--shadow);padding:26px 24px;margin-bottom:18px;
+    position:relative;overflow:hidden;}
+  .step .head{display:flex;align-items:center;gap:13px;margin-bottom:14px;}
+  .step .badge{width:42px;height:42px;border-radius:14px;background:var(--orange-soft);color:var(--orange-d);
+    font-size:20px;display:grid;place-items:center;flex:none;}
+  .step .num{position:absolute;top:20px;right:22px;font-size:13px;font-weight:800;color:var(--gray3);}
+  .step h2{font-size:20px;font-weight:800;line-height:1.35;}
+  .step .lead{font-size:14.5px;color:var(--gray7);font-weight:600;margin-top:2px;}
+  .step .body{font-size:15px;color:var(--gray7);font-weight:450;margin-top:6px;line-height:1.68;}
+  .step .body b{color:var(--ink);font-weight:700;}
+  .step .body .o{color:var(--orange-d);font-weight:700;}
+  .step .viz{margin:18px 0 4px;background:var(--bg2);border-radius:16px;padding:18px;display:flex;justify-content:center;}
+  .easy{display:flex;gap:10px;background:var(--orange-soft);border-radius:14px;padding:13px 15px;margin-top:16px;}
+  .easy .ic{font-size:16px;flex:none;}
+  .easy .tx{font-size:14px;color:var(--orange-d);font-weight:600;line-height:1.55;}
+  .easy .tx b{font-weight:800;}
+
+  /* 핵심 하이라이트 */
+  .hl{background:linear-gradient(135deg,#E0730F,#B25400);border-radius:var(--r);padding:30px 24px;margin:34px 0 18px;color:#fff;
+    box-shadow:0 14px 30px rgba(224,115,15,.30);}
+  .hl .tag{font-size:12.5px;font-weight:700;opacity:.9;letter-spacing:.02em;}
+  .hl h2{font-size:23px;font-weight:800;margin:8px 0 12px;line-height:1.4;}
+  .hl p{font-size:15px;font-weight:500;opacity:.96;line-height:1.66;}
+  .hl .viz{margin:18px 0 4px;background:rgba(255,255,255,.13);border-radius:16px;padding:16px;display:flex;justify-content:center;}
+
+  .sechead{text-align:center;margin:46px 0 18px;}
+  .sechead .e{font-size:13px;font-weight:700;color:var(--orange);}
+  .sechead h2{font-size:24px;font-weight:800;margin-top:6px;}
+
+  .note{background:#FFF6EA;border:1px solid #F6DEBB;border-radius:var(--r);padding:22px;margin-top:26px;}
+  .note h3{font-size:16px;font-weight:800;color:var(--orange-d);display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .note p{font-size:14px;color:#7A5418;font-weight:500;line-height:1.66;}
+
+  footer{text-align:center;color:var(--gray5);font-size:13px;font-weight:500;margin-top:44px;line-height:1.7;}
+  footer b{color:var(--gray7);}
+
+  svg{display:block;max-width:100%;height:auto;}
+  .lbl{font:700 12px 'Pretendard',sans-serif;fill:var(--gray7);}
+  .lbl-s{font:600 10.5px 'Pretendard',sans-serif;fill:var(--gray5);}
+  @media(max-width:420px){ .hero h1{font-size:28px;} .step h2{font-size:18px;} .flow .chips{gap:7px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 히어로 -->
+  <section class="hero">
+    <span class="eyebrow">기억의 궁전 · 기술 설명</span>
+    <h1>방을 어떻게 <b>걷게</b><br>설계할까?</h1>
+    <p class="sub">번호는 그냥 매기는 게 아니에요.<br><b>방에 들어선 시점</b>에서 보이는 <b>부채꼴&nbsp;시야</b>를 기준으로,<br>한 바퀴 매끄럽게 도는 동선을 설계해요.</p>
+    <div class="scene">
+      <svg viewBox="0 0 360 200" role="img" aria-label="입장 시점에서 부채꼴&nbsp;시야로 본 방과 동선">
+        <rect x="0" y="0" width="360" height="200" rx="18" fill="#F2EADF"/>
+        <!-- 방 평면(위에서 본) -->
+        <rect x="40" y="28" width="280" height="150" rx="10" fill="#FBF6EF" stroke="#DCD2C4"/>
+        <!-- 부채꼴&nbsp;시야 -->
+        <path d="M180 168 L66 50 A150 150 0 0 1 294 50 Z" fill="#E0730F" opacity=".10"/>
+        <path d="M180 168 L66 50" stroke="#E0730F" stroke-width="1.5" stroke-dasharray="5 4" opacity=".6"/>
+        <path d="M180 168 L294 50" stroke="#E0730F" stroke-width="1.5" stroke-dasharray="5 4" opacity=".6"/>
+        <!-- 입장 눈 -->
+        <circle cx="180" cy="168" r="9" fill="#E0730F"/>
+        <text x="180" y="192" class="lbl-s" text-anchor="middle" fill="#B25400">입장 시점 👁</text>
+        <!-- 동선 마커 1~5 -->
+        <g font="800 12px Pretendard" text-anchor="middle">
+          <circle cx="120" cy="118" r="13" fill="#241C12"/><text x="120" y="122" fill="#fff" font-size="12">1</text>
+          <circle cx="100" cy="70" r="13" fill="#241C12"/><text x="100" y="74" fill="#fff" font-size="12">2</text>
+          <circle cx="200" cy="60" r="13" fill="#241C12"/><text x="200" y="64" fill="#fff" font-size="12">3</text>
+          <circle cx="268" cy="84" r="13" fill="#241C12"/><text x="268" y="88" fill="#fff" font-size="12">4</text>
+          <circle cx="248" cy="134" r="13" fill="#E0730F"/><text x="248" y="138" fill="#fff" font-size="12">5</text>
+        </g>
+        <path d="M180 160 L120 118 L100 70 L200 60 L268 84 L248 134" fill="none" stroke="#E0730F" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity=".75"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 한눈에 -->
+  <div class="flow">
+    <div class="ttl">한눈에 — 동선이 설계되는 6단계</div>
+    <div class="chips">
+      <span class="chip"><span class="n">1</span>시점 잡기</span>
+      <span class="chip"><span class="n">2</span>부채꼴로 재기</span>
+      <span class="chip"><span class="n">3</span>골고루 솎기</span>
+      <span class="chip"><span class="n">4</span>모서리 4개</span>
+      <span class="chip"><span class="n">5</span>시점 라벨</span>
+      <span class="chip"><span class="n">6</span>순서·카메라</span>
+    </div>
+    <p style="font-size:13px;color:var(--gray5);font-weight:500;margin-top:13px;line-height:1.6;">※ 앞 단계(가구 찾기·이름 짓기·겹침 정리)는 <b style="color:var(--gray7)">「마커가 생기는 법」</b> 페이지에 있어요. 여기선 <b style="color:var(--gray7)">그 마커들을 어떤 순서로 걷게 하나</b>를 다룹니다.</p>
+  </div>
+
+  <!-- 핵심 하이라이트: 부채꼴&nbsp;시야 -->
+  <div class="hl">
+    <div class="tag">👁 VIEWPOINT FRAME · 모든 것의 기준</div>
+    <h2>핵심은 '거리'가 아니라<br>'들어선 시점에서 보이는 부채꼴'</h2>
+    <p>흔히 동선을 '가까운 순서'로만 생각하지만, 이 시스템은 먼저 <b>방에 들어선 한 시점</b>을 정하고, 거기서 펼쳐지는 <b>부채꼴&nbsp;시야</b>를 좌표축으로 삼아요. 그래야 "앞쪽 끝", "왼쪽 구석"이 사람 기준으로 의미를 가져요. 모든 선별·라벨·순서가 이 시점 위에서 계산됩니다.</p>
+  </div>
+
+  <!-- 1 시점 프레임 -->
+  <div class="step">
+    <span class="num">STEP 1</span>
+    <div class="head"><div class="badge">👁</div>
+      <div><h2>입장 시점을 잡는다</h2><div class="lead">방의 긴 쪽 끝에 서서, 안쪽을 바라보게</div></div></div>
+    <p class="body">먼저 <b>어디 서서 방을 볼지</b>를 정해요. <span class="o">방의 더 긴 수평축</span>을 따라 <b>한쪽 끝(뒤)</b>에 서고, <b>가구가 몰려 있는 쪽</b>을 '앞(시선 방향)'으로 잡아요. 짧은 축은 가운데에 서서 옆벽만 응시하지 않게 하죠. 눈높이는 <b>1.6m</b>. 이렇게 <span class="o">눈 위치·앞 방향·오른쪽 방향</span> 세 축이 정해지면, 그게 모든 계산의 좌표계가 돼요.</p>
+    <div class="viz">
+      <svg viewBox="0 0 300 130" aria-label="방 긴 축 한쪽 끝에서 안쪽을 바라보는 입장 시점">
+        <rect x="30" y="16" width="240" height="92" rx="8" fill="#fff" stroke="#DCD2C4"/>
+        <path d="M150 100 L70 30 A110 110 0 0 1 230 30 Z" fill="#E0730F" opacity=".10"/>
+        <circle cx="150" cy="100" r="8" fill="#E0730F"/>
+        <line x1="150" y1="100" x2="150" y2="40" stroke="#E0730F" stroke-width="2"/>
+        <polygon points="150,40 145,50 155,50" fill="#E0730F"/>
+        <text x="150" y="124" class="lbl-s" text-anchor="middle" fill="#B25400">눈 👁 (긴 축 끝)</text>
+        <text x="150" y="32" class="lbl-s" text-anchor="middle">앞(시선)</text>
+        <text x="250" y="64" class="lbl-s" text-anchor="middle">오른쪽 →</text>
+      </svg>
+    </div>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 갤러리에 들어와 <b>입구에 서서 전시장을 한눈에 보는</b> 그 시점을 먼저 정하는 거예요.</span></div>
+  </div>
+
+  <!-- 2 부채꼴로 재기 -->
+  <div class="step">
+    <span class="num">STEP 2</span>
+    <div class="head"><div class="badge">📐</div>
+      <div><h2>부채꼴&nbsp;시야로 앞뒤·좌우를 잰다</h2><div class="lead">모든 가구를 '시점 기준' 두 값으로 변환</div></div></div>
+    <p class="body">이제 각 가구를 그 시점에서 봤을 때 <span class="o">얼마나 앞에 있나(깊이)</span>와 <span class="o">얼마나 왼쪽/오른쪽인가(좌우)</span> 두 값으로 바꿔요. 방 좌표(x·z)가 아니라 <b>사람이 보는 부채꼴 안에서의 위치</b>로요. 이 두 값이 있어야 다음 단계에서 "앞쪽 끝", "뒤 왼쪽" 같은 판단을 할 수 있어요.</p>
+    <div class="viz">
+      <svg viewBox="0 0 300 132" aria-label="부채꼴&nbsp;시야 안에서 가구의 앞뒤·좌우 좌표">
+        <path d="M150 116 L40 24 A140 140 0 0 1 260 24 Z" fill="#E0730F" opacity=".08"/>
+        <line x1="150" y1="116" x2="150" y2="24" stroke="#DCD2C4" stroke-width="1" stroke-dasharray="3 3"/>
+        <line x1="60" y1="70" x2="240" y2="70" stroke="#DCD2C4" stroke-width="1" stroke-dasharray="3 3"/>
+        <circle cx="150" cy="116" r="7" fill="#E0730F"/>
+        <circle cx="108" cy="56" r="11" fill="#fff" stroke="#E0730F" stroke-width="2"/>
+        <text x="108" y="60" text-anchor="middle" font="700 10px Pretendard" fill="#B25400">의자</text>
+        <text x="150" y="20" class="lbl-s" text-anchor="middle">앞 ↑</text>
+        <text x="276" y="74" class="lbl-s" text-anchor="middle">오른쪽</text>
+        <text x="20" y="74" class="lbl-s" text-anchor="middle">왼쪽</text>
+        <text x="108" y="92" class="lbl-s" text-anchor="middle">앞·왼쪽</text>
+      </svg>
+    </div>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — "방 어느 칸"이 아니라 <b>"내가 보기에 앞/뒤, 왼쪽/오른쪽 어디"</b>로 다시 재는 거예요.</span></div>
+  </div>
+
+  <!-- 3 골고루 솎기 -->
+  <div class="step">
+    <span class="num">STEP 3</span>
+    <div class="head"><div class="badge">🧹</div>
+      <div><h2>골고루 솎고, 고정물을 우대</h2><div class="lead">뭉친 마커는 솎되, 칠판·창·교탁은 먼저</div></div></div>
+    <p class="body">한 구역(책상 위 컵·모니터·의자)에 마커가 몰리면 <b>방 크기에 비례한 최소 간격</b>(최소 0.6m)으로 솎아, <span class="o">공간에 고르게 흩어진 대표만</span> 남겨요(파넌트포인트식). 이때 <span class="o">칠판·창문·교탁·스크린·수납장·싱크/냉장고</span> 같은 <b>고정물에는 가산점</b>을 줘서, 방의 기준이 되는 큰 사물이 빠지지 않게 해요. 바닥 평면에서 겹친 둘(러그+벽 그림)도 정리하고요.</p>
+    <div class="viz">
+      <svg viewBox="0 0 300 96" aria-label="뭉친 마커를 고르게 솎고 고정물 우대">
+        <g opacity=".5">
+          <circle cx="58" cy="40" r="7" fill="#9A8E7F"/><circle cx="66" cy="48" r="7" fill="#9A8E7F"/>
+          <circle cx="50" cy="50" r="7" fill="#9A8E7F"/><circle cx="64" cy="34" r="7" fill="#9A8E7F"/>
+        </g>
+        <text x="58" y="80" class="lbl-s" text-anchor="middle">뭉침</text>
+        <text x="135" y="48" class="lbl" text-anchor="middle">→</text>
+        <circle cx="196" cy="34" r="11" fill="#E0730F"/><text x="196" y="38" text-anchor="middle" fill="#fff" font="800 11px Pretendard">★</text>
+        <text x="196" y="58" class="lbl-s" text-anchor="middle">칠판(고정물)</text>
+        <circle cx="248" cy="52" r="9" fill="#241C12"/>
+        <text x="248" y="74" class="lbl-s" text-anchor="middle">대표만</text>
+      </svg>
+    </div>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 한곳에 몰린 건 대표 하나만 남기고, <b>'방의 랜드마크'(칠판·창)는 먼저</b> 챙겨요.</span></div>
+  </div>
+
+  <!-- 4 모서리 4개 -->
+  <div class="step">
+    <span class="num">STEP 4</span>
+    <div class="head"><div class="badge">📍</div>
+      <div><h2>같은 종류가 많으면 '모서리 4개'</h2><div class="lead">앞끝·뒤끝·왼끝·오른끝을 확실히 포함</div></div></div>
+    <p class="body">교실 의자처럼 <b>같은 종류가 잔뜩</b>일 때, 가운데 것만 고르면 방의 끝이 비어 보여요. 그래서 그 무리에서 <span class="o">대각선 네 끝</span> — <b>앞·왼(FL), 앞·오(FR), 뒤·왼(BL), 뒤·오(BR)</b> — 가장 바깥 항목을 골라요. 그러면 <b>방의 네 귀퉁이</b>가 확실히 동선에 들어와, 한 바퀴가 방 전체를 감싸게 돼요. (학습 항목 수보다 적으면, 기존과 가장 먼 것부터 채워 고른 분포를 유지해요.)</p>
+    <div class="viz">
+      <svg viewBox="0 0 300 120" aria-label="군집에서 대각선 네 모서리 선택">
+        <rect x="40" y="14" width="220" height="92" rx="8" fill="#fff" stroke="#DCD2C4"/>
+        <g fill="#DCD2C4"><circle cx="100" cy="44" r="6"/><circle cx="150" cy="40" r="6"/><circle cx="160" cy="66" r="6"/><circle cx="120" cy="70" r="6"/><circle cx="190" cy="52" r="6"/></g>
+        <g fill="#E0730F"><circle cx="62" cy="26" r="9"/><circle cx="238" cy="26" r="9"/><circle cx="62" cy="94" r="9"/><circle cx="238" cy="94" r="9"/></g>
+        <text x="62" y="14" class="lbl-s" text-anchor="middle">뒤·왼</text>
+        <text x="238" y="14" class="lbl-s" text-anchor="middle">뒤·오</text>
+        <text x="62" y="116" class="lbl-s" text-anchor="middle">앞·왼</text>
+        <text x="238" y="116" class="lbl-s" text-anchor="middle">앞·오</text>
+      </svg>
+    </div>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — 똑같은 게 많으면 <b>네 귀퉁이 대표</b>를 뽑아, 방 구석구석이 동선에 들어오게.</span></div>
+  </div>
+
+  <!-- 5 시점 라벨 -->
+  <div class="step">
+    <span class="num">STEP 5</span>
+    <div class="head"><div class="badge">🏷️</div>
+      <div><h2>시점 기준으로 이름을 단다</h2><div class="lead">"앞 왼쪽 의자"처럼 — 헷갈리지 않게</div></div></div>
+    <p class="body">같은 '의자'가 여럿이면 번호만으론 헷갈려요. 그래서 <b>들어선 시점 기준</b>으로 <span class="o">앞/뒤 × 왼쪽/오른쪽</span>을 붙여 <b>"앞 왼쪽 의자", "뒤 오른쪽 의자"</b>처럼 불러요. 사람이 실제로 보는 방향과 같아서 바로 찾을 수 있죠.</p>
+    <div class="viz">
+      <svg viewBox="0 0 300 76" aria-label="시점 기준 앞뒤 좌우 라벨">
+        <rect x="20" y="18" width="120" height="40" rx="10" fill="#fff" stroke="#DCD2C4"/>
+        <text x="80" y="43" text-anchor="middle" font="800 14px Pretendard" fill="#5E5346">의자 · 의자 · 의자</text>
+        <text x="155" y="42" class="lbl" text-anchor="middle">→</text>
+        <rect x="172" y="18" width="118" height="40" rx="10" fill="#FBE7D1" stroke="#E0730F"/>
+        <text x="231" y="43" text-anchor="middle" font="800 13px Pretendard" fill="#B25400">앞 왼쪽 의자</text>
+      </svg>
+    </div>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — "그 의자 말고 <b>앞 왼쪽 의자</b>"처럼, 보는 방향대로 이름을 붙여요.</span></div>
+  </div>
+
+  <!-- 6 순서 + 카메라 -->
+  <div class="step">
+    <span class="num">STEP 6</span>
+    <div class="head"><div class="badge">🚶</div>
+      <div><h2>순서를 잇고, 카메라가 활공</h2><div class="lead">가까움 + 방향 유지 → 한 바퀴, 멀미 없이</div></div></div>
+    <p class="body">고른 마커들을 <b>입장 시점에서 출발</b>해 순서대로 이어요. 매번 <span class="o">① 가장 가까운 미방문 마커</span>이면서 <span class="o">② 가던 방향에서 덜 꺾이는 쪽</span>(뒤로 휙 꺾이면 감점)을 골라요 — 점수로 치면 <b>‑거리 + 방향유지×0.7</b>. 그래서 지그재그·방 횡단 없이 자연스러운 한 바퀴가 돼요. 번호(걷는 순서)가 곧 <b>학습 순서</b>가 되죠. <b>다음 →</b>을 누르면 카메라가 그 마커를 가장 잘 보는 자리로 <b>부드럽게 가감속</b>하며 활공하고, <b>직전에 보던 방향과 비슷한 각도</b>를 골라 갑자기 돌지 않아요.</p>
+    <div class="viz">
+      <svg viewBox="0 0 300 120" aria-label="가까움+방향 유지로 다음 마커 선택, 부드러운 카메라">
+        <circle cx="48" cy="64" r="9" fill="#9A8E7F"/>
+        <line x1="60" y1="62" x2="112" y2="54" stroke="#9A8E7F" stroke-width="2.5"/>
+        <polygon points="112,54 103,52 106,61" fill="#9A8E7F"/>
+        <text x="48" y="90" class="lbl-s" text-anchor="middle">지금</text>
+        <text x="92" y="42" class="lbl-s" fill="#9A8E7F" text-anchor="middle">진행 방향</text>
+        <circle cx="190" cy="48" r="14" fill="#E0730F"/>
+        <text x="190" y="53" text-anchor="middle" fill="#fff" font="800 14px Pretendard">✓</text>
+        <text x="190" y="22" class="lbl-s" text-anchor="middle" fill="#B25400">가깝고 + 방향 유지</text>
+        <circle cx="118" cy="104" r="11" fill="#DCD2C4"/>
+        <text x="118" y="108" text-anchor="middle" fill="#fff" font="800 12px Pretendard">−</text>
+        <text x="176" y="108" class="lbl-s">뒤로 꺾임 = 감점</text>
+      </svg>
+    </div>
+    <div class="easy"><span class="ic">💡</span><span class="tx"><b>쉽게 말하면</b> — '가까운 다음 전시물'을 <b>가던 방향 유지</b>하며 고르고, 카메라는 <b>드론처럼 미끄러져</b> 데려다줘요.</span></div>
+  </div>
+
+  <!-- 한계 -->
+  <div class="note">
+    <h3>🛟 한 가지 더</h3>
+    <p>직접 만든 동선이 더 좋다면, 마커를 <b>끌어 옮기거나 순서를 바꿔</b> 저장할 수 있어요. 그러면 그 <b>손편집이 최우선</b>으로 적용되고(자동 설계보다 위), 다시 들어와도 그대로 복원돼요.</p>
+  </div>
+
+  <footer>
+    이 모든 동선 설계는 <b>방 하나만 넣으면 자동</b>으로 일어나요.<br>
+    이름표가 있든 없든, 어떤 방에도 <b>똑같은 규칙</b>이 적용됩니다.<br>
+    <span style="opacity:.7">기억의 궁전 · 동선 설계 파이프라인</span>
+  </footer>
+
+</div>
+<script src="nav.js" defer></script>
+</body>
+</html>

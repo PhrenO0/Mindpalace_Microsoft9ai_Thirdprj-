@@ -1,0 +1,5 @@
+{
+  "note": "지역(slug) → 학습 테마(palace.json) 매핑. 없으면 _default 사용. 지역마다 다른 학습 콘텐츠를 붙일 때 여기만 추가.",
+  "_default": "public/data/korean_history.palace.json",
+  "jongno": "public/data/korean_history.palace.json"
+}

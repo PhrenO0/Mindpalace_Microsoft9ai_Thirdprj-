@@ -1,0 +1,26 @@
+{
+  "roomId": "living_room",
+  "generatedBy": "personal-room-scanner-3d (Azure AI Vision, farthest-point coverage)",
+  "note": "재스캔: 좌우 균형(왼10/오9). 동선·라벨·선별은 memory-walk 파이프라인 처리.",
+  "hotspots": [
+    {"slot":1,"object":"chair","detectedClass":"chair","confidence":0.82,"markerPosition":[1.215,0.673,-0.589]},
+    {"slot":2,"object":"chair","detectedClass":"chair","confidence":0.74,"markerPosition":[0.792,0.531,-0.025]},
+    {"slot":3,"object":"dining table","detectedClass":"dining table","confidence":0.75,"markerPosition":[1.314,0.74,0.043]},
+    {"slot":4,"object":"chair","detectedClass":"chair","confidence":0.78,"markerPosition":[2.089,0.53,0.491]},
+    {"slot":5,"object":"cushion","detectedClass":"cushion","confidence":0.72,"markerPosition":[2.036,0.53,0.485]},
+    {"slot":6,"object":"potted plant","detectedClass":"potted plant","confidence":0.87,"markerPosition":[-3.257,0.901,1.245]},
+    {"slot":7,"object":"window","detectedClass":"window","confidence":0.69,"markerPosition":[1.049,0.273,1.678]},
+    {"slot":8,"object":"potted plant","detectedClass":"potted plant","confidence":0.82,"markerPosition":[-1.056,0.446,1.144]},
+    {"slot":9,"object":"sofa","detectedClass":"sofa","confidence":0.68,"markerPosition":[-0.488,0.776,0.814]},
+    {"slot":10,"object":"television","detectedClass":"television","confidence":0.72,"markerPosition":[-1.973,0.813,-2.016]},
+    {"slot":11,"object":"window","detectedClass":"window","confidence":0.83,"markerPosition":[-2.391,1.079,-1.512]},
+    {"slot":12,"object":"sofa","detectedClass":"sofa","confidence":0.66,"markerPosition":[1.271,-0.381,-0.987]},
+    {"slot":13,"object":"chair","detectedClass":"chair","confidence":0.7,"markerPosition":[-1.821,0.484,0.161]},
+    {"slot":14,"object":"chair","detectedClass":"chair","confidence":0.74,"markerPosition":[-2.698,0.284,0.901]},
+    {"slot":15,"object":"dining table","detectedClass":"dining table","confidence":0.78,"markerPosition":[-1.796,0.365,0.114]},
+    {"slot":16,"object":"chair","detectedClass":"chair","confidence":0.75,"markerPosition":[-2.087,0.951,1.693]},
+    {"slot":17,"object":"umbrella","detectedClass":"umbrella","confidence":0.71,"markerPosition":[2.748,0.956,1.451]},
+    {"slot":18,"object":"cabinet","detectedClass":"cabinet","confidence":0.74,"markerPosition":[1.82,0.725,-1.511]},
+    {"slot":19,"object":"kite","detectedClass":"kite","confidence":0.62,"markerPosition":[-2.764,0.734,1.217]}
+  ]
+}

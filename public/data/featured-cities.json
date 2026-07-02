@@ -1,0 +1,21 @@
+{
+ "note": "갤러리 슬라이더에 띄울 주요 도시(순서=노출순). 전체 84개는 지도 토글에서.",
+ "slugs": [
+  "jongno",
+  "busan",
+  "incheon",
+  "daegu",
+  "daejeon",
+  "gwangju",
+  "ulsan",
+  "suwon",
+  "gyeongju",
+  "jeonju",
+  "andong",
+  "gongju",
+  "gangneung",
+  "yeosu",
+  "jeju",
+  "chuncheon"
+ ]
+}

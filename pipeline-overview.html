@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>한 장으로 보는 전체 과정 · 방 입력 → 학습·저장</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet" />
+<style>
+  :root{ --orange:#E0730F; --orange-d:#B25400; --soft-o:#FBE7D1; --ink:#241C12; --gray:#6B5E4D;
+    --line:#EADFCD; --bg:#FFFDF9; --green:#15B86B; }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Pretendard','Malgun Gothic',-apple-system,sans-serif; color:var(--ink);
+    background:radial-gradient(130% 120% at 50% 0%, #FFFBF4 0%, #F6EDDF 70%, #EFE4D2 100%); min-height:100vh; word-break:keep-all;}
+  .wrap{max-width:1180px; margin:0 auto; padding:78px 0 40px;}
+  .head{padding:0 28px;}
+  .head h1{font-size:26px; font-weight:800; letter-spacing:-.5px;}
+  .head h1 .o{color:var(--orange);}
+  .head p{margin-top:8px; font-size:14px; color:var(--gray); line-height:1.6; max-width:680px;}
+  .hint{margin-top:14px; font-size:12.5px; color:var(--orange-d); font-weight:700;}
+  .hint .k{display:inline-block; background:var(--soft-o); border-radius:6px; padding:1px 7px; margin:0 2px;}
+
+  /* 가로 스크롤 트랙 */
+  .track{display:flex; align-items:stretch; gap:0; overflow-x:auto; padding:26px 28px 30px; margin-top:8px;
+    scroll-snap-type:x proximity; scrollbar-width:thin; scrollbar-color:var(--orange) transparent;}
+  .track::-webkit-scrollbar{height:9px;}
+  .track::-webkit-scrollbar-thumb{background:var(--orange); border-radius:9px;}
+  .track::-webkit-scrollbar-track{background:#F0E7D8; border-radius:9px;}
+
+  .stage{flex:0 0 248px; width:248px; scroll-snap-align:center; background:#fff; border:1px solid var(--line);
+    border-radius:18px; padding:18px 18px 16px; box-shadow:0 8px 26px rgba(120,80,30,.07); display:flex; flex-direction:column;}
+  .stage .top{display:flex; align-items:center; gap:9px;}
+  .stage .n{width:28px; height:28px; flex:0 0 28px; border-radius:50%; background:var(--orange); color:#fff;
+    font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;}
+  .stage .ic{font-size:22px;}
+  .stage h3{font-size:16.5px; font-weight:800; letter-spacing:-.3px; margin-top:12px;}
+  .stage .d{font-size:13px; color:var(--gray); line-height:1.55; margin-top:7px; flex:1;}
+  .stage .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:13px;}
+  .stage .chip{font-size:11.5px; font-weight:800; color:var(--orange-d); background:var(--soft-o);
+    border-radius:999px; padding:4px 10px; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .stage.fin .n{background:var(--green);} .stage.fin .chip{color:#0c7a47; background:#D8F3E6;}
+
+  .arrow{flex:0 0 30px; align-self:center; color:#D8C7AC; font-size:22px; text-align:center; user-select:none;}
+
+  .foot{padding:6px 28px 0; font-size:13px; color:var(--gray); line-height:1.6;}
+  .foot a{color:var(--orange-d); font-weight:800; text-decoration:none; border-bottom:2px solid var(--soft-o);}
+  .foot a:hover{border-color:var(--orange);}
+  @media(max-width:560px){ .head h1{font-size:21px;} .wrap{padding-top:66px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>한 장으로 보는 <span class="o">전체 과정</span></h1>
+    <p>방 파일 하나가 들어가 <b>걸어 다니며 외우는 기억 궁전</b>이 되기까지 — 9단계를 실제 수치와 함께 한 줄로.</p>
+    <div class="hint">→ <span class="k">옆으로 스크롤</span> 하며 따라오세요 · 각 단계는 실제 코드 동작이에요</div>
+  </div>
+
+  <div class="track" id="track">
+    <div class="stage">
+      <div class="top"><div class="n">1</div><div class="ic">🏠</div></div>
+      <h3>방 입력 · 정규화</h3>
+      <div class="d">어떤 GLB든 받아 <b>가로(긴 변)를 7.2</b>로, 바닥을 0으로 맞춰요. 스캐너와 같은 자라 좌표가 호환돼요.</div>
+      <div class="chips"><span class="chip">GLB · DRACO 300→9MB</span><span class="chip">가로 7.2</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="top"><div class="n">2</div><div class="ic">🪑</div></div>
+      <h3>가구 검출</h3>
+      <div class="d">이름표(Sofa…) 또는 모양·크기로 <b>가구만</b> 골라내고 벽·바닥·천장은 제외해요.</div>
+      <div class="chips"><span class="chip">최대 22개</span><span class="chip">게이트 3%~92%</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="top"><div class="n">3</div><div class="ic">📍</div></div>
+      <h3>좌표</h3>
+      <div class="d">가구마다 <b>정점 상자(AABB)의 중심</b>이 위치. 스크린샷·AI 없이 산수로 끝, 오차 0.</div>
+      <div class="chips"><span class="chip">AABB 중심</span><span class="chip">오차 0</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="top"><div class="n">4</div><div class="ic">🧩</div></div>
+      <h3>세그멘테이션</h3>
+      <div class="d">한 가구가 여러 조각이면 마커가 겹쳐요. <b>같은 자리는 하나로</b> 합쳐 ‘한 사물=한 마커’.</div>
+      <div class="chips"><span class="chip">평면 0.42m</span><span class="chip">같은 이름 1.0m</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="top"><div class="n">5</div><div class="ic">🔦</div></div>
+      <h3>레이캐스트</h3>
+      <div class="d">보이지 않는 <b>광선</b>을 쏴 처음 맞는 면을 읽어요. 마커를 표면에 앉히고, 카메라가 설 트인 곳도 찾죠.</div>
+      <div class="chips"><span class="chip">위→아래 1발</span><span class="chip">3×3=9점 · ±0.4m</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="top"><div class="n">6</div><div class="ic">🏷️</div></div>
+      <h3>이름</h3>
+      <div class="d">방을 <b>네 모서리 4컷</b> 찍어 AI에 딱 1번. 작거나 가린 ‘약한 마커’만 <b>512² 십자선</b>으로 정밀 확인.</div>
+      <div class="chips"><span class="chip">4컷 · 1콜</span><span class="chip">정밀 512²</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="top"><div class="n">7</div><div class="ic">🚶</div></div>
+      <h3>번호 · 동선</h3>
+      <div class="d">입장 시점에서 <b>가까움+직진</b>으로 한 바퀴(걷는 순서=외우는 순서). 겹친 마커는 황금각으로 흩뿌려요.</div>
+      <div class="chips"><span class="chip">−dist + turn×0.7</span><span class="chip">최대 16</span><span class="chip">황금각 137.5°</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage">
+      <div class="top"><div class="n">8</div><div class="ic">🎥</div></div>
+      <h3>카메라</h3>
+      <div class="d">번호를 누르면 <b>28방향</b>을 따져 가장 트인 자리로 <b>0.9초</b> 활공(휙 안 돌게 연속성 우선).</div>
+      <div class="chips"><span class="chip">28방향</span><span class="chip">0.9초 활공</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage fin">
+      <div class="top"><div class="n">9</div><div class="ic">🧠</div></div>
+      <h3>학습 · 저장</h3>
+      <div class="d">각 위치에 <b>학습 개념</b>을 묶어 저장(장소법). 다시 들어오면 같은 자리에서 회상 단서가 재현돼요.</div>
+      <div class="chips"><span class="chip">entityId</span><span class="chip">내 서재 저장</span></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div style="margin-bottom:9px;"><b>3D로 체험</b> — <a href="bounding-box-visual.html">메쉬→좌표→이름→동선→카메라 워크스루 열기 ↗</a></div>
+    <div><b>딥다이브</b> <span style="color:#9A8C78;font-weight:600;">(여기서 팝업으로 열려요)</span> —
+      <a href="how-it-all-works.html" data-modal data-title="전체 기술 한눈에">전체 기술 한눈에</a> ·
+      <a href="how-markers-work.html" data-modal data-title="3D 마커 만드는 법">3D 마커 만드는 법</a> ·
+      <a href="how-route-works.html" data-modal data-title="동선 설계">동선 설계</a> ·
+      <a href="system-architecture.html" data-modal data-title="3D 시스템 아키텍처">시스템 아키텍처</a>
+    </div>
+  </div>
+</div>
+<script src="modal-pages.js" defer></script>
+<script src="nav.js" defer></script>
+</body>
+</html>

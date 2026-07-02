@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>기억의 궁전 · Runtime Architecture</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+  :root{ --blue:#3182F6; --blue-d:#1B64DA; --green:#00B27A; --amber:#FF9500;
+    --ink:#191F28; --gray7:#4E5968; --gray5:#8B95A1; --gray3:#D1D6DB; }
+  *{margin:0;padding:0;box-sizing:border-box;word-break:keep-all;}
+  body{font-family:'Pretendard',-apple-system,'Malgun Gothic',sans-serif;background:#fff;color:var(--ink);
+    letter-spacing:-.01em;-webkit-font-smoothing:antialiased;padding:38px 28px 48px;}
+  .head h1{font-size:30px;font-weight:800;letter-spacing:-.03em;}
+  .head .sub{font-size:14.5px;color:var(--gray5);font-weight:600;margin-top:6px;}
+  .scroll{margin-top:22px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .scroll svg{display:block;width:1560px;max-width:none;height:auto;}
+  .hint{font-size:12.5px;color:var(--gray5);font-weight:600;margin-top:8px;}
+
+  .nl{font:800 16px 'Pretendard';fill:var(--ink);}
+  .nl-s{font:800 14px 'Pretendard';fill:var(--ink);}
+  .ns{font:700 11.5px 'Pretendard';fill:var(--gray5);}
+  .tech-az{font:800 12px 'Pretendard';fill:var(--blue);}
+  .tech-gp{font:800 12px 'Pretendard';fill:var(--green);}
+  .ed{font:700 12.5px 'Pretendard';fill:var(--gray7);}
+  .ed-b{font:800 12.5px 'Pretendard';fill:var(--blue-d);}
+  .cap{font:800 13px 'Pretendard';fill:var(--gray5);letter-spacing:.05em;}
+  .ours-cap{font:800 14px 'Pretendard';fill:var(--blue);letter-spacing:.03em;}
+  .ico{font-size:25px;} .num{font:800 17px 'Pretendard';fill:#fff;}
+  .ann{font:700 11.5px 'Pretendard';}
+
+  .legend{display:flex;gap:18px;margin-top:18px;font-size:13px;font-weight:700;color:var(--gray7);flex-wrap:wrap;}
+  .legend .it{display:flex;align-items:center;gap:7px;}
+  .legend .sw{width:14px;height:14px;border-radius:4px;}
+  footer{margin-top:24px;font-size:13px;color:var(--gray5);font-weight:500;line-height:1.7;}
+  footer b{color:var(--gray7);} footer a{color:var(--blue);font-weight:800;text-decoration:none;}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>기억의 궁전 · Runtime Architecture</h1>
+    <div class="sub">상단 = 별도 모듈(PDF·GraphRAG) · 하단 = <b style="color:#3182F6">우리 구현</b> 3D 마커 파이프라인 7단계</div>
+  </div>
+
+  <div class="scroll">
+  <svg viewBox="0 0 1560 660" role="img" aria-label="기억의 궁전 시스템 아키텍처 — 3D 파이프라인 상세">
+    <defs>
+      <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="#4E5968"/></marker>
+      <marker id="ahb" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="#3182F6"/></marker>
+      <marker id="ahg" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="#00B27A"/></marker>
+      <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1A2A4A" flood-opacity="0.10"/></filter>
+    </defs>
+
+    <!-- ===== 상단: 별도 모듈 (압축) ===== -->
+    <rect x="205" y="78" width="430" height="118" rx="18" fill="#F4F6F8" stroke="#D1D6DB" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <text x="226" y="103" class="cap">별도 모듈 — 데이터·의미 구조</text>
+
+    <!-- 학습자 -->
+    <circle cx="95" cy="140" r="25" fill="#fff" stroke="#E5E8EB" filter="url(#sh)"/>
+    <text x="95" y="140" text-anchor="middle" dominant-baseline="central" class="ico">🧑‍🎓</text>
+    <text x="95" y="184" text-anchor="middle" class="nl-s">학습자</text>
+    <!-- → PDF -->
+    <line x1="128" y1="140" x2="246" y2="140" stroke="#4E5968" stroke-width="2.2" marker-end="url(#ah)"/>
+    <text x="186" y="129" text-anchor="middle" class="ed">PDF 업로드</text>
+    <!-- PDF 전처리 -->
+    <circle cx="290" cy="140" r="25" fill="#fff" stroke="#E5E8EB" filter="url(#sh)"/>
+    <text x="290" y="140" text-anchor="middle" dominant-baseline="central" class="ico">📄</text>
+    <text x="290" y="170" text-anchor="middle" class="nl-s">PDF 전처리</text>
+    <text x="290" y="188" text-anchor="middle" class="tech-az">Azure Doc Intelligence</text>
+    <!-- → GraphRAG -->
+    <line x1="324" y1="140" x2="430" y2="140" stroke="#4E5968" stroke-width="2.2" marker-end="url(#ah)"/>
+    <!-- GraphRAG·방나누기 -->
+    <circle cx="476" cy="140" r="25" fill="#fff" stroke="#E5E8EB" filter="url(#sh)"/>
+    <text x="476" y="140" text-anchor="middle" dominant-baseline="central" class="ico">🕸️</text>
+    <text x="476" y="170" text-anchor="middle" class="nl-s">GraphRAG · 방 나누기</text>
+    <text x="476" y="188" text-anchor="middle" class="ns">개념 그래프 → 의미 클러스터링 → 챕터</text>
+    <!-- RAG 챗봇 작은 칩 -->
+    <rect x="556" y="123" width="64" height="34" rx="9" fill="#fff" stroke="#D1D6DB"/>
+    <text x="588" y="138" text-anchor="middle" style="font:800 11px Pretendard;fill:#4E5968">💬 RAG</text>
+    <text x="588" y="150" text-anchor="middle" style="font:600 9px Pretendard;fill:#8B95A1">학습 챗봇</text>
+    <!-- → palace.json -->
+    <line x1="510" y1="140" x2="548" y2="140" stroke="#4E5968" stroke-width="1.8" marker-end="url(#ah)"/>
+    <!-- palace.json 출력 → 아래 파이프라인으로 -->
+    <line x1="635" y1="140" x2="712" y2="140" stroke="#3182F6" stroke-width="2.4" marker-end="url(#ahb)"/>
+    <rect x="700" y="122" width="118" height="34" rx="9" fill="#fff" stroke="#3182F6" stroke-width="1.5"/>
+    <text x="759" y="138" text-anchor="middle" class="ed-b">palace.json</text>
+    <text x="759" y="151" text-anchor="middle" style="font:600 9.5px Pretendard;fill:#8B95A1">방·개념 구조</text>
+    <!-- palace.json ↓ 파이프라인(⑤ 배치)로 -->
+    <path d="M759 156 L759 250 Q759 262 771 262 L879 262" fill="none" stroke="#3182F6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ahb)"/>
+    <text x="773" y="210" class="ed-b" style="font-size:11.5px">학습 개념</text>
+
+    <!-- ===== 하단: 우리 3D 파이프라인 (메인) ===== -->
+    <rect x="36" y="288" width="1488" height="330" rx="22" fill="#EAF2FE" stroke="#3182F6" stroke-width="2"/>
+    <text x="60" y="318" class="ours-cap">★ 우리 구현 — 3D 마커 파이프라인 (7단계)</text>
+
+    <!-- 방 GLB 입력 -->
+    <circle cx="92" cy="392" r="25" fill="#fff" stroke="#E5E8EB" filter="url(#sh)"/>
+    <text x="92" y="392" text-anchor="middle" dominant-baseline="central" class="ico">📦</text>
+    <text x="92" y="436" text-anchor="middle" class="nl-s">방 GLB</text>
+    <text x="92" y="453" text-anchor="middle" class="ns">3D 방 모델</text>
+
+    <!-- 단계 화살표(가로) -->
+    <g stroke="#3182F6" stroke-width="2" marker-end="url(#ahb)">
+      <line x1="125" y1="392" x2="196" y2="392"/>
+      <line x1="284" y1="392" x2="350" y2="392"/>
+      <line x1="438" y1="392" x2="504" y2="392"/>
+      <line x1="592" y1="392" x2="658" y2="392"/>
+      <line x1="746" y1="392" x2="812" y2="392"/>
+      <line x1="900" y1="392" x2="966" y2="392"/>
+      <line x1="1054" y1="392" x2="1120" y2="392"/>
+      <line x1="1208" y1="392" x2="1278" y2="392"/>
+    </g>
+
+    <!-- 7단계 노드 (번호 원) — x: 240,394,548,702,856,1010,1164 ; 1인칭 1320 -->
+    <!-- ① 정규화 -->
+    <circle cx="240" cy="392" r="23" fill="#3182F6"/><text x="240" y="392" text-anchor="middle" dominant-baseline="central" class="num">1</text>
+    <text x="240" y="434" text-anchor="middle" class="nl-s">정규화</text><text x="240" y="451" text-anchor="middle" class="ns">방 폭 통일</text>
+    <!-- ② 사물 검출 -->
+    <circle cx="394" cy="392" r="23" fill="#3182F6"/><text x="394" y="392" text-anchor="middle" dominant-baseline="central" class="num">2</text>
+    <text x="394" y="434" text-anchor="middle" class="nl-s">사물 검출</text><text x="394" y="451" text-anchor="middle" class="ns">이름표 + 모양</text>
+    <!-- ③ 이름 짓기 -->
+    <circle cx="548" cy="392" r="23" fill="#3182F6"/><text x="548" y="392" text-anchor="middle" dominant-baseline="central" class="num">3</text>
+    <text x="548" y="434" text-anchor="middle" class="nl-s">이름 짓기</text><text x="548" y="451" text-anchor="middle" class="ns">이름신뢰 + 비전</text>
+    <!-- ④ 겹침 정리 -->
+    <circle cx="702" cy="392" r="23" fill="#3182F6"/><text x="702" y="392" text-anchor="middle" dominant-baseline="central" class="num">4</text>
+    <text x="702" y="434" text-anchor="middle" class="nl-s">겹침 정리</text><text x="702" y="451" text-anchor="middle" class="ns">바닥(XZ) 솎기</text>
+    <!-- ⑤ 동선·배치 -->
+    <circle cx="856" cy="392" r="23" fill="#3182F6"/><text x="856" y="392" text-anchor="middle" dominant-baseline="central" class="num">5</text>
+    <text x="856" y="434" text-anchor="middle" class="nl-s">동선·배치</text><text x="856" y="451" text-anchor="middle" class="ns">최근접 + 개념 배정</text>
+    <!-- ⑥ 마커 자리 -->
+    <circle cx="1010" cy="392" r="23" fill="#3182F6"/><text x="1010" y="392" text-anchor="middle" dominant-baseline="central" class="num">6</text>
+    <text x="1010" y="434" text-anchor="middle" class="nl-s">마커 자리</text><text x="1010" y="451" text-anchor="middle" class="ns">표면 부착</text>
+    <!-- ⑦ 카메라 -->
+    <circle cx="1164" cy="392" r="23" fill="#3182F6"/><text x="1164" y="392" text-anchor="middle" dominant-baseline="central" class="num">7</text>
+    <text x="1164" y="434" text-anchor="middle" class="nl-s">카메라</text><text x="1164" y="451" text-anchor="middle" class="ns">부드러운 이동</text>
+    <!-- 1인칭 공간 출력 -->
+    <circle cx="1320" cy="392" r="27" fill="#fff" stroke="#3182F6" stroke-width="2" filter="url(#sh)"/>
+    <text x="1320" y="392" text-anchor="middle" dominant-baseline="central" class="ico">🚶</text>
+    <text x="1320" y="438" text-anchor="middle" class="nl-s">1인칭 공간</text><text x="1320" y="455" text-anchor="middle" class="ns">걸으며 학습</text>
+
+    <!-- ③ 이름 짓기 → 비전 서브시스템(아래) -->
+    <line x1="548" y1="416" x2="548" y2="496" stroke="#00B27A" stroke-width="2" marker-end="url(#ahg)"/>
+    <rect x="372" y="500" width="352" height="84" rx="14" fill="#fff" stroke="#00B27A" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <text x="548" y="524" text-anchor="middle" style="font:800 12.5px Pretendard;fill:#00875A">📸 애매·오명명일 때 — AI 비전이 판단</text>
+    <!-- 비전 미니 플로우 -->
+    <text x="430" y="556" text-anchor="middle" style="font:800 12px Pretendard;fill:#191F28">스크린샷</text>
+    <text x="430" y="571" text-anchor="middle" class="ns">사물 클로즈업</text>
+    <text x="500" y="552" text-anchor="middle" style="font:800 13px Pretendard;fill:#8B95A1">→</text>
+    <text x="560" y="556" text-anchor="middle" class="tech-az">Azure Vision</text>
+    <text x="560" y="571" text-anchor="middle" class="ns">박스 검출(보조)</text>
+    <text x="628" y="552" text-anchor="middle" style="font:800 13px Pretendard;fill:#8B95A1">+</text>
+    <text x="676" y="556" text-anchor="middle" class="tech-gp">GPT-4.1</text>
+    <text x="676" y="571" text-anchor="middle" class="ns">한국어 명명</text>
+
+    <!-- 출력 화살표: 1인칭 → 완성 -->
+    <line x1="1320" y1="419" x2="1320" y2="470" stroke="#4E5968" stroke-width="2" marker-end="url(#ah)"/>
+    <text x="1320" y="500" text-anchor="middle" style="font:800 14px Pretendard;fill:#1B64DA">🏛 기억의 궁전</text>
+    <text x="1320" y="518" text-anchor="middle" class="ns">완성된 3D 학습 공간</text>
+
+    <!-- 주석: 동선 설계 -->
+    <rect x="770" y="500" width="280" height="50" rx="12" fill="#fff" stroke="#3182F6" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="910" y="520" text-anchor="middle" class="ann" fill="#1B64DA">🚶 동선 = 가까움 + 방향 유지(최근접 경로)</text>
+    <text x="910" y="536" text-anchor="middle" class="ann" fill="#1B64DA" style="font-weight:600;opacity:.85">지그재그 없이 한 바퀴 매끄럽게</text>
+    <line x1="856" y1="415" x2="856" y2="500" stroke="#3182F6" stroke-width="1.3" stroke-dasharray="4 4"/>
+  </svg>
+  </div>
+  <div class="hint">← 좌우로 스크롤하면 7단계 전체를 볼 수 있어요</div>
+
+  <div class="legend">
+    <span class="it"><span class="sw" style="background:#D1D6DB"></span>별도 모듈 (PDF·GraphRAG)</span>
+    <span class="it"><span class="sw" style="background:#3182F6"></span>우리 구현 (3D · 7단계)</span>
+    <span class="it"><span class="sw" style="background:#3182F6;opacity:.5"></span>Azure</span>
+    <span class="it"><span class="sw" style="background:#00B27A"></span>GPT-4.1</span>
+  </div>
+
+  <footer>
+    별도 모듈이 만든 <b>palace.json(방·개념 구조)</b> + <b>방 GLB</b>를 받아, 우리는
+    <b style="color:#3182F6">정규화→검출→이름→겹침정리→동선·배치→자리→카메라</b> 7단계로 마커를 놓아 걸어 다니는 공간을 만들어요.
+    핵심은 ③ <b>이름 짓기</b>(이름 신뢰 + 비전 하이브리드)와 ⑤ <b>동선</b>(최근접 경로).<br>
+    각 단계 쉬운 설명은 <a href="how-markers-work.html">여기서 →</a>
+  </footer>
+<script src="nav.js" defer></script>
+</body>
+</html>

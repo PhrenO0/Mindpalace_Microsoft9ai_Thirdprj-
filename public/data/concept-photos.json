@@ -1,0 +1,114 @@
+{
+ "note": "개념 대표 이미지 — Wikimedia Commons / Wikipedia (ko) 자동 소싱. 라이선스: 각 wiki 페이지 참조(대부분 CC BY-SA/PD).",
+ "source": "ko.wikipedia.org REST summary API",
+ "concepts": {
+  "정도전": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Korea-Danyang-Dodamsambong_Sam_Bong_statue_3076-07.JPG/330px-Korea-Danyang-Dodamsambong_Sam_Bong_statue_3076-07.JPG",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/8/88/Korea-Danyang-Dodamsambong_Sam_Bong_statue_3076-07.JPG",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%A0%95%EB%8F%84%EC%A0%84",
+   "matched": "정도전"
+  },
+  "이성계": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/King_Taejo_Yi_02.jpg/330px-King_Taejo_Yi_02.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/6/6a/King_Taejo_Yi_02.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%ED%83%9C%EC%A1%B0_(%EC%A1%B0%EC%84%A0)",
+   "matched": "이성계"
+  },
+  "호패법": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/ko/thumb/1/1b/Hopyae.jpg/330px-Hopyae.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/ko/1/1b/Hopyae.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%ED%98%B8%ED%8C%A8",
+   "matched": "호패법"
+  },
+  "세종": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Korea_Yeouido_Summer_20140805_11_%2814862134703%29.jpg/330px-Korea_Yeouido_Summer_20140805_11_%2814862134703%29.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Korea_Yeouido_Summer_20140805_11_%2814862134703%29.jpg/3840px-Korea_Yeouido_Summer_20140805_11_%2814862134703%29.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%84%B8%EC%A2%85",
+   "matched": "세종"
+  },
+  "집현전": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Sujeongjeon_2018-09-05.jpg/330px-Sujeongjeon_2018-09-05.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Sujeongjeon_2018-09-05.jpg/3840px-Sujeongjeon_2018-09-05.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%A7%91%ED%98%84%EC%A0%84",
+   "matched": "집현전"
+  },
+  "조총": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Vietnamese_arquebuses_with_their_cover.jpg/330px-Vietnamese_arquebuses_with_their_cover.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Vietnamese_arquebuses_with_their_cover.jpg/3840px-Vietnamese_arquebuses_with_their_cover.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%A1%B0%EC%B4%9D",
+   "matched": "조총"
+  },
+  "임진왜란": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Busanjinsunjeoldo.jpg/330px-Busanjinsunjeoldo.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/3/34/Busanjinsunjeoldo.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%9E%84%EC%A7%84%EC%99%9C%EB%9E%80",
+   "matched": "임진왜란"
+  },
+  "의병": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Company_of_Korean_rebels_1907_by_F.A._McKenzie_from_Tragedy_of_Korea_losslessrotate0_35cropped.png/330px-Company_of_Korean_rebels_1907_by_F.A._McKenzie_from_Tragedy_of_Korea_losslessrotate0_35cropped.png",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Company_of_Korean_rebels_1907_by_F.A._McKenzie_from_Tragedy_of_Korea_losslessrotate0_35cropped.png",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%9D%98%EB%B3%91",
+   "matched": "의병"
+  },
+  "이순신": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/%EC%A0%84_%EC%9D%B4%EC%88%9C%EC%8B%A0_%EC%B4%88%EC%83%81_%28cropped%29.jpg/330px-%EC%A0%84_%EC%9D%B4%EC%88%9C%EC%8B%A0_%EC%B4%88%EC%83%81_%28cropped%29.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/8/82/%EC%A0%84_%EC%9D%B4%EC%88%9C%EC%8B%A0_%EC%B4%88%EC%83%81_%28cropped%29.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%9D%B4%EC%88%9C%EC%8B%A0",
+   "matched": "이순신"
+  },
+  "곽재우": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/%EA%B3%BD%EC%9E%AC%EC%9A%B0_%ED%9D%89%EC%83%81.jpg/330px-%EA%B3%BD%EC%9E%AC%EC%9A%B0_%ED%9D%89%EC%83%81.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/5/54/%EA%B3%BD%EC%9E%AC%EC%9A%B0_%ED%9D%89%EC%83%81.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EA%B3%BD%EC%9E%AC%EC%9A%B0",
+   "matched": "곽재우"
+  },
+  "조헌": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/ko/thumb/d/d3/%EC%A1%B0%ED%97%8C_%ED%91%9C%EC%A4%80%EC%98%81%EC%A0%95.jpg/330px-%EC%A1%B0%ED%97%8C_%ED%91%9C%EC%A4%80%EC%98%81%EC%A0%95.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/ko/d/d3/%EC%A1%B0%ED%97%8C_%ED%91%9C%EC%A4%80%EC%98%81%EC%A0%95.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%A1%B0%ED%97%8C",
+   "matched": "조헌"
+  },
+  "고경명": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Go_Gyeong_Myeong_portarit_art.jpg/330px-Go_Gyeong_Myeong_portarit_art.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Go_Gyeong_Myeong_portarit_art.jpg/3840px-Go_Gyeong_Myeong_portarit_art.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EA%B3%A0%EA%B2%BD%EB%AA%85",
+   "matched": "고경명"
+  },
+  "정문부": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/%EC%A0%95%EB%AC%B8%EB%B6%80%EC%9E%A5%EA%B5%B0%EB%AC%98.jpg/330px-%EC%A0%95%EB%AC%B8%EB%B6%80%EC%9E%A5%EA%B5%B0%EB%AC%98.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/4/4c/%EC%A0%95%EB%AC%B8%EB%B6%80%EC%9E%A5%EA%B5%B0%EB%AC%98.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%A0%95%EB%AC%B8%EB%B6%80",
+   "matched": "정문부"
+  },
+  "김시민": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Kim_Si-min.jpg/330px-Kim_Si-min.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Kim_Si-min.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EA%B9%80%EC%8B%9C%EB%AF%BC",
+   "matched": "김시민"
+  },
+  "규장전운": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/%EC%96%B4%EC%A0%95%EA%B7%9C%EC%9E%A5%EC%A0%84%EC%9A%B4-%EA%B5%AC6324.jpg/330px-%EC%96%B4%EC%A0%95%EA%B7%9C%EC%9E%A5%EC%A0%84%EC%9A%B4-%EA%B5%AC6324.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/3/3a/%EC%96%B4%EC%A0%95%EA%B7%9C%EC%9E%A5%EC%A0%84%EC%9A%B4-%EA%B5%AC6324.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EA%B7%9C%EC%9E%A5%EC%A0%84%EC%9A%B4",
+   "matched": "규장전운"
+  },
+  "사도 세자": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/%EC%82%AC%EB%8F%84%EC%84%B8%EC%9E%90.jpg/330px-%EC%82%AC%EB%8F%84%EC%84%B8%EC%9E%90.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/8/81/%EC%82%AC%EB%8F%84%EC%84%B8%EC%9E%90.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EC%9E%A5%EC%A1%B0_(%EC%A1%B0%EC%84%A0)",
+   "matched": "사도 세자"
+  },
+  "김육": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Korea-Portrait_of_Kim_Yuk-Joseon.jpg/330px-Korea-Portrait_of_Kim_Yuk-Joseon.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Korea-Portrait_of_Kim_Yuk-Joseon.jpg/3840px-Korea-Portrait_of_Kim_Yuk-Joseon.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EA%B9%80%EC%9C%A1",
+   "matched": "김육"
+  },
+  "김정호": {
+   "thumb": "https://upload.wikimedia.org/wikipedia/ko/thumb/2/29/%EA%B9%80%EC%A0%95%ED%98%B8_%ED%91%9C%EC%A4%80%EC%98%81%EC%A0%95.jpg/330px-%EA%B9%80%EC%A0%95%ED%98%B8_%ED%91%9C%EC%A4%80%EC%98%81%EC%A0%95.jpg",
+   "full": "https://upload.wikimedia.org/wikipedia/ko/2/29/%EA%B9%80%EC%A0%95%ED%98%B8_%ED%91%9C%EC%A4%80%EC%98%81%EC%A0%95.jpg",
+   "wiki": "https://ko.wikipedia.org/wiki/%EA%B9%80%EC%A0%95%ED%98%B8",
+   "matched": "김정호"
+  }
+ }
+}

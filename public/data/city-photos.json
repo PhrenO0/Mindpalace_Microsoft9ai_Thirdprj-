@@ -1,0 +1,590 @@
+{
+ "andong": {
+  "name": "안동시",
+  "region": "경상북도",
+  "title": "안동 하회마을",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Korea-Andong-Hahoe.Village-02.jpg/330px-Korea-Andong-Hahoe.Village-02.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Korea-Andong-Hahoe.Village-02.jpg"
+ },
+ "ansan": {
+  "name": "안산시",
+  "region": "경기도",
+  "title": "대부도",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Daebudo_NASA-WW.jpg/330px-Daebudo_NASA-WW.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Daebudo_NASA-WW.jpg"
+ },
+ "anseong": {
+  "name": "안성시",
+  "region": "경기도",
+  "title": "안성시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Anseongcity-map.png/330px-Anseongcity-map.png",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/9/96/Anseongcity-map.png"
+ },
+ "anyang": {
+  "name": "안양시",
+  "region": "경기도",
+  "title": "안양시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Anyang_city.jpg/330px-Anyang_city.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Anyang_city.jpg"
+ },
+ "asan": {
+  "name": "아산시",
+  "region": "충청남도",
+  "title": "아산시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Asan_City_Hall.JPG/330px-Asan_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/4/49/Asan_City_Hall.JPG"
+ },
+ "boryeong": {
+  "name": "보령시",
+  "region": "충청남도",
+  "title": "보령시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Korea-Boryeong-Daecheon_Beach-01.jpg/330px-Korea-Boryeong-Daecheon_Beach-01.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/d/d8/Korea-Boryeong-Daecheon_Beach-01.jpg"
+ },
+ "bucheon": {
+  "name": "부천시",
+  "region": "경기도",
+  "title": "부천시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Bucheoncityhall2025.jpg/330px-Bucheoncityhall2025.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Bucheoncityhall2025.jpg/3840px-Bucheoncityhall2025.jpg"
+ },
+ "busan": {
+  "name": "부산광역시",
+  "region": "광역시",
+  "title": "해운대",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Haeundae_2008.png/330px-Haeundae_2008.png",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/6/62/Haeundae_2008.png"
+ },
+ "changwon": {
+  "name": "창원시",
+  "region": "경상남도",
+  "title": "창원시",
+  "thumb": "",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Map_of_Changwon-si_detail.svg/langko-960px-Map_of_Changwon-si_detail.svg.png"
+ },
+ "cheonan": {
+  "name": "천안시",
+  "region": "충청남도",
+  "title": "천안시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cheonan_City_Hall.JPG/330px-Cheonan_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Cheonan_City_Hall.JPG"
+ },
+ "cheongju": {
+  "name": "청주시",
+  "region": "충청북도",
+  "title": "청주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Cheongju_City_Hall.JPG/330px-Cheongju_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Cheongju_City_Hall.JPG"
+ },
+ "chuncheon": {
+  "name": "춘천시",
+  "region": "강원특별자치도",
+  "title": "남이섬",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Nami_island_winter.jpg/330px-Nami_island_winter.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Nami_island_winter.jpg"
+ },
+ "chungju": {
+  "name": "충주시",
+  "region": "충청북도",
+  "title": "탄금대",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/%ED%83%84%EA%B8%88%EB%8C%80%EA%B3%B5%EC%9B%90.png/330px-%ED%83%84%EA%B8%88%EB%8C%80%EA%B3%B5%EC%9B%90.png",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/a/a4/%ED%83%84%EA%B8%88%EB%8C%80%EA%B3%B5%EC%9B%90.png"
+ },
+ "daegu": {
+  "name": "대구광역시",
+  "region": "광역시",
+  "title": "팔공산",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/%ED%8C%94%EA%B3%B5%EC%82%B0_%EA%B4%80%EB%B4%89_%EA%B2%BD%EC%B9%98%28%EA%B2%BD%EC%82%B0%EC%8B%9C_%EB%B0%A9%ED%96%A5%29.jpg/330px-%ED%8C%94%EA%B3%B5%EC%82%B0_%EA%B4%80%EB%B4%89_%EA%B2%BD%EC%B9%98%28%EA%B2%BD%EC%82%B0%EC%8B%9C_%EB%B0%A9%ED%96%A5%29.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/%ED%8C%94%EA%B3%B5%EC%82%B0_%EA%B4%80%EB%B4%89_%EA%B2%BD%EC%B9%98%28%EA%B2%BD%EC%82%B0%EC%8B%9C_%EB%B0%A9%ED%96%A5%29.jpg/3840px-%ED%8C%94%EA%B3%B5%EC%82%B0_%EA%B4%80%EB%B4%89_%EA%B2%BD%EC%B9%98%28%EA%B2%BD%EC%82%B0%EC%8B%9C_%EB%B0%A9%ED%96%A5%29.jpg"
+ },
+ "daejeon": {
+  "name": "대전광역시",
+  "region": "광역시",
+  "title": "대전광역시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Daejeon_metropolitan.png/330px-Daejeon_metropolitan.png",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/3/37/Daejeon_metropolitan.png"
+ },
+ "dangjin": {
+  "name": "당진시",
+  "region": "충청남도",
+  "title": "합덕성당",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Korea_Hapdeok_Catholic_Church_19_%2814217976195%29.jpg/330px-Korea_Hapdeok_Catholic_Church_19_%2814217976195%29.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Korea_Hapdeok_Catholic_Church_19_%2814217976195%29.jpg/3840px-Korea_Hapdeok_Catholic_Church_19_%2814217976195%29.jpg"
+ },
+ "dongducheon": {
+  "name": "동두천시",
+  "region": "경기도",
+  "title": "동두천시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Jihaeng_Station_-_Looking_North.JPG/330px-Jihaeng_Station_-_Looking_North.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Jihaeng_Station_-_Looking_North.JPG"
+ },
+ "donghae": {
+  "name": "동해시",
+  "region": "강원특별자치도",
+  "title": "천곡황금박쥐동굴",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/CGC-CEp1.jpg/330px-CGC-CEp1.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/2/2c/CGC-CEp1.jpg"
+ },
+ "gangneung": {
+  "name": "강릉시",
+  "region": "강원특별자치도",
+  "title": "경포대",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Gyeongpodae_Pavilion_Gangneung.JPG/330px-Gyeongpodae_Pavilion_Gangneung.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Gyeongpodae_Pavilion_Gangneung.JPG"
+ },
+ "geoje": {
+  "name": "거제시",
+  "region": "경상남도",
+  "title": "거제시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Okpo_mountain_view.jpg/330px-Okpo_mountain_view.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Okpo_mountain_view.jpg"
+ },
+ "gimcheon": {
+  "name": "김천시",
+  "region": "경상북도",
+  "title": "김천시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Gimcheon_City_Hall.JPG/330px-Gimcheon_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Gimcheon_City_Hall.JPG"
+ },
+ "gimhae": {
+  "name": "김해시",
+  "region": "경상남도",
+  "title": "김해시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Montage_of_Gimhae.jpg/330px-Montage_of_Gimhae.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Montage_of_Gimhae.jpg"
+ },
+ "gimje": {
+  "name": "김제시",
+  "region": "전북특별자치도",
+  "title": "김제시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Korea-Gimje-Cityscape-01.jpg/330px-Korea-Gimje-Cityscape-01.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/9/91/Korea-Gimje-Cityscape-01.jpg"
+ },
+ "gimpo": {
+  "name": "김포시",
+  "region": "경기도",
+  "title": "대명항",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Choji_Bridge_02.JPG/330px-Choji_Bridge_02.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Choji_Bridge_02.JPG/3840px-Choji_Bridge_02.JPG"
+ },
+ "gongju": {
+  "name": "공주시",
+  "region": "충청남도",
+  "title": "공산성",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/%EA%B3%B5%EC%82%B0%EC%84%B1_%EA%B8%88%EC%84%9C%EB%A3%A8.jpg/330px-%EA%B3%B5%EC%82%B0%EC%84%B1_%EA%B8%88%EC%84%9C%EB%A3%A8.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/%EA%B3%B5%EC%82%B0%EC%84%B1_%EA%B8%88%EC%84%9C%EB%A3%A8.jpg/3840px-%EA%B3%B5%EC%82%B0%EC%84%B1_%EA%B8%88%EC%84%9C%EB%A3%A8.jpg"
+ },
+ "goyang": {
+  "name": "고양시",
+  "region": "경기도",
+  "title": "고양시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/ILSAN%2CGOYANGCITY.jpg/330px-ILSAN%2CGOYANGCITY.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/e/e4/ILSAN%2CGOYANGCITY.jpg"
+ },
+ "gumi": {
+  "name": "구미시",
+  "region": "경상북도",
+  "title": "구미시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Gumicityhall.jpg/330px-Gumicityhall.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/7/72/Gumicityhall.jpg"
+ },
+ "gunpo": {
+  "name": "군포시",
+  "region": "경기도",
+  "title": "군포시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Gunpo_montage.jpg/330px-Gunpo_montage.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/4/44/Gunpo_montage.jpg"
+ },
+ "gunsan": {
+  "name": "군산시",
+  "region": "전북특별자치도",
+  "title": "군산시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Gunsancityhall.jpg/330px-Gunsancityhall.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/a/a3/Gunsancityhall.jpg"
+ },
+ "gwacheon": {
+  "name": "과천시",
+  "region": "경기도",
+  "title": "과천시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Gwacheon_City_Hall.JPG/330px-Gwacheon_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Gwacheon_City_Hall.JPG"
+ },
+ "gwangju-si": {
+  "name": "광주시",
+  "region": "경기도",
+  "title": "남한산성",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Namhanssanseong.JPG/330px-Namhanssanseong.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Namhanssanseong.JPG"
+ },
+ "gwangju": {
+  "name": "광주광역시",
+  "region": "광역시",
+  "title": "무등산",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Gwangju_Mudeungsan.jpg/330px-Gwangju_Mudeungsan.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/9/97/Gwangju_Mudeungsan.jpg"
+ },
+ "gwangmyeong": {
+  "name": "광명시",
+  "region": "경기도",
+  "title": "광명시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Gwangmyeong_City_Hall.JPG/330px-Gwangmyeong_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/5/57/Gwangmyeong_City_Hall.JPG"
+ },
+ "gwangyang": {
+  "name": "광양시",
+  "region": "전라남도",
+  "title": "광양시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Gwangyang_City_Hall.JPG/330px-Gwangyang_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/4/47/Gwangyang_City_Hall.JPG"
+ },
+ "gyeongju": {
+  "name": "경주시",
+  "region": "경상북도",
+  "title": "불국사",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Lotus_Flower_Bridge_and_Seven_Treasure_Bridge_at_Bulguksa_in_Gyeongju%2C_Korea.jpg/330px-Lotus_Flower_Bridge_and_Seven_Treasure_Bridge_at_Bulguksa_in_Gyeongju%2C_Korea.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/e/eb/Lotus_Flower_Bridge_and_Seven_Treasure_Bridge_at_Bulguksa_in_Gyeongju%2C_Korea.jpg"
+ },
+ "gyeongsan": {
+  "name": "경산시",
+  "region": "경상북도",
+  "title": "경산시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Gyeongsan_City_Hall.JPG/330px-Gyeongsan_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/e/e4/Gyeongsan_City_Hall.JPG"
+ },
+ "gyeryong": {
+  "name": "계룡시",
+  "region": "충청남도",
+  "title": "계룡시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Gyeryong_City_Hall.JPG/330px-Gyeryong_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/2/28/Gyeryong_City_Hall.JPG"
+ },
+ "hanam": {
+  "name": "하남시",
+  "region": "경기도",
+  "title": "하남시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Hanam_City_Hall.JPG/330px-Hanam_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/c/cd/Hanam_City_Hall.JPG"
+ },
+ "hwaseong": {
+  "name": "화성시",
+  "region": "경기도",
+  "title": "화성시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Hwaseong_City_Hall.JPG/330px-Hwaseong_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Hwaseong_City_Hall.JPG"
+ },
+ "icheon": {
+  "name": "이천시",
+  "region": "경기도",
+  "title": "이천시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Icheon_City_Hall.JPG/330px-Icheon_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/c/c4/Icheon_City_Hall.JPG"
+ },
+ "iksan": {
+  "name": "익산시",
+  "region": "전북특별자치도",
+  "title": "익산시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Iksan_-_Young_Deung_Dong.jpg/330px-Iksan_-_Young_Deung_Dong.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Iksan_-_Young_Deung_Dong.jpg"
+ },
+ "incheon": {
+  "name": "인천광역시",
+  "region": "광역시",
+  "title": "인천광역시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Songdo_Central_Park_and_Posco_Tower_Songdo.jpg/330px-Songdo_Central_Park_and_Posco_Tower_Songdo.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Songdo_Central_Park_and_Posco_Tower_Songdo.jpg/3840px-Songdo_Central_Park_and_Posco_Tower_Songdo.jpg"
+ },
+ "jecheon": {
+  "name": "제천시",
+  "region": "충청북도",
+  "title": "의림지",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/%EC%B2%AD%ED%92%8D_%EC%84%B1%EC%97%B4%ED%98%84%EC%9D%B8_%EC%95%85%EC%84%B1_%EC%9A%B0%EB%A5%B5_552%EB%85%84_%EC%9E%84%EC%A7%80_%EB%B6%80%EC%97%BD%EA%B3%B5%EB%B2%95_%EC%A0%9C%EC%96%B8_%EC%8B%9C%EC%B6%95_%EA%B8%B0%EB%85%90%EC%9A%B0%ED%91%9C.jpg/330px-%EC%B2%AD%ED%92%8D_%EC%84%B1%EC%97%B4%ED%98%84%EC%9D%B8_%EC%95%85%EC%84%B1_%EC%9A%B0%EB%A5%B5_552%EB%85%84_%EC%9E%84%EC%A7%80_%EB%B6%80%EC%97%BD%EA%B3%B5%EB%B2%95_%EC%A0%9C%EC%96%B8_%EC%8B%9C%EC%B6%95_%EA%B8%B0%EB%85%90%EC%9A%B0%ED%91%9C.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/b/b6/%EC%B2%AD%ED%92%8D_%EC%84%B1%EC%97%B4%ED%98%84%EC%9D%B8_%EC%95%85%EC%84%B1_%EC%9A%B0%EB%A5%B5_552%EB%85%84_%EC%9E%84%EC%A7%80_%EB%B6%80%EC%97%BD%EA%B3%B5%EB%B2%95_%EC%A0%9C%EC%96%B8_%EC%8B%9C%EC%B6%95_%EA%B8%B0%EB%85%90%EC%9A%B0%ED%91%9C.jpg"
+ },
+ "jeju": {
+  "name": "제주시",
+  "region": "제주특별자치도",
+  "title": "성산일출봉",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/%EC%84%B1%EC%82%B0%EC%9D%BC%EC%B6%9C%EB%B4%89_%EC%B2%9C%EC%97%B0%EB%B3%B4%ED%98%B8%EA%B5%AC%EC%97%AD_2019%EB%85%84_%EC%B4%AC%EC%98%81%28%EC%B6%9C%EC%B2%98_%EB%AC%B8%ED%99%94%EC%9E%AC%EC%B2%AD_%EB%8C%80%EB%B3%80%EC%9D%B8%EC%8B%A4%29.jpg/330px-%EC%84%B1%EC%82%B0%EC%9D%BC%EC%B6%9C%EB%B4%89_%EC%B2%9C%EC%97%B0%EB%B3%B4%ED%98%B8%EA%B5%AC%EC%97%AD_2019%EB%85%84_%EC%B4%AC%EC%98%81%28%EC%B6%9C%EC%B2%98_%EB%AC%B8%ED%99%94%EC%9E%AC%EC%B2%AD_%EB%8C%80%EB%B3%80%EC%9D%B8%EC%8B%A4%29.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/%EC%84%B1%EC%82%B0%EC%9D%BC%EC%B6%9C%EB%B4%89_%EC%B2%9C%EC%97%B0%EB%B3%B4%ED%98%B8%EA%B5%AC%EC%97%AD_2019%EB%85%84_%EC%B4%AC%EC%98%81%28%EC%B6%9C%EC%B2%98_%EB%AC%B8%ED%99%94%EC%9E%AC%EC%B2%AD_%EB%8C%80%EB%B3%80%EC%9D%B8%EC%8B%A4%29.jpg/3840px-%EC%84%B1%EC%82%B0%EC%9D%BC%EC%B6%9C%EB%B4%89_%EC%B2%9C%EC%97%B0%EB%B3%B4%ED%98%B8%EA%B5%AC%EC%97%AD_2019%EB%85%84_%EC%B4%AC%EC%98%81%28%EC%B6%9C%EC%B2%98_%EB%AC%B8%ED%99%94%EC%9E%AC%EC%B2%AD_%EB%8C%80%EB%B3%80%EC%9D%B8%EC%8B%A4%29.jpg"
+ },
+ "jeongeup": {
+  "name": "정읍시",
+  "region": "전북특별자치도",
+  "title": "정읍시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Street_in_central_Jeongeup_-_2009-02-04.JPG/330px-Street_in_central_Jeongeup_-_2009-02-04.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/1/13/Street_in_central_Jeongeup_-_2009-02-04.JPG"
+ },
+ "jeonju": {
+  "name": "전주시",
+  "region": "전북특별자치도",
+  "title": "전주한옥마을",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/%EC%A0%84%EC%A3%BC%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_%EC%A0%84%EA%B2%BD.JPG/330px-%EC%A0%84%EC%A3%BC%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_%EC%A0%84%EA%B2%BD.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/%EC%A0%84%EC%A3%BC%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_%EC%A0%84%EA%B2%BD.JPG/3840px-%EC%A0%84%EC%A3%BC%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_%EC%A0%84%EA%B2%BD.JPG"
+ },
+ "jinju": {
+  "name": "진주시",
+  "region": "경상남도",
+  "title": "진주남강유등축제",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Jinju_namgang_lantern_festival.jpg/330px-Jinju_namgang_lantern_festival.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/d/d8/Jinju_namgang_lantern_festival.jpg"
+ },
+ "jongno": {
+  "name": "종로구",
+  "region": "서울특별시",
+  "title": "종로구",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Gyeongbokgung_at_night.png/330px-Gyeongbokgung_at_night.png",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/3/37/Gyeongbokgung_at_night.png"
+ },
+ "miryang": {
+  "name": "밀양시",
+  "region": "경상남도",
+  "title": "밀양시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Miryang_city_hall.jpg/330px-Miryang_city_hall.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Miryang_city_hall.jpg"
+ },
+ "mokpo": {
+  "name": "목포시",
+  "region": "전라남도",
+  "title": "목포시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Montage_of_Mokpo.jpg/330px-Montage_of_Mokpo.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Montage_of_Mokpo.jpg"
+ },
+ "mungyeong": {
+  "name": "문경시",
+  "region": "경상북도",
+  "title": "문경시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mungyeong_City_Hall.JPG/330px-Mungyeong_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/3/32/Mungyeong_City_Hall.JPG"
+ },
+ "naju": {
+  "name": "나주시",
+  "region": "전라남도",
+  "title": "나주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Naju_City_Hall.JPG/330px-Naju_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/8/83/Naju_City_Hall.JPG"
+ },
+ "namwon": {
+  "name": "남원시",
+  "region": "전북특별자치도",
+  "title": "남원시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Namwon_City_Hall.JPG/330px-Namwon_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Namwon_City_Hall.JPG"
+ },
+ "namyangju": {
+  "name": "남양주시",
+  "region": "경기도",
+  "title": "남양주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Yeoyudang2.jpg/330px-Yeoyudang2.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Yeoyudang2.jpg"
+ },
+ "nonsan": {
+  "name": "논산시",
+  "region": "충청남도",
+  "title": "논산시",
+  "thumb": "",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Map_Nonsan-si.png"
+ },
+ "osan": {
+  "name": "오산시",
+  "region": "경기도",
+  "title": "오산시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Osan_city.jpg/330px-Osan_city.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Osan_city.jpg"
+ },
+ "paju": {
+  "name": "파주시",
+  "region": "경기도",
+  "title": "파주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Paju_City_Hall.JPG/330px-Paju_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Paju_City_Hall.JPG"
+ },
+ "pocheon": {
+  "name": "포천시",
+  "region": "경기도",
+  "title": "포천시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/250207_%ED%8F%AC%EC%B2%9C%EC%8B%9C%EC%B2%AD_%EB%B3%B8%EA%B4%80.jpg/330px-250207_%ED%8F%AC%EC%B2%9C%EC%8B%9C%EC%B2%AD_%EB%B3%B8%EA%B4%80.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/250207_%ED%8F%AC%EC%B2%9C%EC%8B%9C%EC%B2%AD_%EB%B3%B8%EA%B4%80.jpg/3840px-250207_%ED%8F%AC%EC%B2%9C%EC%8B%9C%EC%B2%AD_%EB%B3%B8%EA%B4%80.jpg"
+ },
+ "pohang": {
+  "name": "포항시",
+  "region": "경상북도",
+  "title": "죽도시장",
+  "thumb": "https://upload.wikimedia.org/wikipedia/ko/thumb/9/9e/Pohang-Jukdosijang_main.jpg/330px-Pohang-Jukdosijang_main.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/ko/9/9e/Pohang-Jukdosijang_main.jpg"
+ },
+ "pyeongtaek": {
+  "name": "평택시",
+  "region": "경기도",
+  "title": "평택시",
+  "thumb": "",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Gyeonggi-Pyeongtaek.svg/langko-960px-Gyeonggi-Pyeongtaek.svg.png"
+ },
+ "sacheon": {
+  "name": "사천시",
+  "region": "경상남도",
+  "title": "사천시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Sacheon_City_Hall.JPG/330px-Sacheon_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Sacheon_City_Hall.JPG"
+ },
+ "samcheok": {
+  "name": "삼척시",
+  "region": "강원특별자치도",
+  "title": "죽서루",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Jeong_Seon-Jukseoru-2-%EC%A3%BD%EC%84%9C%EB%A3%A8.jpg/330px-Jeong_Seon-Jukseoru-2-%EC%A3%BD%EC%84%9C%EB%A3%A8.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/6/63/Jeong_Seon-Jukseoru-2-%EC%A3%BD%EC%84%9C%EB%A3%A8.jpg"
+ },
+ "sangju": {
+  "name": "상주시",
+  "region": "경상북도",
+  "title": "상주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Sangju_City_Hall.JPG/330px-Sangju_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Sangju_City_Hall.JPG"
+ },
+ "sejong": {
+  "name": "세종특별자치시",
+  "region": "특별자치시",
+  "title": "세종특별자치시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Hannuridaero_and_Bangchukcheon.jpg/330px-Hannuridaero_and_Bangchukcheon.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Hannuridaero_and_Bangchukcheon.jpg/3840px-Hannuridaero_and_Bangchukcheon.jpg"
+ },
+ "seogwipo": {
+  "name": "서귀포시",
+  "region": "제주특별자치도",
+  "title": "천지연폭포",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Korea-Jeju-Cheonjiyeon_Waterfall-01.jpg/330px-Korea-Jeju-Cheonjiyeon_Waterfall-01.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Korea-Jeju-Cheonjiyeon_Waterfall-01.jpg/3840px-Korea-Jeju-Cheonjiyeon_Waterfall-01.jpg"
+ },
+ "seongnam": {
+  "name": "성남시",
+  "region": "경기도",
+  "title": "성남시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Seongnam-2013.jpg/330px-Seongnam-2013.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Seongnam-2013.jpg"
+ },
+ "seosan": {
+  "name": "서산시",
+  "region": "충청남도",
+  "title": "서산시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Seosan_montage.jpg/330px-Seosan_montage.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Seosan_montage.jpg"
+ },
+ "siheung": {
+  "name": "시흥시",
+  "region": "경기도",
+  "title": "시흥시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/%EC%8B%9C%ED%9D%A5%EC%8B%9C%EC%B2%AD_%EC%8B%9C%EC%B2%AD%EB%A1%9C_%EB%B0%A9%EB%A9%B4%EC%97%90%EC%84%9C_%EC%B0%8D%EC%9D%80_%EC%A0%95%EB%AC%B8.jpg/330px-%EC%8B%9C%ED%9D%A5%EC%8B%9C%EC%B2%AD_%EC%8B%9C%EC%B2%AD%EB%A1%9C_%EB%B0%A9%EB%A9%B4%EC%97%90%EC%84%9C_%EC%B0%8D%EC%9D%80_%EC%A0%95%EB%AC%B8.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/%EC%8B%9C%ED%9D%A5%EC%8B%9C%EC%B2%AD_%EC%8B%9C%EC%B2%AD%EB%A1%9C_%EB%B0%A9%EB%A9%B4%EC%97%90%EC%84%9C_%EC%B0%8D%EC%9D%80_%EC%A0%95%EB%AC%B8.jpg/3840px-%EC%8B%9C%ED%9D%A5%EC%8B%9C%EC%B2%AD_%EC%8B%9C%EC%B2%AD%EB%A1%9C_%EB%B0%A9%EB%A9%B4%EC%97%90%EC%84%9C_%EC%B0%8D%EC%9D%80_%EC%A0%95%EB%AC%B8.jpg"
+ },
+ "sokcho": {
+  "name": "속초시",
+  "region": "강원특별자치도",
+  "title": "속초시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Korea-Sokcho-Expo_Tower-01.jpg/330px-Korea-Sokcho-Expo_Tower-01.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Korea-Sokcho-Expo_Tower-01.jpg"
+ },
+ "suncheon": {
+  "name": "순천시",
+  "region": "전라남도",
+  "title": "낙안읍성",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/%EB%82%99%EC%95%88%EC%9D%8D%EC%84%B1%EC%A0%84%EA%B2%BD.jpg/330px-%EB%82%99%EC%95%88%EC%9D%8D%EC%84%B1%EC%A0%84%EA%B2%BD.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/2/2e/%EB%82%99%EC%95%88%EC%9D%8D%EC%84%B1%EC%A0%84%EA%B2%BD.jpg"
+ },
+ "suwon": {
+  "name": "수원시",
+  "region": "경기도",
+  "title": "수원화성",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Bifyu_8.jpg/330px-Bifyu_8.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Bifyu_8.jpg"
+ },
+ "taebaek": {
+  "name": "태백시",
+  "region": "강원특별자치도",
+  "title": "태백시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/2025-10-28_14.38.29_taebaek.jpg/330px-2025-10-28_14.38.29_taebaek.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/2025-10-28_14.38.29_taebaek.jpg/3840px-2025-10-28_14.38.29_taebaek.jpg"
+ },
+ "tongyeong": {
+  "name": "통영시",
+  "region": "경상남도",
+  "title": "통영시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Korea-Tongyeong-Collage-01.jpg/330px-Korea-Tongyeong-Collage-01.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Korea-Tongyeong-Collage-01.jpg"
+ },
+ "uijeongbu": {
+  "name": "의정부시",
+  "region": "경기도",
+  "title": "의정부시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Uijeongbu_City_Hall.JPG/330px-Uijeongbu_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Uijeongbu_City_Hall.JPG"
+ },
+ "uiwang": {
+  "name": "의왕시",
+  "region": "경기도",
+  "title": "의왕시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/20231012_Citiscape_of_Uiwang_02.jpg/330px-20231012_Citiscape_of_Uiwang_02.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/20231012_Citiscape_of_Uiwang_02.jpg/3840px-20231012_Citiscape_of_Uiwang_02.jpg"
+ },
+ "ulsan": {
+  "name": "울산광역시",
+  "region": "광역시",
+  "title": "대왕암공원",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/KU-Dwa2.jpg/330px-KU-Dwa2.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/KU-Dwa2.jpg/3840px-KU-Dwa2.jpg"
+ },
+ "wonju": {
+  "name": "원주시",
+  "region": "강원특별자치도",
+  "title": "원주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Wonju_City_Hall_20231206.jpg/330px-Wonju_City_Hall_20231206.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Wonju_City_Hall_20231206.jpg/3840px-Wonju_City_Hall_20231206.jpg"
+ },
+ "yangju": {
+  "name": "양주시",
+  "region": "경기도",
+  "title": "양주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Yangju_City_Hall.JPG/330px-Yangju_City_Hall.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Yangju_City_Hall.JPG"
+ },
+ "yangsan": {
+  "name": "양산시",
+  "region": "경상남도",
+  "title": "양산시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Yangsan_newtown_001.JPG/330px-Yangsan_newtown_001.JPG",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Yangsan_newtown_001.JPG/3840px-Yangsan_newtown_001.JPG"
+ },
+ "yeoju": {
+  "name": "여주시",
+  "region": "경기도",
+  "title": "여주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Yeoju_City_office.jpg/330px-Yeoju_City_office.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/4/40/Yeoju_City_office.jpg"
+ },
+ "yeongcheon": {
+  "name": "영천시",
+  "region": "경상북도",
+  "title": "영천시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Yeongcheoncityhall.jpg/330px-Yeongcheoncityhall.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/a/ad/Yeongcheoncityhall.jpg"
+ },
+ "yeongju": {
+  "name": "영주시",
+  "region": "경상북도",
+  "title": "영주시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Yeongju_montage.jpg/330px-Yeongju_montage.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Yeongju_montage.jpg"
+ },
+ "yeosu": {
+  "name": "여수시",
+  "region": "전라남도",
+  "title": "오동도",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Yeosu_Odongdo_20180929_002.jpg/330px-Yeosu_Odongdo_20180929_002.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Yeosu_Odongdo_20180929_002.jpg/3840px-Yeosu_Odongdo_20180929_002.jpg"
+ },
+ "yongin": {
+  "name": "용인시",
+  "region": "경기도",
+  "title": "용인시",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Yongin_CityHall.jpg/330px-Yongin_CityHall.jpg",
+  "full": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Yongin_CityHall.jpg/3840px-Yongin_CityHall.jpg"
+ }
+}
